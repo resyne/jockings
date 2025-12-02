@@ -14,7 +14,96 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      pranks: {
+        Row: {
+          call_status: string
+          created_at: string
+          creativity_level: number
+          id: string
+          language: string
+          max_duration: number
+          personality_tone: string
+          prank_theme: string
+          recording_url: string | null
+          send_recording: boolean
+          twilio_call_sid: string | null
+          updated_at: string
+          user_id: string
+          victim_first_name: string
+          victim_last_name: string
+          victim_phone: string
+          voice_gender: string
+        }
+        Insert: {
+          call_status?: string
+          created_at?: string
+          creativity_level?: number
+          id?: string
+          language?: string
+          max_duration?: number
+          personality_tone?: string
+          prank_theme: string
+          recording_url?: string | null
+          send_recording?: boolean
+          twilio_call_sid?: string | null
+          updated_at?: string
+          user_id: string
+          victim_first_name: string
+          victim_last_name: string
+          victim_phone: string
+          voice_gender: string
+        }
+        Update: {
+          call_status?: string
+          created_at?: string
+          creativity_level?: number
+          id?: string
+          language?: string
+          max_duration?: number
+          personality_tone?: string
+          prank_theme?: string
+          recording_url?: string | null
+          send_recording?: boolean
+          twilio_call_sid?: string | null
+          updated_at?: string
+          user_id?: string
+          victim_first_name?: string
+          victim_last_name?: string
+          victim_phone?: string
+          voice_gender?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          credits: number | null
+          id: string
+          updated_at: string
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          credits?: number | null
+          id?: string
+          updated_at?: string
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          credits?: number | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
