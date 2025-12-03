@@ -310,49 +310,20 @@ serve(async (req) => {
       let twiml: string;
       const bgSound = backgroundSoundUrl ? `<Play>${backgroundSoundUrl}</Play>` : '';
       
-      if (voiceProvider === 'elevenlabs') {
-        try {
-          const audioUrl = await generateElevenLabsAudioUrl(greeting, elevenLabsVoiceId, elSettings);
-          
-          twiml = `<?xml version="1.0" encoding="UTF-8"?>
-          <Response>
-            ${bgSound}
-            <Play>${audioUrl}</Play>
-            <Gather input="speech" language="${langCode}" timeout="4" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1&amp;provider=elevenlabs">
-            </Gather>
-            <Say voice="${pollyVoice.voice}" language="${langCode}">Pronto?</Say>
-            <Gather input="speech" language="${langCode}" timeout="4" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1&amp;provider=elevenlabs">
-            </Gather>
-            <Hangup/>
-          </Response>`;
-        } catch (elevenLabsError) {
-          console.error('ElevenLabs error, falling back to Polly:', elevenLabsError);
-          twiml = `<?xml version="1.0" encoding="UTF-8"?>
-          <Response>
-            ${bgSound}
-            <Say voice="${pollyVoice.voice}" language="${pollyVoice.language}">${escapeXml(greeting)}</Say>
-            <Gather input="speech" language="${langCode}" timeout="4" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1">
-            </Gather>
-            <Say voice="${pollyVoice.voice}" language="${langCode}">Pronto?</Say>
-            <Gather input="speech" language="${langCode}" timeout="4" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1">
-            </Gather>
-            <Hangup/>
-          </Response>`;
-        }
-      } else {
-        // OpenAI/Polly voice
-        twiml = `<?xml version="1.0" encoding="UTF-8"?>
-        <Response>
-          <Say voice="${pollyVoice.voice}" language="${pollyVoice.language}">${escapeXml(greeting)}</Say>
-          <Gather input="speech" language="${langCode}" timeout="5" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1">
-          </Gather>
-          <Say voice="${pollyVoice.voice}" language="${langCode}">Pronto? Mi sente?</Say>
-          <Gather input="speech" language="${langCode}" timeout="5" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1">
-          </Gather>
-          <Say voice="${pollyVoice.voice}" language="${langCode}">Va bene, la richiamerò. Arrivederci.</Say>
-          <Hangup/>
-        </Response>`;
-      }
+      // Only use ElevenLabs - no fallback to other voices
+      const audioUrl = await generateElevenLabsAudioUrl(greeting, elevenLabsVoiceId, elSettings);
+      
+      twiml = `<?xml version="1.0" encoding="UTF-8"?>
+      <Response>
+        ${bgSound}
+        <Play>${audioUrl}</Play>
+        <Gather input="speech" language="${langCode}" timeout="4" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1">
+        </Gather>
+        <Pause length="2"/>
+        <Gather input="speech" language="${langCode}" timeout="4" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1">
+        </Gather>
+        <Hangup/>
+      </Response>`;
 
       return new Response(twiml, { headers: { 'Content-Type': 'text/xml' } });
     }
@@ -415,50 +386,18 @@ serve(async (req) => {
       
       console.log('AI response:', aiResponse);
 
-      // Continue conversation based on provider
-      let twiml: string;
-      
-      if (useElevenLabs) {
-        try {
-          const audioUrl = await generateElevenLabsAudioUrl(aiResponse, elevenLabsVoiceId, elSettings);
-          twiml = `<?xml version="1.0" encoding="UTF-8"?>
-          <Response>
-            <Play>${audioUrl}</Play>
-            <Gather input="speech" language="${langCode}" timeout="5" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=${turn + 1}&amp;provider=elevenlabs">
-            </Gather>
-            <Say voice="${pollyVoice.voice}" language="${langCode}">Pronto?</Say>
-            <Gather input="speech" language="${langCode}" timeout="3" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=${turn + 1}&amp;provider=elevenlabs">
-            </Gather>
-            <Say voice="${pollyVoice.voice}" language="${langCode}">Va bene, la richiamerò. Arrivederci.</Say>
-            <Hangup/>
-          </Response>`;
-        } catch (elevenLabsError) {
-          console.error('ElevenLabs error in respond, falling back:', elevenLabsError);
-          twiml = `<?xml version="1.0" encoding="UTF-8"?>
-          <Response>
-            <Say voice="${pollyVoice.voice}" language="${langCode}">${escapeXml(aiResponse)}</Say>
-            <Gather input="speech" language="${langCode}" timeout="5" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=${turn + 1}">
-            </Gather>
-            <Say voice="${pollyVoice.voice}" language="${langCode}">Pronto?</Say>
-            <Gather input="speech" language="${langCode}" timeout="3" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=${turn + 1}">
-            </Gather>
-            <Say voice="${pollyVoice.voice}" language="${langCode}">Va bene, la richiamerò. Arrivederci.</Say>
-            <Hangup/>
-          </Response>`;
-        }
-      } else {
-        twiml = `<?xml version="1.0" encoding="UTF-8"?>
-        <Response>
-          <Say voice="${pollyVoice.voice}" language="${langCode}">${escapeXml(aiResponse)}</Say>
-          <Gather input="speech" language="${langCode}" timeout="5" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=${turn + 1}">
-          </Gather>
-          <Say voice="${pollyVoice.voice}" language="${langCode}">Pronto?</Say>
-          <Gather input="speech" language="${langCode}" timeout="3" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=${turn + 1}">
-          </Gather>
-          <Say voice="${pollyVoice.voice}" language="${langCode}">Va bene, la richiamerò. Arrivederci.</Say>
-          <Hangup/>
-        </Response>`;
-      }
+      // Only use ElevenLabs - no fallback
+      const audioUrl = await generateElevenLabsAudioUrl(aiResponse, elevenLabsVoiceId, elSettings);
+      const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+      <Response>
+        <Play>${audioUrl}</Play>
+        <Gather input="speech" language="${langCode}" timeout="5" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=${turn + 1}">
+        </Gather>
+        <Pause length="2"/>
+        <Gather input="speech" language="${langCode}" timeout="3" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=${turn + 1}">
+        </Gather>
+        <Hangup/>
+      </Response>`;
 
       return new Response(twiml, { headers: { 'Content-Type': 'text/xml' } });
     }
