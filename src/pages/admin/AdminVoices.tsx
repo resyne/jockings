@@ -313,6 +313,9 @@ const AdminVoices = () => {
                       max={100}
                       step={1}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      🎯 <strong>Basso (0-30%):</strong> Più espressivo e variabile. <strong>Alto (70-100%):</strong> Più costante e monotono. Per prank, 40-60% è ideale.
+                    </p>
                   </div>
 
                   <div className="space-y-2">
@@ -326,6 +329,9 @@ const AdminVoices = () => {
                       max={100}
                       step={1}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      🔊 Quanto la voce assomiglia all'originale. <strong>Alto (75-100%):</strong> Più fedele ma può creare artefatti. <strong>Medio (50-75%):</strong> Bilanciato.
+                    </p>
                   </div>
 
                   <div className="space-y-2">
@@ -339,6 +345,9 @@ const AdminVoices = () => {
                       max={100}
                       step={1}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      🎭 Amplifica lo stile della voce. <strong>0%:</strong> Neutro. <strong>Alto:</strong> Più teatrale/esagerato. Per chiamate realistiche, tieni basso (0-30%).
+                    </p>
                   </div>
 
                   <div className="space-y-2">
@@ -353,6 +362,9 @@ const AdminVoices = () => {
                       max={200}
                       step={5}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      ⚡ <strong>0.8-1.0x:</strong> Naturale e calmo. <strong>1.0-1.2x:</strong> Energico/agitato. Adatta alla personalità del prank.
+                    </p>
                   </div>
 
                   {/* Test Voice Section */}
