@@ -79,16 +79,20 @@ const PRANK_PRESETS = [
   },
 ];
 
-// ElevenLabs voices - multilingual default voices that support Italian
+// ElevenLabs voices with language support
+// Languages supported: Italiano, Napoletano, Siciliano, Romano, Milanese (Italian dialects), English, Español, Français, Deutsch
 const ELEVENLABS_VOICES = [
-  // Multilingual voices (support Italian via eleven_multilingual_v2 model)
-  { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel", gender: "male", description: "Multilingue - profondo", category: "multilingual" },
-  { id: "nPczCjzI2devNBz1zQrb", name: "Brian", gender: "male", description: "Multilingue - maturo", category: "multilingual" },
-  { id: "cjVigY5qzO86Huf0OWal", name: "Eric", gender: "male", description: "Multilingue - giovane", category: "multilingual" },
-  { id: "TX3LPaxmHKxFdv7VOQHJ", name: "Liam", gender: "male", description: "Multilingue - caldo", category: "multilingual" },
-  { id: "CwhRBWXzGAHq8TQ4Fs17", name: "Roger", gender: "neutral", description: "Multilingue - neutro", category: "multilingual" },
-  { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah", gender: "female", description: "Multilingue - espressiva", category: "multilingual" },
-  { id: "XB0fDUnXU5powFXDhCwa", name: "Charlotte", gender: "female", description: "Multilingue - sofisticata", category: "multilingual" },
+  // Multilingual voices (support multiple languages via eleven_multilingual_v2 model)
+  { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel", gender: "male", description: "Profondo e caldo", languages: ["Italiano", "Napoletano", "Siciliano", "Romano", "Milanese", "English", "Español", "Français", "Deutsch"] },
+  { id: "nPczCjzI2devNBz1zQrb", name: "Brian", gender: "male", description: "Maturo e autorevole", languages: ["Italiano", "Napoletano", "Siciliano", "Romano", "Milanese", "English", "Español", "Français", "Deutsch"] },
+  { id: "cjVigY5qzO86Huf0OWal", name: "Eric", gender: "male", description: "Giovane e dinamico", languages: ["Italiano", "Napoletano", "Siciliano", "Romano", "Milanese", "English", "Español", "Français", "Deutsch"] },
+  { id: "TX3LPaxmHKxFdv7VOQHJ", name: "Liam", gender: "male", description: "Caldo e amichevole", languages: ["Italiano", "Napoletano", "Siciliano", "Romano", "Milanese", "English", "Español", "Français", "Deutsch"] },
+  { id: "CwhRBWXzGAHq8TQ4Fs17", name: "Roger", gender: "neutral", description: "Neutro e versatile", languages: ["Italiano", "Napoletano", "Siciliano", "Romano", "Milanese", "English", "Español", "Français", "Deutsch"] },
+  { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah", gender: "female", description: "Espressiva e naturale", languages: ["Italiano", "Napoletano", "Siciliano", "Romano", "Milanese", "English", "Español", "Français", "Deutsch"] },
+  { id: "XB0fDUnXU5powFXDhCwa", name: "Charlotte", gender: "female", description: "Sofisticata ed elegante", languages: ["Italiano", "Napoletano", "Siciliano", "Romano", "Milanese", "English", "Español", "Français", "Deutsch"] },
+  { id: "9BWtsMINqrJLrRacOk9x", name: "Aria", gender: "female", description: "Vivace e fresca", languages: ["Italiano", "Napoletano", "Siciliano", "Romano", "Milanese", "English", "Español", "Français", "Deutsch"] },
+  { id: "JBFqnCBsd6RMkjVDRZzb", name: "George", gender: "male", description: "Classico britannico", languages: ["English"] },
+  { id: "pFZP5JQG7iQjIQuC4Bku", name: "Lily", gender: "female", description: "Dolce britannica", languages: ["English"] },
 ];
 
 const CreatePrank = () => {
@@ -527,6 +531,7 @@ const CreatePrank = () => {
                         <SelectContent>
                           <SelectItem value="__default__">Default (automatica)</SelectItem>
                           {ELEVENLABS_VOICES
+                            .filter(v => v.languages.includes(language))
                             .filter(v => voiceGender === "neutral" || v.gender === voiceGender || v.gender === "neutral")
                             .map((voice) => (
                               <SelectItem key={voice.id} value={voice.id}>
@@ -535,7 +540,7 @@ const CreatePrank = () => {
                             ))}
                         </SelectContent>
                       </Select>
-                      <p className="text-xs text-muted-foreground">Voci multilingue che parlano italiano</p>
+                      <p className="text-xs text-muted-foreground">Voci che supportano: {language}</p>
                     </div>
 
                     <div className="space-y-2">
