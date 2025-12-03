@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, RotateCcw, Calendar, Clock, X, CalendarClock } from "lucide-react";
+import { Play, Pause, RotateCcw, Calendar, Clock, X, CalendarClock, Download } from "lucide-react";
 import { useState, useRef } from "react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -96,18 +96,30 @@ const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, onCancel, 
                 <X className="w-4 h-4" />
               </Button>
             ) : prank.recording_url ? (
-              <Button
-                size="icon"
-                variant="outline"
-                className="w-10 h-10 rounded-full"
-                onClick={togglePlay}
-              >
-                {isPlaying ? (
-                  <Pause className="w-4 h-4" />
-                ) : (
-                  <Play className="w-4 h-4" />
-                )}
-              </Button>
+              <div className="flex gap-1">
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="w-10 h-10 rounded-full"
+                  onClick={togglePlay}
+                  title={isPlaying ? "Pausa" : "Ascolta"}
+                >
+                  {isPlaying ? (
+                    <Pause className="w-4 h-4" />
+                  ) : (
+                    <Play className="w-4 h-4" />
+                  )}
+                </Button>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="w-10 h-10 rounded-full"
+                  onClick={() => window.open(prank.recording_url!, '_blank')}
+                  title="Scarica registrazione"
+                >
+                  <Download className="w-4 h-4" />
+                </Button>
+              </div>
             ) : null}
             {!isScheduled && (
               <Button
