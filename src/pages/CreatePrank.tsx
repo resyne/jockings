@@ -29,6 +29,54 @@ const TONES = [
   { value: "friendly", label: "Amichevole 😊" },
 ];
 
+const PRANK_PRESETS = [
+  { 
+    id: "custom", 
+    label: "Personalizzato ✏️", 
+    theme: "" 
+  },
+  { 
+    id: "gas-technician", 
+    label: "Tecnico del Gas 🔧", 
+    theme: "Fai finta di essere un tecnico del gas che deve fare un controllo urgente entro oggi altrimenti ci saranno gravi conseguenze. Sii molto insistente e crea urgenza." 
+  },
+  { 
+    id: "lottery-winner", 
+    label: "Vincita alla Lotteria 🎰", 
+    theme: "Fai finta di essere un funzionario della lotteria nazionale che deve comunicare una vincita di 50.000€, ma ci sono documenti urgenti da compilare entro un'ora." 
+  },
+  { 
+    id: "tv-show", 
+    label: "Programma TV 📺", 
+    theme: "Fai finta di essere un autore di un famoso programma TV che vuole invitare la persona come ospite d'onore per la puntata di domani. Sii entusiasta e convincente." 
+  },
+  { 
+    id: "wrong-delivery", 
+    label: "Pacco Misterioso 📦", 
+    theme: "Fai finta di essere un corriere che ha un pacco enorme e pesantissimo da consegnare, ma l'indirizzo è illeggibile. Descrivi contenuti assurdi come 47 casse di ananas o un acquario con delfini." 
+  },
+  { 
+    id: "celebrity-manager", 
+    label: "Manager VIP ⭐", 
+    theme: "Fai finta di essere il manager di una celebrity famosa che sta cercando urgentemente una casa in affitto nella zona e vuole venire a vedere l'appartamento oggi stesso." 
+  },
+  { 
+    id: "survey", 
+    label: "Sondaggio Assurdo 📋", 
+    theme: "Fai finta di condurre un sondaggio ufficiale del comune con domande sempre più assurde: dal colore preferito dei calzini alla frequenza con cui parlano con i piccioni." 
+  },
+  { 
+    id: "radio-contest", 
+    label: "Quiz Radiofonico 🎙️", 
+    theme: "Fai finta di essere un DJ di una radio locale che ha selezionato il loro numero per un quiz a premi. Fai domande impossibili e dai indizi fuorvianti." 
+  },
+  { 
+    id: "long-lost-relative", 
+    label: "Parente Lontano 👴", 
+    theme: "Fai finta di essere un parente lontanissimo (tipo cugino di terzo grado) che vuole riallacciare i rapporti e raccontare storie di famiglia completamente inventate." 
+  },
+];
+
 const CreatePrank = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -40,8 +88,17 @@ const CreatePrank = () => {
   const [victimFirstName, setVictimFirstName] = useState("");
   const [victimLastName, setVictimLastName] = useState("");
   const [victimPhone, setVictimPhone] = useState("");
+  const [selectedPreset, setSelectedPreset] = useState("custom");
   const [prankTheme, setPrankTheme] = useState("");
   const [voiceGender, setVoiceGender] = useState("male");
+
+  const handlePresetChange = (presetId: string) => {
+    setSelectedPreset(presetId);
+    const preset = PRANK_PRESETS.find(p => p.id === presetId);
+    if (preset && preset.theme) {
+      setPrankTheme(preset.theme);
+    }
+  };
   const [language, setLanguage] = useState("Italiano");
   const [personalityTone, setPersonalityTone] = useState("enthusiastic");
   const [maxDuration, setMaxDuration] = useState(60);
@@ -249,13 +306,32 @@ const CreatePrank = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="theme">Tema dello Scherzo</Label>
+              <div className="space-y-3">
+                <Label>Tema dello Scherzo</Label>
+                <div className="flex flex-wrap gap-2">
+                  {PRANK_PRESETS.map((preset) => (
+                    <Button
+                      key={preset.id}
+                      type="button"
+                      variant={selectedPreset === preset.id ? "default" : "outline"}
+                      size="sm"
+                      className={`text-xs ${selectedPreset === preset.id ? "gradient-primary" : ""}`}
+                      onClick={() => handlePresetChange(preset.id)}
+                    >
+                      {preset.label}
+                    </Button>
+                  ))}
+                </div>
                 <Textarea
                   id="theme"
-                  placeholder="Es: Fai finta di essere un tecnico del gas che deve fare un controllo urgente..."
+                  placeholder="Descrivi lo scherzo che vuoi fare..."
                   value={prankTheme}
-                  onChange={(e) => setPrankTheme(e.target.value)}
+                  onChange={(e) => {
+                    setPrankTheme(e.target.value);
+                    if (selectedPreset !== "custom") {
+                      setSelectedPreset("custom");
+                    }
+                  }}
                   className="min-h-[100px]"
                 />
               </div>
