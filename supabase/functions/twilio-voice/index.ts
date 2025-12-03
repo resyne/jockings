@@ -77,6 +77,7 @@ const generateElevenLabsAudioUrl = async (
 
   console.log('ElevenLabs settings:', settings);
 
+  // Use eleven_turbo_v2_5 for faster generation (supports 32 languages including Italian)
   const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
     method: 'POST',
     headers: {
@@ -85,14 +86,14 @@ const generateElevenLabsAudioUrl = async (
     },
     body: JSON.stringify({
       text,
-      model_id: 'eleven_multilingual_v2',
+      model_id: 'eleven_turbo_v2_5', // Much faster than eleven_multilingual_v2
       voice_settings: {
         stability: settings.stability,
         similarity_boost: settings.similarity_boost,
         style: settings.style,
-        use_speaker_boost: true,
+        use_speaker_boost: false, // Disable for faster processing
       },
-      output_format: 'mp3_44100_128',
+      output_format: 'mp3_22050_32', // Lower quality but faster, fine for phone calls
     }),
   });
 
