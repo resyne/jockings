@@ -135,10 +135,28 @@ const CreatePrank = () => {
 
       toast({
         title: "Scherzo creato! 🎭",
-        description: "La chiamata verrà avviata a breve...",
+        description: "Avvio della chiamata in corso...",
       });
 
-      // TODO: Trigger Twilio call via edge function
+      // Trigger Twilio call via edge function
+      const { error: callError } = await supabase.functions.invoke('initiate-call', {
+        body: { prankId: prank.id }
+      });
+
+      if (callError) {
+        console.error('Error initiating call:', callError);
+        toast({
+          title: "Errore chiamata",
+          description: "Lo scherzo è stato salvato ma la chiamata non è partita. Riprova dalla cronologia.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Chiamata avviata! 📞",
+          description: `Stiamo chiamando ${victimFirstName}...`,
+        });
+      }
+
       navigate("/dashboard");
     } catch (error: any) {
       toast({ title: "Errore", description: error.message, variant: "destructive" });
