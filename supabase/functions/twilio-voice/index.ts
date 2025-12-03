@@ -226,6 +226,7 @@ RULES:
 8. React naturally but ALWAYS maintain your personality trait
 9. If they get suspicious, deflect using your personality (angry = get more defensive, confused = get more lost, etc.)
 10. Use the correct time-based greeting ("${timeGreeting.greeting}") when starting the call!
+11. When introducing yourself, use REALISTIC Italian names - NEVER use generic names like "Mario Rossi", "Marco Rossi", "Giuseppe Bianchi", "Nunzio", etc. Use more authentic names like: Luca Ferretti, Alessandro Conti, Simone Marchetti, Davide Galli, Matteo Ricci (male) or Giulia Moretti, Francesca Lombardi, Chiara Santini, Elena Barbieri, Valentina Costa (female).
 
 Respond with ONLY what you would say. Make your personality and gender OBVIOUS in how you speak.`;
 };
