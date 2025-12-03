@@ -19,6 +19,10 @@ export type Database = {
           call_status: string
           created_at: string
           creativity_level: number
+          elevenlabs_similarity: number | null
+          elevenlabs_speed: number | null
+          elevenlabs_stability: number | null
+          elevenlabs_style: number | null
           id: string
           language: string
           max_duration: number
@@ -40,6 +44,10 @@ export type Database = {
           call_status?: string
           created_at?: string
           creativity_level?: number
+          elevenlabs_similarity?: number | null
+          elevenlabs_speed?: number | null
+          elevenlabs_stability?: number | null
+          elevenlabs_style?: number | null
           id?: string
           language?: string
           max_duration?: number
@@ -61,6 +69,10 @@ export type Database = {
           call_status?: string
           created_at?: string
           creativity_level?: number
+          elevenlabs_similarity?: number | null
+          elevenlabs_speed?: number | null
+          elevenlabs_stability?: number | null
+          elevenlabs_style?: number | null
           id?: string
           language?: string
           max_duration?: number

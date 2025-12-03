@@ -54,13 +54,27 @@ const getElevenLabsVoice = (gender: string, language: string): string => {
   return voiceMap[lang]?.[gender] || voiceMap[lang]?.['male'] || 'onwK4e9ZLuTAKqWW03F9';
 };
 
+// ElevenLabs voice settings interface
+interface ElevenLabsSettings {
+  stability: number;
+  similarity_boost: number;
+  style: number;
+  speed: number;
+}
+
 // Generate audio using ElevenLabs API and return base64
-const generateElevenLabsAudio = async (text: string, voiceId: string): Promise<string> => {
+const generateElevenLabsAudio = async (
+  text: string, 
+  voiceId: string, 
+  settings: ElevenLabsSettings
+): Promise<string> => {
   const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY');
   
   if (!ELEVENLABS_API_KEY) {
     throw new Error('ELEVENLABS_API_KEY not configured');
   }
+
+  console.log('ElevenLabs settings:', settings);
 
   const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
     method: 'POST',
@@ -72,9 +86,13 @@ const generateElevenLabsAudio = async (text: string, voiceId: string): Promise<s
       text,
       model_id: 'eleven_multilingual_v2',
       voice_settings: {
-        stability: 0.5,
-        similarity_boost: 0.75,
+        stability: settings.stability,
+        similarity_boost: settings.similarity_boost,
+        style: settings.style,
+        use_speaker_boost: true,
       },
+      // Speed is applied via output settings
+      output_format: 'mp3_44100_128',
     }),
   });
 
@@ -176,7 +194,15 @@ serve(async (req) => {
     const elevenLabsVoiceId = getElevenLabsVoice(prank.voice_gender, prank.language);
     const webhookBase = `https://vtsankkghplkfhrlxefs.supabase.co/functions/v1/twilio-voice`;
     
-    console.log('Voice provider:', voiceProvider, 'Language:', langCode);
+    // ElevenLabs settings from prank record
+    const elSettings: ElevenLabsSettings = {
+      stability: (prank as any).elevenlabs_stability ?? 0.5,
+      similarity_boost: (prank as any).elevenlabs_similarity ?? 0.75,
+      style: (prank as any).elevenlabs_style ?? 0,
+      speed: (prank as any).elevenlabs_speed ?? 1.0,
+    };
+    
+    console.log('Voice provider:', voiceProvider, 'Language:', langCode, 'EL Settings:', elSettings);
 
     if (action === 'start') {
       console.log('Starting prank call for:', prank.victim_first_name);
@@ -217,7 +243,7 @@ serve(async (req) => {
       
       if (voiceProvider === 'elevenlabs') {
         try {
-          const audioBase64 = await generateElevenLabsAudio(greeting, elevenLabsVoiceId);
+          const audioBase64 = await generateElevenLabsAudio(greeting, elevenLabsVoiceId, elSettings);
           const audioUrl = `data:audio/mpeg;base64,${audioBase64}`;
           
           // ElevenLabs: Use Play with base64 audio
@@ -328,7 +354,7 @@ serve(async (req) => {
       
       if (useElevenLabs) {
         try {
-          const audioBase64 = await generateElevenLabsAudio(aiResponse, elevenLabsVoiceId);
+          const audioBase64 = await generateElevenLabsAudio(aiResponse, elevenLabsVoiceId, elSettings);
           twiml = `<?xml version="1.0" encoding="UTF-8"?>
           <Response>
             <Play>data:audio/mpeg;base64,${audioBase64}</Play>

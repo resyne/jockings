@@ -94,6 +94,12 @@ const CreatePrank = () => {
   const [prankTheme, setPrankTheme] = useState("");
   const [voiceGender, setVoiceGender] = useState("male");
   const [voiceProvider, setVoiceProvider] = useState("openai");
+  
+  // ElevenLabs settings
+  const [elStability, setElStability] = useState([50]);
+  const [elSimilarity, setElSimilarity] = useState([75]);
+  const [elStyle, setElStyle] = useState([0]);
+  const [elSpeed, setElSpeed] = useState([100]);
 
   const handlePresetChange = (presetId: string) => {
     setSelectedPreset(presetId);
@@ -143,6 +149,10 @@ const CreatePrank = () => {
       setPrankTheme(data.prank_theme);
       setVoiceGender(data.voice_gender);
       setVoiceProvider((data as any).voice_provider || "openai");
+      setElStability([((data as any).elevenlabs_stability || 0.5) * 100]);
+      setElSimilarity([((data as any).elevenlabs_similarity || 0.75) * 100]);
+      setElStyle([((data as any).elevenlabs_style || 0) * 100]);
+      setElSpeed([((data as any).elevenlabs_speed || 1) * 100]);
       setLanguage(data.language);
       setPersonalityTone(data.personality_tone);
       setMaxDuration(data.max_duration);
@@ -201,6 +211,10 @@ const CreatePrank = () => {
           prank_theme: prankTheme.trim(),
           voice_gender: voiceGender,
           voice_provider: voiceProvider,
+          elevenlabs_stability: elStability[0] / 100,
+          elevenlabs_similarity: elSimilarity[0] / 100,
+          elevenlabs_style: elStyle[0] / 100,
+          elevenlabs_speed: elSpeed[0] / 100,
           language,
           personality_tone: personalityTone,
           max_duration: maxDuration,
@@ -409,6 +423,78 @@ const CreatePrank = () => {
                   ))}
                 </div>
               </div>
+
+              {/* ElevenLabs Fine-Tuning Settings */}
+              {voiceProvider === "elevenlabs" && (
+                <div className="space-y-4 p-4 rounded-lg bg-secondary/10 border border-secondary/20">
+                  <Label className="flex items-center gap-2 text-secondary">
+                    <Sparkles className="w-4 h-4" /> Fine-Tuning ElevenLabs
+                  </Label>
+                  
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Stabilità</span>
+                        <span className="text-muted-foreground">{elStability[0]}%</span>
+                      </div>
+                      <Slider
+                        value={elStability}
+                        onValueChange={setElStability}
+                        max={100}
+                        step={5}
+                        className="w-full"
+                      />
+                      <p className="text-xs text-muted-foreground">Basso = più espressivo, Alto = più consistente</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Similarità</span>
+                        <span className="text-muted-foreground">{elSimilarity[0]}%</span>
+                      </div>
+                      <Slider
+                        value={elSimilarity}
+                        onValueChange={setElSimilarity}
+                        max={100}
+                        step={5}
+                        className="w-full"
+                      />
+                      <p className="text-xs text-muted-foreground">Quanto aderire al campione vocale originale</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Stile</span>
+                        <span className="text-muted-foreground">{elStyle[0]}%</span>
+                      </div>
+                      <Slider
+                        value={elStyle}
+                        onValueChange={setElStyle}
+                        max={100}
+                        step={5}
+                        className="w-full"
+                      />
+                      <p className="text-xs text-muted-foreground">Esagera lo stile (più teatrale/emotivo)</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Velocità</span>
+                        <span className="text-muted-foreground">{(elSpeed[0] / 100).toFixed(1)}x</span>
+                      </div>
+                      <Slider
+                        value={elSpeed}
+                        onValueChange={setElSpeed}
+                        min={50}
+                        max={200}
+                        step={10}
+                        className="w-full"
+                      />
+                      <p className="text-xs text-muted-foreground">Velocità di parlato (0.5x - 2x)</p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
