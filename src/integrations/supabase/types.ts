@@ -25,6 +25,7 @@ export type Database = {
           personality_tone: string
           prank_theme: string
           recording_url: string | null
+          scheduled_at: string | null
           send_recording: boolean
           twilio_call_sid: string | null
           updated_at: string
@@ -44,6 +45,7 @@ export type Database = {
           personality_tone?: string
           prank_theme: string
           recording_url?: string | null
+          scheduled_at?: string | null
           send_recording?: boolean
           twilio_call_sid?: string | null
           updated_at?: string
@@ -63,6 +65,7 @@ export type Database = {
           personality_tone?: string
           prank_theme?: string
           recording_url?: string | null
+          scheduled_at?: string | null
           send_recording?: boolean
           twilio_call_sid?: string | null
           updated_at?: string
