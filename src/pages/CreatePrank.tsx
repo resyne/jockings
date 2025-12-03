@@ -79,6 +79,26 @@ const PRANK_PRESETS = [
   },
 ];
 
+// ElevenLabs Italian-compatible multilingual voices
+const ELEVENLABS_VOICES = [
+  { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel", gender: "male", description: "Profondo, naturale" },
+  { id: "nPczCjzI2devNBz1zQrb", name: "Brian", gender: "male", description: "Maturo, autorevole" },
+  { id: "cjVigY5qzO86Huf0OWal", name: "Eric", gender: "male", description: "Giovane, energico" },
+  { id: "TX3LPaxmHKxFdv7VOQHJ", name: "Liam", gender: "male", description: "Caldo, amichevole" },
+  { id: "JBFqnCBsd6RMkjVDRZzb", name: "George", gender: "male", description: "Britannico, elegante" },
+  { id: "N2lVS1w4EtoT3dr4eOWO", name: "Callum", gender: "male", description: "Scozzese, caratteristico" },
+  { id: "bIHbv24MWmeRgasZH58o", name: "Will", gender: "male", description: "Americano, rilassato" },
+  { id: "iP95p4xoKVk53GoZ742B", name: "Chris", gender: "male", description: "Casual, conversazionale" },
+  { id: "IKne3meq5aSn9XLyUdCD", name: "Charlie", gender: "male", description: "Australiano, vivace" },
+  { id: "pqHfZKP75CvOlQylNhV4", name: "Bill", gender: "male", description: "Narratore, profondo" },
+  { id: "CwhRBWXzGAHq8TQ4Fs17", name: "Roger", gender: "neutral", description: "Neutro, versatile" },
+  { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah", gender: "female", description: "Morbida, espressiva" },
+  { id: "XB0fDUnXU5powFXDhCwa", name: "Charlotte", gender: "female", description: "Sofisticata, calda" },
+  { id: "XrExE9yKIg1WjnnlVkGX", name: "Matilda", gender: "female", description: "Dolce, naturale" },
+  { id: "pFZP5JQG7iQjIQuC4Bku", name: "Lily", gender: "female", description: "Britannica, chiara" },
+  { id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura", gender: "female", description: "Americana, professionale" },
+];
+
 const CreatePrank = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -100,6 +120,7 @@ const CreatePrank = () => {
   const [elSimilarity, setElSimilarity] = useState([75]);
   const [elStyle, setElStyle] = useState([0]);
   const [elSpeed, setElSpeed] = useState([100]);
+  const [elVoiceId, setElVoiceId] = useState("");
 
   const handlePresetChange = (presetId: string) => {
     setSelectedPreset(presetId);
@@ -153,6 +174,7 @@ const CreatePrank = () => {
       setElSimilarity([((data as any).elevenlabs_similarity || 0.75) * 100]);
       setElStyle([((data as any).elevenlabs_style || 0) * 100]);
       setElSpeed([((data as any).elevenlabs_speed || 1) * 100]);
+      setElVoiceId((data as any).elevenlabs_voice_id || "");
       setLanguage(data.language);
       setPersonalityTone(data.personality_tone);
       setMaxDuration(data.max_duration);
@@ -215,6 +237,7 @@ const CreatePrank = () => {
           elevenlabs_similarity: elSimilarity[0] / 100,
           elevenlabs_style: elStyle[0] / 100,
           elevenlabs_speed: elSpeed[0] / 100,
+          elevenlabs_voice_id: elVoiceId || null,
           language,
           personality_tone: personalityTone,
           max_duration: maxDuration,
@@ -491,6 +514,26 @@ const CreatePrank = () => {
                         className="w-full"
                       />
                       <p className="text-xs text-muted-foreground">Velocità di parlato (0.5x - 2x)</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Voce ElevenLabs</Label>
+                      <Select value={elVoiceId} onValueChange={setElVoiceId}>
+                        <SelectTrigger className="h-12">
+                          <SelectValue placeholder="Seleziona una voce..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">Default (automatica)</SelectItem>
+                          {ELEVENLABS_VOICES
+                            .filter(v => voiceGender === "neutral" || v.gender === voiceGender || v.gender === "neutral")
+                            .map((voice) => (
+                              <SelectItem key={voice.id} value={voice.id}>
+                                {voice.name} - {voice.description} {voice.gender === "male" ? "👨" : voice.gender === "female" ? "👩" : "🤖"}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">Tutte le voci supportano l'italiano (multilingual)</p>
                     </div>
                   </div>
                 </div>
