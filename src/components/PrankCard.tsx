@@ -1,10 +1,12 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, RotateCcw, Calendar, Clock, X, CalendarClock, Download } from "lucide-react";
+import { Play, Pause, RotateCcw, Calendar, Clock, X, CalendarClock, Download, Loader2 } from "lucide-react";
 import { useState, useRef } from "react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Prank {
   id: string;
@@ -28,9 +30,46 @@ interface PrankCardProps {
 
 const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, onCancel, showDetails = false }: PrankCardProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [audioSrc, setAudioSrc] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const togglePlay = () => {
+  const fetchRecording = async () => {
+    if (!prank.recording_url) return null;
+    
+    const { data, error } = await supabase.functions.invoke('get-recording', {
+      body: { recordingUrl: prank.recording_url }
+    });
+
+    if (error) {
+      console.error('Error fetching recording:', error);
+      toast.error('Errore nel caricamento della registrazione');
+      return null;
+    }
+
+    // Create blob URL from the response
+    const blob = new Blob([data], { type: 'audio/mpeg' });
+    return URL.createObjectURL(blob);
+  };
+
+  const togglePlay = async () => {
+    if (!audioSrc && prank.recording_url) {
+      setIsDownloading(true);
+      const url = await fetchRecording();
+      setIsDownloading(false);
+      if (url) {
+        setAudioSrc(url);
+        // Wait for audio to load then play
+        setTimeout(() => {
+          if (audioRef.current) {
+            audioRef.current.play();
+            setIsPlaying(true);
+          }
+        }, 100);
+      }
+      return;
+    }
+
     if (audioRef.current) {
       if (isPlaying) {
         audioRef.current.pause();
@@ -38,6 +77,29 @@ const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, onCancel, 
         audioRef.current.play();
       }
       setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!prank.recording_url) return;
+    
+    setIsDownloading(true);
+    try {
+      const url = audioSrc || await fetchRecording();
+      if (url) {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `scherzo_${prank.victim_first_name}_${prank.victim_last_name}.mp3`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        toast.success('Download avviato!');
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Errore nel download');
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -102,9 +164,12 @@ const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, onCancel, 
                   variant="outline"
                   className="w-10 h-10 rounded-full"
                   onClick={togglePlay}
+                  disabled={isDownloading}
                   title={isPlaying ? "Pausa" : "Ascolta"}
                 >
-                  {isPlaying ? (
+                  {isDownloading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : isPlaying ? (
                     <Pause className="w-4 h-4" />
                   ) : (
                     <Play className="w-4 h-4" />
@@ -114,10 +179,15 @@ const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, onCancel, 
                   size="icon"
                   variant="outline"
                   className="w-10 h-10 rounded-full"
-                  onClick={() => window.open(prank.recording_url!, '_blank')}
+                  onClick={handleDownload}
+                  disabled={isDownloading}
                   title="Scarica registrazione"
                 >
-                  <Download className="w-4 h-4" />
+                  {isDownloading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Download className="w-4 h-4" />
+                  )}
                 </Button>
               </div>
             ) : null}
@@ -135,10 +205,10 @@ const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, onCancel, 
           </div>
         </div>
 
-        {prank.recording_url && (
+        {audioSrc && (
           <audio
             ref={audioRef}
-            src={prank.recording_url}
+            src={audioSrc}
             onEnded={handleAudioEnd}
             className="hidden"
           />
