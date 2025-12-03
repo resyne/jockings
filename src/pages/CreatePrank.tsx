@@ -518,12 +518,12 @@ const CreatePrank = () => {
 
                     <div className="space-y-2">
                       <Label>Voce ElevenLabs</Label>
-                      <Select value={elVoiceId} onValueChange={setElVoiceId}>
+                      <Select value={elVoiceId || "__default__"} onValueChange={(v) => setElVoiceId(v === "__default__" ? "" : v)}>
                         <SelectTrigger className="h-12">
                           <SelectValue placeholder="Seleziona una voce..." />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Default (automatica)</SelectItem>
+                          <SelectItem value="__default__">Default (automatica)</SelectItem>
                           {ELEVENLABS_VOICES
                             .filter(v => voiceGender === "neutral" || v.gender === voiceGender || v.gender === "neutral")
                             .map((voice) => (
