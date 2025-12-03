@@ -1,28 +1,19 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// In-memory cache for audio (will be cleared on function restart)
-const audioCache = new Map<string, { data: Uint8Array; timestamp: number }>();
-
-// Clean old entries (older than 5 minutes)
-const cleanOldEntries = () => {
-  const now = Date.now();
-  const maxAge = 5 * 60 * 1000; // 5 minutes
-  for (const [key, value] of audioCache.entries()) {
-    if (now - value.timestamp > maxAge) {
-      audioCache.delete(key);
-    }
-  }
-};
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   const url = new URL(req.url);
   const audioId = url.searchParams.get('id');
@@ -46,8 +37,21 @@ serve(async (req) => {
         bytes[i] = binaryString.charCodeAt(i);
       }
 
-      audioCache.set(id, { data: bytes, timestamp: Date.now() });
-      cleanOldEntries();
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('temp-audio')
+        .upload(`${id}.mp3`, bytes, {
+          contentType: 'audio/mpeg',
+          upsert: true
+        });
+
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        return new Response(JSON.stringify({ error: 'Failed to store audio' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
 
       console.log(`Audio stored with id: ${id}, size: ${bytes.length} bytes`);
 
@@ -65,25 +69,39 @@ serve(async (req) => {
 
   // Retrieve audio
   if (req.method === 'GET' && audioId) {
-    const cached = audioCache.get(audioId);
-    
-    if (!cached) {
-      console.log(`Audio not found: ${audioId}`);
-      return new Response('Audio not found', { 
-        status: 404,
+    try {
+      const { data, error } = await supabase.storage
+        .from('temp-audio')
+        .download(`${audioId}.mp3`);
+      
+      if (error || !data) {
+        console.log(`Audio not found: ${audioId}`, error);
+        return new Response('Audio not found', { 
+          status: 404,
+          headers: corsHeaders 
+        });
+      }
+
+      const arrayBuffer = await data.arrayBuffer();
+      console.log(`Serving audio: ${audioId}, size: ${arrayBuffer.byteLength} bytes`);
+
+      // Delete after serving (cleanup)
+      supabase.storage.from('temp-audio').remove([`${audioId}.mp3`]).catch(console.error);
+
+      return new Response(arrayBuffer, {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'audio/mpeg',
+          'Content-Length': arrayBuffer.byteLength.toString(),
+        }
+      });
+    } catch (error) {
+      console.error('Error retrieving audio:', error);
+      return new Response('Error retrieving audio', { 
+        status: 500,
         headers: corsHeaders 
       });
     }
-
-    console.log(`Serving audio: ${audioId}, size: ${cached.data.length} bytes`);
-
-    return new Response(new Uint8Array(cached.data).buffer as ArrayBuffer, {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'audio/mpeg',
-        'Content-Length': cached.data.length.toString(),
-      }
-    });
   }
 
   return new Response('Bad request', { 
