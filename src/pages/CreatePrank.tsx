@@ -79,24 +79,16 @@ const PRANK_PRESETS = [
   },
 ];
 
-// ElevenLabs Italian-compatible multilingual voices
+// ElevenLabs voices - multilingual default voices that support Italian
 const ELEVENLABS_VOICES = [
-  { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel", gender: "male", description: "Profondo, naturale" },
-  { id: "nPczCjzI2devNBz1zQrb", name: "Brian", gender: "male", description: "Maturo, autorevole" },
-  { id: "cjVigY5qzO86Huf0OWal", name: "Eric", gender: "male", description: "Giovane, energico" },
-  { id: "TX3LPaxmHKxFdv7VOQHJ", name: "Liam", gender: "male", description: "Caldo, amichevole" },
-  { id: "JBFqnCBsd6RMkjVDRZzb", name: "George", gender: "male", description: "Britannico, elegante" },
-  { id: "N2lVS1w4EtoT3dr4eOWO", name: "Callum", gender: "male", description: "Scozzese, caratteristico" },
-  { id: "bIHbv24MWmeRgasZH58o", name: "Will", gender: "male", description: "Americano, rilassato" },
-  { id: "iP95p4xoKVk53GoZ742B", name: "Chris", gender: "male", description: "Casual, conversazionale" },
-  { id: "IKne3meq5aSn9XLyUdCD", name: "Charlie", gender: "male", description: "Australiano, vivace" },
-  { id: "pqHfZKP75CvOlQylNhV4", name: "Bill", gender: "male", description: "Narratore, profondo" },
-  { id: "CwhRBWXzGAHq8TQ4Fs17", name: "Roger", gender: "neutral", description: "Neutro, versatile" },
-  { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah", gender: "female", description: "Morbida, espressiva" },
-  { id: "XB0fDUnXU5powFXDhCwa", name: "Charlotte", gender: "female", description: "Sofisticata, calda" },
-  { id: "XrExE9yKIg1WjnnlVkGX", name: "Matilda", gender: "female", description: "Dolce, naturale" },
-  { id: "pFZP5JQG7iQjIQuC4Bku", name: "Lily", gender: "female", description: "Britannica, chiara" },
-  { id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura", gender: "female", description: "Americana, professionale" },
+  // Multilingual voices (support Italian via eleven_multilingual_v2 model)
+  { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel", gender: "male", description: "Multilingue - profondo", category: "multilingual" },
+  { id: "nPczCjzI2devNBz1zQrb", name: "Brian", gender: "male", description: "Multilingue - maturo", category: "multilingual" },
+  { id: "cjVigY5qzO86Huf0OWal", name: "Eric", gender: "male", description: "Multilingue - giovane", category: "multilingual" },
+  { id: "TX3LPaxmHKxFdv7VOQHJ", name: "Liam", gender: "male", description: "Multilingue - caldo", category: "multilingual" },
+  { id: "CwhRBWXzGAHq8TQ4Fs17", name: "Roger", gender: "neutral", description: "Multilingue - neutro", category: "multilingual" },
+  { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah", gender: "female", description: "Multilingue - espressiva", category: "multilingual" },
+  { id: "XB0fDUnXU5powFXDhCwa", name: "Charlotte", gender: "female", description: "Multilingue - sofisticata", category: "multilingual" },
 ];
 
 const CreatePrank = () => {
@@ -121,6 +113,7 @@ const CreatePrank = () => {
   const [elStyle, setElStyle] = useState([0]);
   const [elSpeed, setElSpeed] = useState([100]);
   const [elVoiceId, setElVoiceId] = useState("");
+  const [elCustomVoiceId, setElCustomVoiceId] = useState("");
 
   const handlePresetChange = (presetId: string) => {
     setSelectedPreset(presetId);
@@ -174,7 +167,16 @@ const CreatePrank = () => {
       setElSimilarity([((data as any).elevenlabs_similarity || 0.75) * 100]);
       setElStyle([((data as any).elevenlabs_style || 0) * 100]);
       setElSpeed([((data as any).elevenlabs_speed || 1) * 100]);
-      setElVoiceId((data as any).elevenlabs_voice_id || "");
+      // Check if voice ID is a preset or custom
+      const loadedVoiceId = (data as any).elevenlabs_voice_id || "";
+      const isPresetVoice = ELEVENLABS_VOICES.some(v => v.id === loadedVoiceId);
+      if (isPresetVoice) {
+        setElVoiceId(loadedVoiceId);
+        setElCustomVoiceId("");
+      } else if (loadedVoiceId) {
+        setElVoiceId("");
+        setElCustomVoiceId(loadedVoiceId);
+      }
       setLanguage(data.language);
       setPersonalityTone(data.personality_tone);
       setMaxDuration(data.max_duration);
@@ -237,7 +239,7 @@ const CreatePrank = () => {
           elevenlabs_similarity: elSimilarity[0] / 100,
           elevenlabs_style: elStyle[0] / 100,
           elevenlabs_speed: elSpeed[0] / 100,
-          elevenlabs_voice_id: elVoiceId || null,
+          elevenlabs_voice_id: elCustomVoiceId || elVoiceId || null,
           language,
           personality_tone: personalityTone,
           max_duration: maxDuration,
@@ -517,8 +519,8 @@ const CreatePrank = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Voce ElevenLabs</Label>
-                      <Select value={elVoiceId || "__default__"} onValueChange={(v) => setElVoiceId(v === "__default__" ? "" : v)}>
+                      <Label>Voce Preimpostata</Label>
+                      <Select value={elVoiceId || "__default__"} onValueChange={(v) => { setElVoiceId(v === "__default__" ? "" : v); setElCustomVoiceId(""); }}>
                         <SelectTrigger className="h-12">
                           <SelectValue placeholder="Seleziona una voce..." />
                         </SelectTrigger>
@@ -533,7 +535,24 @@ const CreatePrank = () => {
                             ))}
                         </SelectContent>
                       </Select>
-                      <p className="text-xs text-muted-foreground">Tutte le voci supportano l'italiano (multilingual)</p>
+                      <p className="text-xs text-muted-foreground">Voci multilingue che parlano italiano</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Voice ID Personalizzato (opzionale)</Label>
+                      <Input
+                        placeholder="Es: AbCdEf123456..."
+                        value={elCustomVoiceId}
+                        onChange={(e) => { setElCustomVoiceId(e.target.value); if (e.target.value) setElVoiceId(""); }}
+                        className="h-12 font-mono text-sm"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Per voci italiane native: vai su{" "}
+                        <a href="https://elevenlabs.io/app/voice-library" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                          ElevenLabs Voice Library
+                        </a>
+                        , cerca "Italian", aggiungi la voce al tuo account, poi copia il Voice ID.
+                      </p>
                     </div>
                   </div>
                 </div>
