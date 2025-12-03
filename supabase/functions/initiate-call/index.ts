@@ -63,7 +63,10 @@ serve(async (req) => {
           StatusCallback: statusCallbackUrl,
           StatusCallbackEvent: 'initiated ringing answered completed',
           StatusCallbackMethod: 'POST',
-          Record: prank.send_recording ? 'true' : 'false',
+          Record: 'true',
+          RecordingStatusCallback: statusCallbackUrl,
+          RecordingStatusCallbackEvent: 'completed',
+          RecordingStatusCallbackMethod: 'POST',
           Timeout: '30',
         }).toString(),
       }

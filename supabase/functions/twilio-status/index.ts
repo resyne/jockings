@@ -15,11 +15,20 @@ serve(async (req) => {
     const formData = await req.formData();
     
     const callSid = formData.get('CallSid') as string;
-    const callStatus = formData.get('CallStatus') as string;
+    const callStatus = formData.get('CallStatus') as string | null;
     const recordingUrl = formData.get('RecordingUrl') as string | null;
+    const recordingSid = formData.get('RecordingSid') as string | null;
+    const recordingStatus = formData.get('RecordingStatus') as string | null;
     const callDuration = formData.get('CallDuration') as string | null;
 
-    console.log('Status callback received:', { callSid, callStatus, recordingUrl, callDuration });
+    console.log('Callback received:', { 
+      callSid, 
+      callStatus, 
+      recordingUrl, 
+      recordingSid,
+      recordingStatus,
+      callDuration 
+    });
 
     if (!callSid) {
       throw new Error('CallSid is required');
@@ -30,51 +39,69 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
-    // Map Twilio status to our status
-    const statusMap: Record<string, string> = {
-      'queued': 'pending',
-      'initiated': 'initiated',
-      'ringing': 'ringing',
-      'in-progress': 'in_progress',
-      'completed': 'completed',
-      'busy': 'failed',
-      'no-answer': 'failed',
-      'canceled': 'failed',
-      'failed': 'failed',
-    };
+    // Handle recording callback
+    if (recordingStatus === 'completed' && recordingUrl) {
+      console.log('Recording completed, saving URL:', recordingUrl);
+      
+      const { error } = await supabase
+        .from('pranks')
+        .update({
+          recording_url: recordingUrl + '.mp3',
+          call_status: 'recording_available',
+        })
+        .eq('twilio_call_sid', callSid);
 
-    const mappedStatus = statusMap[callStatus] || callStatus;
+      if (error) {
+        console.error('Error saving recording URL:', error);
+      } else {
+        console.log('Recording URL saved successfully');
+      }
 
-    // Update prank status
-    const updateData: Record<string, any> = {
-      call_status: mappedStatus,
-    };
-
-    // If recording URL is available, add it
-    if (recordingUrl) {
-      // Twilio recording URLs need .mp3 extension
-      updateData.recording_url = recordingUrl + '.mp3';
+      return new Response('', { status: 200, headers: corsHeaders });
     }
 
-    const { error } = await supabase
-      .from('pranks')
-      .update(updateData)
-      .eq('twilio_call_sid', callSid);
+    // Handle call status callback
+    if (callStatus) {
+      const statusMap: Record<string, string> = {
+        'queued': 'pending',
+        'initiated': 'initiated',
+        'ringing': 'ringing',
+        'in-progress': 'in_progress',
+        'completed': 'completed',
+        'busy': 'failed',
+        'no-answer': 'failed',
+        'canceled': 'cancelled',
+        'failed': 'failed',
+      };
 
-    if (error) {
-      console.error('Error updating prank status:', error);
-    } else {
-      console.log('Prank status updated to:', mappedStatus);
+      const mappedStatus = statusMap[callStatus] || callStatus;
+
+      // Don't overwrite recording_available status
+      const { data: existingPrank } = await supabase
+        .from('pranks')
+        .select('call_status')
+        .eq('twilio_call_sid', callSid)
+        .maybeSingle();
+
+      // Only update if not already completed with recording
+      if (existingPrank?.call_status !== 'recording_available') {
+        const { error } = await supabase
+          .from('pranks')
+          .update({ call_status: mappedStatus })
+          .eq('twilio_call_sid', callSid);
+
+        if (error) {
+          console.error('Error updating prank status:', error);
+        } else {
+          console.log('Prank status updated to:', mappedStatus);
+        }
+      }
     }
 
-    // Return empty response for Twilio
-    return new Response('', {
-      status: 200,
-      headers: corsHeaders,
-    });
+    return new Response('', { status: 200, headers: corsHeaders });
 
   } catch (error) {
-    console.error('Error processing status callback:', error);
+    console.error('Error processing callback:', error);
     return new Response('', { status: 200 });
   }
 });
