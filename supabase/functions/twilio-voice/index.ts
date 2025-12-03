@@ -264,16 +264,16 @@ serve(async (req) => {
     if (action === 'start') {
       console.log('Starting prank call for:', prank.victim_first_name);
       
-      // Run status update and AI generation in parallel for faster response
+      // Run all operations in parallel for faster response
       const systemPrompt = buildSystemPrompt(prank);
       
-      const [_, aiResponse] = await Promise.all([
+      const [_, aiResponse, presetResult] = await Promise.all([
         // Update status (don't wait for result)
         supabase
           .from('pranks')
           .update({ call_status: 'in_progress' })
           .eq('id', prankId),
-        // Generate greeting with AI - use fastest approach
+        // Generate greeting with AI
         fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -286,19 +286,29 @@ serve(async (req) => {
               { role: 'system', content: systemPrompt },
               { role: 'user', content: 'Inizia con un saluto breve (max 2 frasi). Presentati secondo lo scenario.' }
             ],
-            max_tokens: 80, // Shorter greeting = faster TTS
+            max_tokens: 80,
             temperature: 0.7,
           }),
-        })
+        }),
+        // Check for background sound (parallel, doesn't add latency)
+        supabase
+          .from('prank_presets')
+          .select('background_sound_url')
+          .eq('theme', prank.prank_theme)
+          .eq('background_sound_enabled', true)
+          .maybeSingle()
       ]);
 
       const aiData = await aiResponse.json();
       const greeting = aiData.choices[0]?.message?.content || 'Pronto, buongiorno!';
+      const backgroundSoundUrl = presetResult.data?.background_sound_url;
       
       console.log('AI greeting:', greeting);
+      if (backgroundSoundUrl) console.log('Background sound:', backgroundSoundUrl);
 
       // Generate TwiML based on voice provider
       let twiml: string;
+      const bgSound = backgroundSoundUrl ? `<Play>${backgroundSoundUrl}</Play>` : '';
       
       if (voiceProvider === 'elevenlabs') {
         try {
@@ -306,6 +316,7 @@ serve(async (req) => {
           
           twiml = `<?xml version="1.0" encoding="UTF-8"?>
           <Response>
+            ${bgSound}
             <Play>${audioUrl}</Play>
             <Gather input="speech" language="${langCode}" timeout="4" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1&amp;provider=elevenlabs">
             </Gather>
@@ -318,6 +329,7 @@ serve(async (req) => {
           console.error('ElevenLabs error, falling back to Polly:', elevenLabsError);
           twiml = `<?xml version="1.0" encoding="UTF-8"?>
           <Response>
+            ${bgSound}
             <Say voice="${pollyVoice.voice}" language="${pollyVoice.language}">${escapeXml(greeting)}</Say>
             <Gather input="speech" language="${langCode}" timeout="4" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1">
             </Gather>
