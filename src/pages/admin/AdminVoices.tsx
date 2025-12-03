@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Mic, Save, Plus, Trash2, Shield, Play, Volume2, Loader2 } from "lucide-react";
+import { ArrowLeft, Mic, Save, Plus, Trash2, Shield, Play, Volume2, Loader2, Music } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface VoiceSetting {
@@ -44,6 +45,9 @@ const AdminVoices = () => {
   const [newGender, setNewGender] = useState("male");
   const [testingVoice, setTestingVoice] = useState(false);
   const [testAudioUrl, setTestAudioUrl] = useState<string | null>(null);
+  const [soundPrompt, setSoundPrompt] = useState("");
+  const [generatingSound, setGeneratingSound] = useState(false);
+  const [soundPreviewUrl, setSoundPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !isAdmin) {
@@ -404,6 +408,84 @@ const AdminVoices = () => {
                     <p className="text-xs text-muted-foreground">
                       Genera un audio di test con le impostazioni correnti
                     </p>
+                  </div>
+
+                  {/* Background Sound Section */}
+                  <div className="border-t pt-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Music className="w-4 h-4 text-orange-500" />
+                      <Label>Genera Suono di Sottofondo</Label>
+                    </div>
+                    <Textarea
+                      value={soundPrompt}
+                      onChange={(e) => setSoundPrompt(e.target.value)}
+                      placeholder="Descrivi il suono (in inglese per migliori risultati): es. 'busy office with phones ringing and people talking'"
+                      rows={2}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        if (!soundPrompt.trim()) {
+                          toast({ title: "Errore", description: "Inserisci una descrizione del suono", variant: "destructive" });
+                          return;
+                        }
+                        setGeneratingSound(true);
+                        setSoundPreviewUrl(null);
+                        try {
+                          const { data, error } = await supabase.functions.invoke("generate-sound-effect", {
+                            body: { prompt: soundPrompt, duration: 10 }
+                          });
+                          if (error) throw error;
+                          if (data?.audioUrl) {
+                            setSoundPreviewUrl(data.audioUrl);
+                            toast({ title: "Suono generato!", description: "Premi play per ascoltare" });
+                          } else if (data?.audioBase64) {
+                            setSoundPreviewUrl(`data:audio/mpeg;base64,${data.audioBase64}`);
+                            toast({ title: "Suono generato!", description: "Premi play per ascoltare" });
+                          }
+                        } catch (error: any) {
+                          toast({ title: "Errore", description: error.message, variant: "destructive" });
+                        } finally {
+                          setGeneratingSound(false);
+                        }
+                      }}
+                      disabled={generatingSound || !soundPrompt.trim()}
+                      className="w-full"
+                    >
+                      {generatingSound ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Generando...
+                        </>
+                      ) : (
+                        <>
+                          <Music className="w-4 h-4 mr-2" />
+                          Genera Suono
+                        </>
+                      )}
+                    </Button>
+                    {soundPreviewUrl && (
+                      <audio src={soundPreviewUrl} controls className="w-full" />
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Usa ElevenLabs Sound Effects per generare suoni ambiente. Copia l'URL per usarlo nei preset.
+                    </p>
+                    {soundPreviewUrl && soundPreviewUrl.startsWith("http") && (
+                      <div className="flex items-center gap-2">
+                        <Input value={soundPreviewUrl} readOnly className="text-xs" />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            navigator.clipboard.writeText(soundPreviewUrl);
+                            toast({ title: "Copiato!", description: "URL copiato negli appunti" });
+                          }}
+                        >
+                          Copia
+                        </Button>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex gap-2 pt-4">
