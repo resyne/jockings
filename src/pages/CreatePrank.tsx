@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Phone, User, Mic, Globe, Clock, Sparkles, Send, Volume2, CalendarClock } from "lucide-react";
+import { ArrowLeft, Phone, User, Mic, Globe, Clock, Sparkles, Send, CalendarClock } from "lucide-react";
 import { z } from "zod";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -31,69 +31,12 @@ const TONES = [
   { value: "friendly", label: "Amichevole 😊" },
 ];
 
-const PRANK_PRESETS = [
-  { 
-    id: "custom", 
-    label: "Personalizzato ✏️", 
-    theme: "" 
-  },
-  { 
-    id: "gas-technician", 
-    label: "Tecnico del Gas 🔧", 
-    theme: "Fai finta di essere un tecnico del gas che deve fare un controllo urgente entro oggi altrimenti ci saranno gravi conseguenze. Sii molto insistente e crea urgenza." 
-  },
-  { 
-    id: "lottery-winner", 
-    label: "Vincita alla Lotteria 🎰", 
-    theme: "Fai finta di essere un funzionario della lotteria nazionale che deve comunicare una vincita di 50.000€, ma ci sono documenti urgenti da compilare entro un'ora." 
-  },
-  { 
-    id: "tv-show", 
-    label: "Programma TV 📺", 
-    theme: "Fai finta di essere un autore di un famoso programma TV che vuole invitare la persona come ospite d'onore per la puntata di domani. Sii entusiasta e convincente." 
-  },
-  { 
-    id: "wrong-delivery", 
-    label: "Pacco Misterioso 📦", 
-    theme: "Fai finta di essere un corriere che ha un pacco enorme e pesantissimo da consegnare, ma l'indirizzo è illeggibile. Descrivi contenuti assurdi come 47 casse di ananas o un acquario con delfini." 
-  },
-  { 
-    id: "celebrity-manager", 
-    label: "Manager VIP ⭐", 
-    theme: "Fai finta di essere il manager di una celebrity famosa che sta cercando urgentemente una casa in affitto nella zona e vuole venire a vedere l'appartamento oggi stesso." 
-  },
-  { 
-    id: "survey", 
-    label: "Sondaggio Assurdo 📋", 
-    theme: "Fai finta di condurre un sondaggio ufficiale del comune con domande sempre più assurde: dal colore preferito dei calzini alla frequenza con cui parlano con i piccioni." 
-  },
-  { 
-    id: "radio-contest", 
-    label: "Quiz Radiofonico 🎙️", 
-    theme: "Fai finta di essere un DJ di una radio locale che ha selezionato il loro numero per un quiz a premi. Fai domande impossibili e dai indizi fuorvianti." 
-  },
-  { 
-    id: "long-lost-relative", 
-    label: "Parente Lontano 👴", 
-    theme: "Fai finta di essere un parente lontanissimo (tipo cugino di terzo grado) che vuole riallacciare i rapporti e raccontare storie di famiglia completamente inventate." 
-  },
-];
-
-// ElevenLabs voices with language support
-// Languages supported: Italiano, Napoletano, Siciliano, Romano, Milanese (Italian dialects), English, Español, Français, Deutsch
-const ELEVENLABS_VOICES = [
-  // Multilingual voices (support multiple languages via eleven_multilingual_v2 model)
-  { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel", gender: "male", description: "Profondo e caldo", languages: ["Italiano", "Napoletano", "Siciliano", "Romano", "Milanese", "English", "Español", "Français", "Deutsch"] },
-  { id: "nPczCjzI2devNBz1zQrb", name: "Brian", gender: "male", description: "Maturo e autorevole", languages: ["Italiano", "Napoletano", "Siciliano", "Romano", "Milanese", "English", "Español", "Français", "Deutsch"] },
-  { id: "cjVigY5qzO86Huf0OWal", name: "Eric", gender: "male", description: "Giovane e dinamico", languages: ["Italiano", "Napoletano", "Siciliano", "Romano", "Milanese", "English", "Español", "Français", "Deutsch"] },
-  { id: "TX3LPaxmHKxFdv7VOQHJ", name: "Liam", gender: "male", description: "Caldo e amichevole", languages: ["Italiano", "Napoletano", "Siciliano", "Romano", "Milanese", "English", "Español", "Français", "Deutsch"] },
-  { id: "CwhRBWXzGAHq8TQ4Fs17", name: "Roger", gender: "neutral", description: "Neutro e versatile", languages: ["Italiano", "Napoletano", "Siciliano", "Romano", "Milanese", "English", "Español", "Français", "Deutsch"] },
-  { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah", gender: "female", description: "Espressiva e naturale", languages: ["Italiano", "Napoletano", "Siciliano", "Romano", "Milanese", "English", "Español", "Français", "Deutsch"] },
-  { id: "XB0fDUnXU5powFXDhCwa", name: "Charlotte", gender: "female", description: "Sofisticata ed elegante", languages: ["Italiano", "Napoletano", "Siciliano", "Romano", "Milanese", "English", "Español", "Français", "Deutsch"] },
-  { id: "9BWtsMINqrJLrRacOk9x", name: "Aria", gender: "female", description: "Vivace e fresca", languages: ["Italiano", "Napoletano", "Siciliano", "Romano", "Milanese", "English", "Español", "Français", "Deutsch"] },
-  { id: "JBFqnCBsd6RMkjVDRZzb", name: "George", gender: "male", description: "Classico britannico", languages: ["English"] },
-  { id: "pFZP5JQG7iQjIQuC4Bku", name: "Lily", gender: "female", description: "Dolce britannica", languages: ["English"] },
-];
+interface PrankPreset {
+  id: string;
+  title: string;
+  theme: string;
+  icon: string;
+}
 
 const CreatePrank = () => {
   const [searchParams] = useSearchParams();
@@ -101,6 +44,7 @@ const CreatePrank = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [presets, setPresets] = useState<PrankPreset[]>([]);
 
   // Form state
   const [victimFirstName, setVictimFirstName] = useState("");
@@ -109,23 +53,6 @@ const CreatePrank = () => {
   const [selectedPreset, setSelectedPreset] = useState("custom");
   const [prankTheme, setPrankTheme] = useState("");
   const [voiceGender, setVoiceGender] = useState("male");
-  const [voiceProvider, setVoiceProvider] = useState("openai");
-  
-  // ElevenLabs settings
-  const [elStability, setElStability] = useState([50]);
-  const [elSimilarity, setElSimilarity] = useState([75]);
-  const [elStyle, setElStyle] = useState([0]);
-  const [elSpeed, setElSpeed] = useState([100]);
-  const [elVoiceId, setElVoiceId] = useState("");
-  const [elCustomVoiceId, setElCustomVoiceId] = useState("");
-
-  const handlePresetChange = (presetId: string) => {
-    setSelectedPreset(presetId);
-    const preset = PRANK_PRESETS.find(p => p.id === presetId);
-    if (preset && preset.theme) {
-      setPrankTheme(preset.theme);
-    }
-  };
   const [language, setLanguage] = useState("Italiano");
   const [personalityTone, setPersonalityTone] = useState("enthusiastic");
   const [maxDuration, setMaxDuration] = useState(60);
@@ -146,11 +73,37 @@ const CreatePrank = () => {
   }, [navigate]);
 
   useEffect(() => {
+    fetchPresets();
+  }, []);
+
+  useEffect(() => {
     const repeatId = searchParams.get("repeat");
     if (repeatId && user) {
       loadPrankData(repeatId);
     }
   }, [searchParams, user]);
+
+  const fetchPresets = async () => {
+    const { data } = await supabase
+      .from("prank_presets")
+      .select("id, title, theme, icon")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true });
+
+    if (data) {
+      setPresets(data);
+    }
+  };
+
+  const handlePresetChange = (presetId: string) => {
+    setSelectedPreset(presetId);
+    if (presetId !== "custom") {
+      const preset = presets.find(p => p.id === presetId);
+      if (preset) {
+        setPrankTheme(preset.theme);
+      }
+    }
+  };
 
   const loadPrankData = async (prankId: string) => {
     const { data, error } = await supabase
@@ -166,21 +119,6 @@ const CreatePrank = () => {
       setVictimPhone(data.victim_phone);
       setPrankTheme(data.prank_theme);
       setVoiceGender(data.voice_gender);
-      setVoiceProvider((data as any).voice_provider || "openai");
-      setElStability([((data as any).elevenlabs_stability || 0.5) * 100]);
-      setElSimilarity([((data as any).elevenlabs_similarity || 0.75) * 100]);
-      setElStyle([((data as any).elevenlabs_style || 0) * 100]);
-      setElSpeed([((data as any).elevenlabs_speed || 1) * 100]);
-      // Check if voice ID is a preset or custom
-      const loadedVoiceId = (data as any).elevenlabs_voice_id || "";
-      const isPresetVoice = ELEVENLABS_VOICES.some(v => v.id === loadedVoiceId);
-      if (isPresetVoice) {
-        setElVoiceId(loadedVoiceId);
-        setElCustomVoiceId("");
-      } else if (loadedVoiceId) {
-        setElVoiceId("");
-        setElCustomVoiceId(loadedVoiceId);
-      }
       setLanguage(data.language);
       setPersonalityTone(data.personality_tone);
       setMaxDuration(data.max_duration);
@@ -227,6 +165,14 @@ const CreatePrank = () => {
     setLoading(true);
 
     try {
+      // Fetch voice settings for the selected language and gender
+      const { data: voiceSettings } = await supabase
+        .from("voice_settings")
+        .select("*")
+        .eq("language", language)
+        .eq("gender", voiceGender)
+        .single();
+
       const scheduledAt = scheduleCall ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : null;
       
       const { data: prank, error } = await supabase
@@ -238,12 +184,12 @@ const CreatePrank = () => {
           victim_phone: victimPhone.replace(/\s/g, ""),
           prank_theme: prankTheme.trim(),
           voice_gender: voiceGender,
-          voice_provider: voiceProvider,
-          elevenlabs_stability: elStability[0] / 100,
-          elevenlabs_similarity: elSimilarity[0] / 100,
-          elevenlabs_style: elStyle[0] / 100,
-          elevenlabs_speed: elSpeed[0] / 100,
-          elevenlabs_voice_id: elCustomVoiceId || elVoiceId || null,
+          voice_provider: voiceSettings?.voice_provider || "elevenlabs",
+          elevenlabs_stability: voiceSettings?.elevenlabs_stability || 0.5,
+          elevenlabs_similarity: voiceSettings?.elevenlabs_similarity || 0.75,
+          elevenlabs_style: voiceSettings?.elevenlabs_style || 0,
+          elevenlabs_speed: voiceSettings?.elevenlabs_speed || 1,
+          elevenlabs_voice_id: voiceSettings?.elevenlabs_voice_id || null,
           language,
           personality_tone: personalityTone,
           max_duration: maxDuration,
@@ -366,7 +312,7 @@ const CreatePrank = () => {
             </CardContent>
           </Card>
 
-          {/* AI Settings */}
+          {/* Prank Theme */}
           <Card className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
@@ -374,16 +320,25 @@ const CreatePrank = () => {
                   <Mic className="w-5 h-5 text-secondary" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">Parametri AI</CardTitle>
-                  <CardDescription>Personalizza la voce e lo stile</CardDescription>
+                  <CardTitle className="text-lg">Tema dello Scherzo</CardTitle>
+                  <CardDescription>Cosa vuoi far dire all'AI?</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
-                <Label>Tema dello Scherzo</Label>
+                <Label>Scegli un preset o scrivi il tuo</Label>
                 <div className="flex flex-wrap gap-2">
-                  {PRANK_PRESETS.map((preset) => (
+                  <Button
+                    type="button"
+                    variant={selectedPreset === "custom" ? "default" : "outline"}
+                    size="sm"
+                    className={`text-xs ${selectedPreset === "custom" ? "gradient-primary" : ""}`}
+                    onClick={() => handlePresetChange("custom")}
+                  >
+                    ✏️ Personalizzato
+                  </Button>
+                  {presets.map((preset) => (
                     <Button
                       key={preset.id}
                       type="button"
@@ -392,12 +347,11 @@ const CreatePrank = () => {
                       className={`text-xs ${selectedPreset === preset.id ? "gradient-primary" : ""}`}
                       onClick={() => handlePresetChange(preset.id)}
                     >
-                      {preset.label}
+                      {preset.icon} {preset.title}
                     </Button>
                   ))}
                 </div>
                 <Textarea
-                  id="theme"
                   placeholder="Descrivi lo scherzo che vuoi fare..."
                   value={prankTheme}
                   onChange={(e) => {
@@ -409,165 +363,26 @@ const CreatePrank = () => {
                   className="min-h-[100px]"
                 />
               </div>
+            </CardContent>
+          </Card>
 
-              <div className="space-y-2">
-                <Label>Provider Voce</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { value: "openai", label: "OpenAI (Polly)", emoji: "🤖" },
-                    { value: "elevenlabs", label: "ElevenLabs", emoji: "🎙️" },
-                  ].map((option) => (
-                    <Button
-                      key={option.value}
-                      type="button"
-                      variant={voiceProvider === option.value ? "default" : "outline"}
-                      className={`h-14 flex-col gap-1 ${voiceProvider === option.value ? "gradient-primary" : ""}`}
-                      onClick={() => setVoiceProvider(option.value)}
-                    >
-                      <span className="text-lg">{option.emoji}</span>
-                      <span className="text-xs">{option.label}</span>
-                    </Button>
-                  ))}
+          {/* Voice & Language Settings */}
+          <Card className="animate-slide-up" style={{ animationDelay: "0.15s" }}>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-accent/10">
+                  <Globe className="w-5 h-5 text-accent" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Voce e Lingua</CardTitle>
+                  <CardDescription>Personalizza la voce AI</CardDescription>
                 </div>
               </div>
-
-              <div className="space-y-2">
-                <Label>Genere Voce</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { value: "male", label: "Maschio", emoji: "👨" },
-                    { value: "female", label: "Femmina", emoji: "👩" },
-                    { value: "neutral", label: "Neutro", emoji: "🤖" },
-                  ].map((option) => (
-                    <Button
-                      key={option.value}
-                      type="button"
-                      variant={voiceGender === option.value ? "default" : "outline"}
-                      className={`h-16 flex-col gap-1 ${voiceGender === option.value ? "gradient-primary" : ""}`}
-                      onClick={() => setVoiceGender(option.value)}
-                    >
-                      <span className="text-xl">{option.emoji}</span>
-                      <span className="text-xs">{option.label}</span>
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              {/* ElevenLabs Fine-Tuning Settings */}
-              {voiceProvider === "elevenlabs" && (
-                <div className="space-y-4 p-4 rounded-lg bg-secondary/10 border border-secondary/20">
-                  <Label className="flex items-center gap-2 text-secondary">
-                    <Sparkles className="w-4 h-4" /> Fine-Tuning ElevenLabs
-                  </Label>
-                  
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Stabilità</span>
-                        <span className="text-muted-foreground">{elStability[0]}%</span>
-                      </div>
-                      <Slider
-                        value={elStability}
-                        onValueChange={setElStability}
-                        max={100}
-                        step={5}
-                        className="w-full"
-                      />
-                      <p className="text-xs text-muted-foreground">Basso = più espressivo, Alto = più consistente</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Similarità</span>
-                        <span className="text-muted-foreground">{elSimilarity[0]}%</span>
-                      </div>
-                      <Slider
-                        value={elSimilarity}
-                        onValueChange={setElSimilarity}
-                        max={100}
-                        step={5}
-                        className="w-full"
-                      />
-                      <p className="text-xs text-muted-foreground">Quanto aderire al campione vocale originale</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Stile</span>
-                        <span className="text-muted-foreground">{elStyle[0]}%</span>
-                      </div>
-                      <Slider
-                        value={elStyle}
-                        onValueChange={setElStyle}
-                        max={100}
-                        step={5}
-                        className="w-full"
-                      />
-                      <p className="text-xs text-muted-foreground">Esagera lo stile (più teatrale/emotivo)</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Velocità</span>
-                        <span className="text-muted-foreground">{(elSpeed[0] / 100).toFixed(1)}x</span>
-                      </div>
-                      <Slider
-                        value={elSpeed}
-                        onValueChange={setElSpeed}
-                        min={50}
-                        max={200}
-                        step={10}
-                        className="w-full"
-                      />
-                      <p className="text-xs text-muted-foreground">Velocità di parlato (0.5x - 2x)</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Voce Preimpostata</Label>
-                      <Select value={elVoiceId || "__default__"} onValueChange={(v) => { setElVoiceId(v === "__default__" ? "" : v); setElCustomVoiceId(""); }}>
-                        <SelectTrigger className="h-12">
-                          <SelectValue placeholder="Seleziona una voce..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__default__">Default (automatica)</SelectItem>
-                          {ELEVENLABS_VOICES
-                            .filter(v => v.languages.includes(language))
-                            .filter(v => voiceGender === "neutral" || v.gender === voiceGender || v.gender === "neutral")
-                            .map((voice) => (
-                              <SelectItem key={voice.id} value={voice.id}>
-                                {voice.name} - {voice.description} {voice.gender === "male" ? "👨" : voice.gender === "female" ? "👩" : "🤖"}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-muted-foreground">Voci che supportano: {language}</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Voice ID Personalizzato (opzionale)</Label>
-                      <Input
-                        placeholder="Es: AbCdEf123456..."
-                        value={elCustomVoiceId}
-                        onChange={(e) => { setElCustomVoiceId(e.target.value); if (e.target.value) setElVoiceId(""); }}
-                        className="h-12 font-mono text-sm"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Per voci italiane native: vai su{" "}
-                        <a href="https://elevenlabs.io/app/voice-library" target="_blank" rel="noopener noreferrer" className="text-primary underline">
-                          ElevenLabs Voice Library
-                        </a>
-                        , cerca "Italian", aggiungi la voce al tuo account, poi copia il Voice ID.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <Globe className="w-4 h-4" /> Lingua
-                  </Label>
+                  <Label>Lingua / Accento</Label>
                   <Select value={language} onValueChange={setLanguage}>
                     <SelectTrigger className="h-12">
                       <SelectValue />
@@ -580,20 +395,32 @@ const CreatePrank = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <Volume2 className="w-4 h-4" /> Tono
-                  </Label>
-                  <Select value={personalityTone} onValueChange={setPersonalityTone}>
+                  <Label>Genere Voce</Label>
+                  <Select value={voiceGender} onValueChange={setVoiceGender}>
                     <SelectTrigger className="h-12">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {TONES.map((tone) => (
-                        <SelectItem key={tone.value} value={tone.value}>{tone.label}</SelectItem>
-                      ))}
+                      <SelectItem value="male">Maschile 👨</SelectItem>
+                      <SelectItem value="female">Femminile 👩</SelectItem>
+                      <SelectItem value="neutral">Neutro 🧑</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Tono Personalità</Label>
+                <Select value={personalityTone} onValueChange={setPersonalityTone}>
+                  <SelectTrigger className="h-12">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TONES.map((tone) => (
+                      <SelectItem key={tone.value} value={tone.value}>{tone.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
@@ -602,131 +429,117 @@ const CreatePrank = () => {
           <Card className="animate-slide-up" style={{ animationDelay: "0.2s" }}>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-accent/20">
-                  <Sparkles className="w-5 h-5 text-accent-foreground" />
+                <div className="p-2 rounded-lg bg-purple-500/10">
+                  <Sparkles className="w-5 h-5 text-purple-500" />
                 </div>
                 <div>
                   <CardTitle className="text-lg">Opzioni Avanzate</CardTitle>
-                  <CardDescription>Regola durata e creatività</CardDescription>
+                  <CardDescription>Configura durata e creatività</CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-3">
-                <Label className="flex items-center gap-2">
-                  <Clock className="w-4 h-4" /> Durata Massima
-                </Label>
-                <div className="grid grid-cols-3 gap-2">
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Durata Massima: {maxDuration} secondi</Label>
+                <div className="flex gap-2">
                   {[30, 60, 120].map((duration) => (
                     <Button
                       key={duration}
                       type="button"
                       variant={maxDuration === duration ? "default" : "outline"}
+                      size="sm"
                       className={maxDuration === duration ? "gradient-primary" : ""}
                       onClick={() => setMaxDuration(duration)}
                     >
-                      {duration} sec
+                      <Clock className="w-4 h-4 mr-1" />
+                      {duration}s
                     </Button>
                   ))}
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4" /> Creatività AI
-                  </Label>
-                  <span className="text-sm font-medium text-primary">{creativityLevel[0]}%</span>
-                </div>
+              <div className="space-y-2">
+                <Label>Creatività AI: {creativityLevel[0]}%</Label>
                 <Slider
                   value={creativityLevel}
                   onValueChange={setCreativityLevel}
                   max={100}
-                  step={5}
+                  step={10}
                   className="py-2"
                 />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Prevedibile</span>
-                  <span>Imprevedibile</span>
-                </div>
+                <p className="text-xs text-muted-foreground">
+                  Alta creatività = risposte più imprevedibili
+                </p>
               </div>
 
-              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
-                <div className="space-y-0.5">
-                  <Label htmlFor="recording">Invia Registrazione</Label>
-                  <p className="text-xs text-muted-foreground">Ricevi l'audio via email</p>
+              <div className="flex items-center justify-between py-2">
+                <div>
+                  <Label>Invia Registrazione</Label>
+                  <p className="text-xs text-muted-foreground">Ricevi l'audio dopo la chiamata</p>
                 </div>
                 <Switch
-                  id="recording"
                   checked={sendRecording}
                   onCheckedChange={setSendRecording}
                 />
               </div>
 
-              {/* Scheduling */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="schedule" className="flex items-center gap-2">
-                      <CalendarClock className="w-4 h-4" /> Programma Chiamata
-                    </Label>
-                    <p className="text-xs text-muted-foreground">Pianifica per dopo</p>
+              <div className="flex items-center justify-between py-2 border-t pt-4">
+                <div className="flex items-center gap-2">
+                  <CalendarClock className="w-5 h-5 text-orange-500" />
+                  <div>
+                    <Label>Programma Chiamata</Label>
+                    <p className="text-xs text-muted-foreground">Imposta data e ora</p>
                   </div>
-                  <Switch
-                    id="schedule"
-                    checked={scheduleCall}
-                    onCheckedChange={setScheduleCall}
-                  />
                 </div>
-
-                {scheduleCall && (
-                  <div className="grid grid-cols-2 gap-3 animate-slide-up">
-                    <div className="space-y-2">
-                      <Label htmlFor="date">Data</Label>
-                      <Input
-                        id="date"
-                        type="date"
-                        value={scheduledDate}
-                        onChange={(e) => setScheduledDate(e.target.value)}
-                        min={new Date().toISOString().split('T')[0]}
-                        className="h-12"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="time">Ora</Label>
-                      <Input
-                        id="time"
-                        type="time"
-                        value={scheduledTime}
-                        onChange={(e) => setScheduledTime(e.target.value)}
-                        className="h-12"
-                      />
-                    </div>
-                  </div>
-                )}
+                <Switch
+                  checked={scheduleCall}
+                  onCheckedChange={setScheduleCall}
+                />
               </div>
+
+              {scheduleCall && (
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <div className="space-y-2">
+                    <Label>Data</Label>
+                    <Input
+                      type="date"
+                      value={scheduledDate}
+                      onChange={(e) => setScheduledDate(e.target.value)}
+                      min={new Date().toISOString().split('T')[0]}
+                      className="h-12"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Ora</Label>
+                    <Input
+                      type="time"
+                      value={scheduledTime}
+                      onChange={(e) => setScheduledTime(e.target.value)}
+                      className="h-12"
+                    />
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Submit Button */}
+          {/* Submit */}
           <Button
             type="submit"
             className="w-full h-14 text-lg gradient-primary shadow-glow animate-slide-up"
-            style={{ animationDelay: "0.3s" }}
+            style={{ animationDelay: "0.25s" }}
             disabled={loading}
           >
             {loading ? (
-              <span className="animate-pulse">Generazione in corso...</span>
-            ) : scheduleCall ? (
-              <>
-                <CalendarClock className="w-5 h-5 mr-2" />
-                Programma Scherzo
-              </>
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                {scheduleCall ? "Schedulando..." : "Avviando..."}
+              </div>
             ) : (
-              <>
-                <Send className="w-5 h-5 mr-2" />
-                Avvia Chiamata AI
-              </>
+              <div className="flex items-center gap-2">
+                <Send className="w-5 h-5" />
+                {scheduleCall ? "Programma Scherzo" : "Avvia Scherzo"}
+              </div>
             )}
           </Button>
         </form>

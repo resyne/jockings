@@ -9,6 +9,11 @@ import CreatePrank from "./pages/CreatePrank";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminVoices from "./pages/admin/AdminVoices";
+import AdminPresets from "./pages/admin/AdminPresets";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminCalls from "./pages/admin/AdminCalls";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +30,11 @@ const App = () => (
           <Route path="/create-prank" element={<CreatePrank />} />
           <Route path="/history" element={<History />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/voices" element={<AdminVoices />} />
+          <Route path="/admin/presets" element={<AdminPresets />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/admin/calls" element={<AdminCalls />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
