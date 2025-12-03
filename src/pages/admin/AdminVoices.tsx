@@ -27,12 +27,9 @@ interface VoiceSetting {
   is_active: boolean;
 }
 
-const LANGUAGES = [
-  "Italiano", "Napoletano", "Siciliano", "Romano", "Milanese",
-  "English", "Español", "Français", "Deutsch"
-];
+const LANGUAGES = ["Italiano", "English"];
 
-const GENDERS = ["male", "female", "neutral"];
+const GENDERS = ["male", "female"];
 
 const AdminVoices = () => {
   const navigate = useNavigate();
@@ -236,7 +233,7 @@ const AdminVoices = () => {
                     <SelectContent>
                       {GENDERS.map((g) => (
                         <SelectItem key={g} value={g}>
-                          {g === "male" ? "Maschile" : g === "female" ? "Femminile" : "Neutro"}
+                          {g === "male" ? "Maschile" : "Femminile"}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -265,7 +262,7 @@ const AdminVoices = () => {
                     <div>
                       <p className="font-medium">{setting.language}</p>
                       <p className="text-sm text-muted-foreground">
-                        {setting.gender === "male" ? "Maschile" : setting.gender === "female" ? "Femminile" : "Neutro"}
+                        {setting.gender === "male" ? "Maschile" : "Femminile"}
                       </p>
                     </div>
                     <div className="text-right">
@@ -284,7 +281,7 @@ const AdminVoices = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">
-                    {selectedSetting.language} - {selectedSetting.gender === "male" ? "Maschile" : selectedSetting.gender === "female" ? "Femminile" : "Neutro"}
+                    {selectedSetting.language} - {selectedSetting.gender === "male" ? "Maschile" : "Femminile"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">

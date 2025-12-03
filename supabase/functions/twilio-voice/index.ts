@@ -11,30 +11,20 @@ const corsHeaders = {
 const getLanguageCode = (language: string): string => {
   const langMap: Record<string, string> = {
     'Italiano': 'it-IT',
-    'Napoletano': 'it-IT',
-    'Siciliano': 'it-IT',
-    'Romano': 'it-IT',
-    'Milanese': 'it-IT',
     'English': 'en-US',
-    'Español': 'es-ES',
-    'Français': 'fr-FR',
-    'Deutsch': 'de-DE',
   };
   return langMap[language] || 'it-IT';
 };
 
-// Map voice gender to Twilio Polly voice
+// Map voice gender to Twilio Polly voice (fallback only)
 const getTwilioPollyVoice = (gender: string, language: string): { voice: string; language: string } => {
   const voiceMap: Record<string, Record<string, string>> = {
-    'it-IT': { male: 'Polly.Adriano-Neural', female: 'Polly.Bianca-Neural', neutral: 'Polly.Adriano-Neural' },
-    'en-US': { male: 'Polly.Matthew-Neural', female: 'Polly.Joanna-Neural', neutral: 'Polly.Matthew-Neural' },
-    'es-ES': { male: 'Polly.Sergio-Neural', female: 'Polly.Lucia-Neural', neutral: 'Polly.Sergio-Neural' },
-    'fr-FR': { male: 'Polly.Remi-Neural', female: 'Polly.Lea-Neural', neutral: 'Polly.Remi-Neural' },
-    'de-DE': { male: 'Polly.Daniel-Neural', female: 'Polly.Vicki-Neural', neutral: 'Polly.Daniel-Neural' },
+    'it-IT': { male: 'Polly.Adriano-Neural', female: 'Polly.Bianca-Neural' },
+    'en-US': { male: 'Polly.Matthew-Neural', female: 'Polly.Joanna-Neural' },
   };
 
   const lang = getLanguageCode(language);
-  const voice = voiceMap[lang]?.[gender] || voiceMap[lang]?.['male'] || 'Polly.Adriano-Neural';
+  const voice = voiceMap[lang]?.[gender] || voiceMap['it-IT']?.['male'] || 'Polly.Adriano-Neural';
   
   return { voice, language: lang };
 };
@@ -43,15 +33,12 @@ const getTwilioPollyVoice = (gender: string, language: string): { voice: string;
 const getElevenLabsDefaultVoice = (gender: string, language: string): string => {
   // ElevenLabs multilingual voices - used only if no custom voice is selected
   const voiceMap: Record<string, Record<string, string>> = {
-    'it-IT': { male: 'onwK4e9ZLuTAKqWW03F9', female: 'EXAVITQu4vr4xnSDxMaL', neutral: 'CwhRBWXzGAHq8TQ4Fs17' }, // Daniel, Sarah, Roger
-    'en-US': { male: 'TX3LPaxmHKxFdv7VOQHJ', female: 'EXAVITQu4vr4xnSDxMaL', neutral: 'CwhRBWXzGAHq8TQ4Fs17' }, // Liam, Sarah, Roger
-    'es-ES': { male: 'onwK4e9ZLuTAKqWW03F9', female: 'pFZP5JQG7iQjIQuC4Bku', neutral: 'CwhRBWXzGAHq8TQ4Fs17' }, // Daniel, Lily, Roger
-    'fr-FR': { male: 'onwK4e9ZLuTAKqWW03F9', female: 'XrExE9yKIg1WjnnlVkGX', neutral: 'CwhRBWXzGAHq8TQ4Fs17' }, // Daniel, Matilda, Roger
-    'de-DE': { male: 'nPczCjzI2devNBz1zQrb', female: 'XB0fDUnXU5powFXDhCwa', neutral: 'CwhRBWXzGAHq8TQ4Fs17' }, // Brian, Charlotte, Roger
+    'it-IT': { male: 'onwK4e9ZLuTAKqWW03F9', female: 'EXAVITQu4vr4xnSDxMaL' }, // Daniel, Sarah
+    'en-US': { male: 'TX3LPaxmHKxFdv7VOQHJ', female: 'EXAVITQu4vr4xnSDxMaL' }, // Liam, Sarah
   };
 
   const lang = getLanguageCode(language);
-  return voiceMap[lang]?.[gender] || voiceMap[lang]?.['male'] || 'onwK4e9ZLuTAKqWW03F9';
+  return voiceMap[lang]?.[gender] || voiceMap['it-IT']?.['male'] || 'onwK4e9ZLuTAKqWW03F9';
 };
 
 // ElevenLabs voice settings interface
@@ -142,14 +129,7 @@ const generateElevenLabsAudioUrl = async (
 const buildSystemPrompt = (prank: any): string => {
   const languageMap: Record<string, string> = {
     'Italiano': 'Italian',
-    'Napoletano': 'Neapolitan Italian dialect with typical expressions like "uè", "ma che dice"',
-    'Siciliano': 'Sicilian Italian dialect',
-    'Romano': 'Roman Italian dialect with expressions like "daje", "ammazza"',
-    'Milanese': 'Milanese Italian dialect',
     'English': 'English',
-    'Español': 'Spanish',
-    'Français': 'French',
-    'Deutsch': 'German',
   };
 
   // Gender-specific instructions
@@ -161,10 +141,6 @@ const buildSystemPrompt = (prank: any): string => {
     'female': {
       identity: 'a WOMAN (female)',
       style: 'Use feminine forms of words and adjectives. Speak with a female perspective and identity.'
-    },
-    'neutral': {
-      identity: 'a person',
-      style: 'Use neutral language when possible.'
     },
   };
 
