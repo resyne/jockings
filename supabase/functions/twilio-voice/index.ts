@@ -125,6 +125,32 @@ const generateElevenLabsAudioUrl = async (
   return `${SUPABASE_URL}/functions/v1/serve-audio?id=${audioId}`;
 };
 
+// Get appropriate greeting based on time of day (Italy timezone)
+const getTimeBasedGreeting = (language: string): { greeting: string; instruction: string } => {
+  // Get current hour in Italy timezone (CET/CEST)
+  const now = new Date();
+  const italyTime = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Rome' }));
+  const hour = italyTime.getHours();
+  
+  // In Italian: buongiorno until 18:00, then buonasera
+  // In English: good morning until 12:00, good afternoon until 18:00, good evening after
+  if (language === 'Italian' || language === 'Italiano') {
+    if (hour >= 6 && hour < 18) {
+      return { greeting: 'buongiorno', instruction: 'Use "buongiorno" as greeting (it is daytime).' };
+    } else {
+      return { greeting: 'buonasera', instruction: 'Use "buonasera" as greeting (it is evening/night).' };
+    }
+  } else {
+    if (hour >= 6 && hour < 12) {
+      return { greeting: 'good morning', instruction: 'Use "good morning" as greeting.' };
+    } else if (hour >= 12 && hour < 18) {
+      return { greeting: 'good afternoon', instruction: 'Use "good afternoon" as greeting.' };
+    } else {
+      return { greeting: 'good evening', instruction: 'Use "good evening" as greeting.' };
+    }
+  }
+};
+
 // Build system prompt from prank data
 const buildSystemPrompt = (prank: any): string => {
   const languageMap: Record<string, string> = {
@@ -177,6 +203,7 @@ const buildSystemPrompt = (prank: any): string => {
   const gender = genderMap[prank.voice_gender] || genderMap['male'];
   const creativity = prank.creativity_level > 70 ? 'very creative, unpredictable, and willing to improvise wildly' : 
                      prank.creativity_level > 30 ? 'moderately creative with occasional surprises' : 'straightforward and predictable';
+  const timeGreeting = getTimeBasedGreeting(language);
 
   return `You are making a prank phone call. Your target is ${prank.victim_first_name} ${prank.victim_last_name}.
 
@@ -185,6 +212,8 @@ SCENARIO: ${prank.prank_theme}
 YOUR GENDER: You are ${gender.identity}. ${gender.style}
 YOUR PERSONALITY: You are ${personality.description}.
 CRITICAL BEHAVIOR INSTRUCTIONS: ${personality.behavior}
+
+TIME-AWARE GREETING: ${timeGreeting.instruction}
 
 RULES:
 1. Speak ONLY in ${language}
@@ -196,6 +225,7 @@ RULES:
 7. Keep responses concise (1-3 sentences max)
 8. React naturally but ALWAYS maintain your personality trait
 9. If they get suspicious, deflect using your personality (angry = get more defensive, confused = get more lost, etc.)
+10. Use the correct time-based greeting ("${timeGreeting.greeting}") when starting the call!
 
 Respond with ONLY what you would say. Make your personality and gender OBVIOUS in how you speak.`;
 };
