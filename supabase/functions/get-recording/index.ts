@@ -42,13 +42,25 @@ serve(async (req) => {
     
     console.log('Recording fetched successfully, size:', audioBuffer.byteLength);
 
-    return new Response(audioBuffer, {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'audio/mpeg',
-        'Content-Disposition': 'attachment; filename="recording.mp3"',
-      },
-    });
+    // Convert to base64 safely (avoiding stack overflow for large buffers)
+    const uint8Array = new Uint8Array(audioBuffer);
+    let binary = '';
+    const chunkSize = 8192;
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+      const chunk = uint8Array.subarray(i, i + chunkSize);
+      binary += String.fromCharCode(...chunk);
+    }
+    const audioBase64 = btoa(binary);
+
+    return new Response(
+      JSON.stringify({ audioBase64 }),
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
+    );
 
   } catch (error: unknown) {
     console.error('Error fetching recording:', error);

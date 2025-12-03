@@ -47,9 +47,20 @@ const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, onCancel, 
       return null;
     }
 
-    // Create blob URL from the response
-    const blob = new Blob([data], { type: 'audio/mpeg' });
-    return URL.createObjectURL(blob);
+    if (data?.audioBase64) {
+      // Convert base64 to blob URL
+      const byteCharacters = atob(data.audioBase64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'audio/mpeg' });
+      return URL.createObjectURL(blob);
+    }
+
+    toast.error('Formato registrazione non valido');
+    return null;
   };
 
   const togglePlay = async () => {
