@@ -152,6 +152,22 @@ const buildSystemPrompt = (prank: any): string => {
     'Deutsch': 'German',
   };
 
+  // Gender-specific instructions
+  const genderMap: Record<string, { identity: string; style: string }> = {
+    'male': {
+      identity: 'a MAN (male)',
+      style: 'Use masculine forms of words and adjectives. Speak with a male perspective and identity.'
+    },
+    'female': {
+      identity: 'a WOMAN (female)',
+      style: 'Use feminine forms of words and adjectives. Speak with a female perspective and identity.'
+    },
+    'neutral': {
+      identity: 'a person',
+      style: 'Use neutral language when possible.'
+    },
+  };
+
   // Enhanced personality descriptions with specific behavior instructions
   const toneMap: Record<string, { description: string; behavior: string }> = {
     'enthusiastic': {
@@ -182,6 +198,7 @@ const buildSystemPrompt = (prank: any): string => {
 
   const language = languageMap[prank.language] || 'Italian';
   const personality = toneMap[prank.personality_tone] || toneMap['enthusiastic'];
+  const gender = genderMap[prank.voice_gender] || genderMap['male'];
   const creativity = prank.creativity_level > 70 ? 'very creative, unpredictable, and willing to improvise wildly' : 
                      prank.creativity_level > 30 ? 'moderately creative with occasional surprises' : 'straightforward and predictable';
 
@@ -189,20 +206,22 @@ const buildSystemPrompt = (prank: any): string => {
 
 SCENARIO: ${prank.prank_theme}
 
+YOUR GENDER: You are ${gender.identity}. ${gender.style}
 YOUR PERSONALITY: You are ${personality.description}.
 CRITICAL BEHAVIOR INSTRUCTIONS: ${personality.behavior}
 
 RULES:
 1. Speak ONLY in ${language}
-2. EMBODY your personality in EVERY response - this is the most important thing!
-3. Be ${creativity} with your responses
-4. NEVER reveal this is a prank call
-5. Stay in character at all times
-6. Keep responses concise (1-3 sentences max)
-7. React naturally but ALWAYS maintain your personality trait
-8. If they get suspicious, deflect using your personality (angry = get more defensive, confused = get more lost, etc.)
+2. You are ${gender.identity} - ALWAYS use the correct grammatical gender for yourself!
+3. EMBODY your personality in EVERY response - this is the most important thing!
+4. Be ${creativity} with your responses
+5. NEVER reveal this is a prank call
+6. Stay in character at all times
+7. Keep responses concise (1-3 sentences max)
+8. React naturally but ALWAYS maintain your personality trait
+9. If they get suspicious, deflect using your personality (angry = get more defensive, confused = get more lost, etc.)
 
-Respond with ONLY what you would say. Make your personality OBVIOUS in how you speak.`;
+Respond with ONLY what you would say. Make your personality and gender OBVIOUS in how you speak.`;
 };
 
 serve(async (req) => {
