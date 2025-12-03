@@ -66,8 +66,14 @@ const History = () => {
     switch (status) {
       case "completed": return "bg-green-500/10 text-green-600 border-green-500/20";
       case "in_progress": return "bg-blue-500/10 text-blue-600 border-blue-500/20";
-      case "failed": return "bg-red-500/10 text-red-600 border-red-500/20";
+      case "initiated": return "bg-cyan-500/10 text-cyan-600 border-cyan-500/20";
+      case "ringing": return "bg-indigo-500/10 text-indigo-600 border-indigo-500/20";
+      case "failed": 
+      case "no_answer":
+      case "busy": return "bg-red-500/10 text-red-600 border-red-500/20";
       case "recording_available": return "bg-purple-500/10 text-purple-600 border-purple-500/20";
+      case "scheduled": return "bg-orange-500/10 text-orange-600 border-orange-500/20";
+      case "cancelled": return "bg-gray-500/10 text-gray-600 border-gray-500/20";
       default: return "bg-yellow-500/10 text-yellow-600 border-yellow-500/20";
     }
   };
@@ -75,10 +81,16 @@ const History = () => {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case "pending": return "In attesa";
+      case "initiated": return "Avviata";
+      case "ringing": return "Squilla";
       case "in_progress": return "In corso";
       case "completed": return "Completata";
       case "failed": return "Fallita";
-      case "recording_available": return "Registrazione";
+      case "no_answer": return "Non risponde";
+      case "busy": return "Occupato";
+      case "recording_available": return "🎙️ Registrazione";
+      case "scheduled": return "Programmata";
+      case "cancelled": return "Annullata";
       default: return status;
     }
   };
