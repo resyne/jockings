@@ -93,6 +93,7 @@ const CreatePrank = () => {
   const [selectedPreset, setSelectedPreset] = useState("custom");
   const [prankTheme, setPrankTheme] = useState("");
   const [voiceGender, setVoiceGender] = useState("male");
+  const [voiceProvider, setVoiceProvider] = useState("openai");
 
   const handlePresetChange = (presetId: string) => {
     setSelectedPreset(presetId);
@@ -141,6 +142,7 @@ const CreatePrank = () => {
       setVictimPhone(data.victim_phone);
       setPrankTheme(data.prank_theme);
       setVoiceGender(data.voice_gender);
+      setVoiceProvider((data as any).voice_provider || "openai");
       setLanguage(data.language);
       setPersonalityTone(data.personality_tone);
       setMaxDuration(data.max_duration);
@@ -198,6 +200,7 @@ const CreatePrank = () => {
           victim_phone: victimPhone.replace(/\s/g, ""),
           prank_theme: prankTheme.trim(),
           voice_gender: voiceGender,
+          voice_provider: voiceProvider,
           language,
           personality_tone: personalityTone,
           max_duration: maxDuration,
@@ -365,7 +368,28 @@ const CreatePrank = () => {
               </div>
 
               <div className="space-y-2">
-                <Label>Voce</Label>
+                <Label>Provider Voce</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: "openai", label: "OpenAI (Polly)", emoji: "🤖" },
+                    { value: "elevenlabs", label: "ElevenLabs", emoji: "🎙️" },
+                  ].map((option) => (
+                    <Button
+                      key={option.value}
+                      type="button"
+                      variant={voiceProvider === option.value ? "default" : "outline"}
+                      className={`h-14 flex-col gap-1 ${voiceProvider === option.value ? "gradient-primary" : ""}`}
+                      onClick={() => setVoiceProvider(option.value)}
+                    >
+                      <span className="text-lg">{option.emoji}</span>
+                      <span className="text-xs">{option.label}</span>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Genere Voce</Label>
                 <div className="grid grid-cols-3 gap-2">
                   {[
                     { value: "male", label: "Maschio", emoji: "👨" },

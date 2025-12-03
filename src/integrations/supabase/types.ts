@@ -34,6 +34,7 @@ export type Database = {
           victim_last_name: string
           victim_phone: string
           voice_gender: string
+          voice_provider: string
         }
         Insert: {
           call_status?: string
@@ -54,6 +55,7 @@ export type Database = {
           victim_last_name: string
           victim_phone: string
           voice_gender: string
+          voice_provider?: string
         }
         Update: {
           call_status?: string
@@ -74,6 +76,7 @@ export type Database = {
           victim_last_name?: string
           victim_phone?: string
           voice_gender?: string
+          voice_provider?: string
         }
         Relationships: []
       }
