@@ -39,9 +39,9 @@ const getTwilioPollyVoice = (gender: string, language: string): { voice: string;
   return { voice, language: lang };
 };
 
-// ElevenLabs voice IDs mapped by gender and language
-const getElevenLabsVoice = (gender: string, language: string): string => {
-  // ElevenLabs multilingual voices
+// ElevenLabs voice IDs mapped by gender and language (default fallback)
+const getElevenLabsDefaultVoice = (gender: string, language: string): string => {
+  // ElevenLabs multilingual voices - used only if no custom voice is selected
   const voiceMap: Record<string, Record<string, string>> = {
     'it-IT': { male: 'onwK4e9ZLuTAKqWW03F9', female: 'EXAVITQu4vr4xnSDxMaL', neutral: 'CwhRBWXzGAHq8TQ4Fs17' }, // Daniel, Sarah, Roger
     'en-US': { male: 'TX3LPaxmHKxFdv7VOQHJ', female: 'EXAVITQu4vr4xnSDxMaL', neutral: 'CwhRBWXzGAHq8TQ4Fs17' }, // Liam, Sarah, Roger
@@ -191,7 +191,11 @@ serve(async (req) => {
     const voiceProvider = prank.voice_provider || 'openai';
     const langCode = getLanguageCode(prank.language);
     const pollyVoice = getTwilioPollyVoice(prank.voice_gender, prank.language);
-    const elevenLabsVoiceId = getElevenLabsVoice(prank.voice_gender, prank.language);
+    // Use custom voice ID if set, otherwise use default based on gender/language
+    const customVoiceId = (prank as any).elevenlabs_voice_id;
+    const elevenLabsVoiceId = customVoiceId || getElevenLabsDefaultVoice(prank.voice_gender, prank.language);
+    
+    console.log('ElevenLabs voice:', customVoiceId ? `custom (${elevenLabsVoiceId})` : `default (${elevenLabsVoiceId})`);
     const webhookBase = `https://vtsankkghplkfhrlxefs.supabase.co/functions/v1/twilio-voice`;
     
     // ElevenLabs settings from prank record

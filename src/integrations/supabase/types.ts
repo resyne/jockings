@@ -23,6 +23,7 @@ export type Database = {
           elevenlabs_speed: number | null
           elevenlabs_stability: number | null
           elevenlabs_style: number | null
+          elevenlabs_voice_id: string | null
           id: string
           language: string
           max_duration: number
@@ -48,6 +49,7 @@ export type Database = {
           elevenlabs_speed?: number | null
           elevenlabs_stability?: number | null
           elevenlabs_style?: number | null
+          elevenlabs_voice_id?: string | null
           id?: string
           language?: string
           max_duration?: number
@@ -73,6 +75,7 @@ export type Database = {
           elevenlabs_speed?: number | null
           elevenlabs_stability?: number | null
           elevenlabs_style?: number | null
+          elevenlabs_voice_id?: string | null
           id?: string
           language?: string
           max_duration?: number
