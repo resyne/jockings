@@ -6,9 +6,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Phone, Shield, Search, Play, RefreshCw } from "lucide-react";
+import { ArrowLeft, Phone, Shield, Search, Play, RefreshCw, ChevronDown, ChevronUp, Cpu, Mic, Settings2 } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface PrankCall {
   id: string;
@@ -22,6 +23,17 @@ interface PrankCall {
   language: string;
   voice_gender: string;
   user_id: string;
+  voice_provider: string;
+  elevenlabs_voice_id: string | null;
+  elevenlabs_stability: number | null;
+  elevenlabs_similarity: number | null;
+  elevenlabs_style: number | null;
+  elevenlabs_speed: number | null;
+  twilio_call_sid: string | null;
+  max_duration: number;
+  creativity_level: number;
+  personality_tone: string;
+  scheduled_at: string | null;
 }
 
 const AdminCalls = () => {
@@ -32,6 +44,7 @@ const AdminCalls = () => {
   const [search, setSearch] = useState("");
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loadingAudio, setLoadingAudio] = useState<string | null>(null);
+  const [expandedCalls, setExpandedCalls] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!loading && !isAdmin) {
@@ -68,7 +81,18 @@ const AdminCalls = () => {
       });
 
       if (error) throw error;
-      if (data?.audioUrl) {
+      
+      // Handle base64 audio response
+      if (data?.audio) {
+        const binaryString = atob(data.audio);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        const blob = new Blob([bytes], { type: 'audio/wav' });
+        const url = URL.createObjectURL(blob);
+        setAudioUrl(url);
+      } else if (data?.audioUrl) {
         setAudioUrl(data.audioUrl);
       }
     } catch (error) {
@@ -76,6 +100,18 @@ const AdminCalls = () => {
     } finally {
       setLoadingAudio(null);
     }
+  };
+
+  const toggleExpand = (callId: string) => {
+    setExpandedCalls(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(callId)) {
+        newSet.delete(callId);
+      } else {
+        newSet.add(callId);
+      }
+      return newSet;
+    });
   };
 
   const getStatusColor = (status: string) => {
@@ -114,12 +150,25 @@ const AdminCalls = () => {
     }
   };
 
+  const getPersonalityLabel = (tone: string) => {
+    const map: Record<string, string> = {
+      enthusiastic: "🎉 Entusiasta",
+      serious: "🎩 Serio",
+      angry: "😠 Arrabbiato",
+      confused: "😵 Confuso",
+      mysterious: "🕵️ Misterioso",
+      friendly: "😊 Amichevole",
+    };
+    return map[tone] || tone;
+  };
+
   const filteredCalls = calls.filter(
     (call) =>
       call.victim_first_name.toLowerCase().includes(search.toLowerCase()) ||
       call.victim_last_name.toLowerCase().includes(search.toLowerCase()) ||
       call.victim_phone.includes(search) ||
-      call.prank_theme.toLowerCase().includes(search.toLowerCase())
+      call.prank_theme.toLowerCase().includes(search.toLowerCase()) ||
+      (call.twilio_call_sid && call.twilio_call_sid.toLowerCase().includes(search.toLowerCase()))
   );
 
   if (loading) {
@@ -142,7 +191,7 @@ const AdminCalls = () => {
             </Button>
             <div className="flex items-center gap-2">
               <Phone className="w-5 h-5 text-green-500" />
-              <h1 className="font-bold">Tutte le Chiamate</h1>
+              <h1 className="font-bold">Log Chiamate</h1>
             </div>
           </div>
           <Button variant="outline" size="sm" onClick={fetchCalls}>
@@ -156,7 +205,7 @@ const AdminCalls = () => {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Cerca per nome, telefono, tema..."
+            placeholder="Cerca per nome, telefono, tema, call SID..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -183,46 +232,162 @@ const AdminCalls = () => {
               {filteredCalls.length} chiamate trovate
             </p>
             {filteredCalls.map((call) => (
-              <Card key={call.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-medium">
-                          {call.victim_first_name} {call.victim_last_name}
+              <Collapsible key={call.id} open={expandedCalls.has(call.id)} onOpenChange={() => toggleExpand(call.id)}>
+                <Card className="overflow-hidden">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-medium">
+                            {call.victim_first_name} {call.victim_last_name}
+                          </p>
+                          <Badge variant="outline" className={getStatusColor(call.call_status)}>
+                            {getStatusLabel(call.call_status)}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {call.victim_phone} • {call.language} • {call.voice_gender === "male" ? "♂ Maschio" : call.voice_gender === "female" ? "♀ Femmina" : "⚥ Neutro"}
                         </p>
-                        <Badge variant="outline" className={getStatusColor(call.call_status)}>
-                          {getStatusLabel(call.call_status)}
-                        </Badge>
+                        <p className="text-sm text-muted-foreground line-clamp-1 mt-1">
+                          {call.prank_theme}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {format(new Date(call.created_at), "d MMM yyyy HH:mm", { locale: it })}
+                        </p>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {call.victim_phone} • {call.language} • {call.voice_gender === "male" ? "M" : call.voice_gender === "female" ? "F" : "N"}
-                      </p>
-                      <p className="text-sm text-muted-foreground line-clamp-1 mt-1">
-                        {call.prank_theme}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {format(new Date(call.created_at), "d MMM yyyy HH:mm", { locale: it })}
-                      </p>
+
+                      <div className="flex items-center gap-2">
+                        {call.recording_url && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => playRecording(call.id)}
+                            disabled={loadingAudio === call.id}
+                          >
+                            {loadingAudio === call.id ? (
+                              <RefreshCw className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Play className="w-4 h-4" />
+                            )}
+                          </Button>
+                        )}
+                        <CollapsibleTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            {expandedCalls.has(call.id) ? (
+                              <ChevronUp className="w-4 h-4" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4" />
+                            )}
+                          </Button>
+                        </CollapsibleTrigger>
+                      </div>
                     </div>
 
-                    {call.recording_url && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => playRecording(call.id)}
-                        disabled={loadingAudio === call.id}
-                      >
-                        {loadingAudio === call.id ? (
-                          <RefreshCw className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Play className="w-4 h-4" />
+                    <CollapsibleContent className="mt-4">
+                      <div className="border-t pt-4 space-y-4">
+                        {/* Tech Stack */}
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <Cpu className="w-4 h-4 text-primary" />
+                            Stack Tecnologico
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="bg-muted/50 rounded-lg p-2">
+                              <span className="text-muted-foreground">Voice Provider:</span>
+                              <p className="font-mono font-medium text-primary">
+                                {call.voice_provider === 'elevenlabs' ? '🔊 ElevenLabs' : '🎙️ OpenAI/Polly'}
+                              </p>
+                            </div>
+                            <div className="bg-muted/50 rounded-lg p-2">
+                              <span className="text-muted-foreground">Personalità:</span>
+                              <p className="font-medium">{getPersonalityLabel(call.personality_tone)}</p>
+                            </div>
+                            <div className="bg-muted/50 rounded-lg p-2">
+                              <span className="text-muted-foreground">Durata Max:</span>
+                              <p className="font-medium">{call.max_duration}s</p>
+                            </div>
+                            <div className="bg-muted/50 rounded-lg p-2">
+                              <span className="text-muted-foreground">Creatività:</span>
+                              <p className="font-medium">{call.creativity_level}%</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* ElevenLabs Settings */}
+                        {call.voice_provider === 'elevenlabs' && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-sm font-medium">
+                              <Mic className="w-4 h-4 text-purple-500" />
+                              ElevenLabs Config
+                            </div>
+                            <div className="bg-purple-500/5 border border-purple-500/20 rounded-lg p-3">
+                              <div className="grid grid-cols-2 gap-2 text-xs">
+                                <div>
+                                  <span className="text-muted-foreground">Voice ID:</span>
+                                  <p className="font-mono text-purple-600 break-all">
+                                    {call.elevenlabs_voice_id || 'default'}
+                                  </p>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">Stability:</span>
+                                  <p className="font-medium">{((call.elevenlabs_stability ?? 0.5) * 100).toFixed(0)}%</p>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">Similarity:</span>
+                                  <p className="font-medium">{((call.elevenlabs_similarity ?? 0.75) * 100).toFixed(0)}%</p>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">Style:</span>
+                                  <p className="font-medium">{((call.elevenlabs_style ?? 0) * 100).toFixed(0)}%</p>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">Speed:</span>
+                                  <p className="font-medium">{call.elevenlabs_speed ?? 1.0}x</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         )}
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+
+                        {/* Twilio Info */}
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <Settings2 className="w-4 h-4 text-red-500" />
+                            Twilio Info
+                          </div>
+                          <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-3">
+                            <div className="text-xs space-y-1">
+                              <div>
+                                <span className="text-muted-foreground">Call SID:</span>
+                                <p className="font-mono text-red-600 break-all">
+                                  {call.twilio_call_sid || 'N/A'}
+                                </p>
+                              </div>
+                              {call.recording_url && (
+                                <div>
+                                  <span className="text-muted-foreground">Recording URL:</span>
+                                  <p className="font-mono text-red-600 break-all text-[10px]">
+                                    {call.recording_url}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* IDs */}
+                        <div className="text-[10px] font-mono text-muted-foreground border-t pt-2">
+                          <p>Prank ID: {call.id}</p>
+                          <p>User ID: {call.user_id}</p>
+                          {call.scheduled_at && (
+                            <p>Scheduled: {format(new Date(call.scheduled_at), "d MMM yyyy HH:mm", { locale: it })}</p>
+                          )}
+                        </div>
+                      </div>
+                    </CollapsibleContent>
+                  </CardContent>
+                </Card>
+              </Collapsible>
             ))}
           </div>
         )}
