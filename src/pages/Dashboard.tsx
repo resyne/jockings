@@ -24,6 +24,7 @@ interface Prank {
   call_status: string;
   recording_url: string | null;
   created_at: string;
+  scheduled_at: string | null;
 }
 
 const Dashboard = () => {
@@ -78,7 +79,7 @@ const Dashboard = () => {
     if (!user) return;
     const { data, error } = await supabase
       .from("pranks")
-      .select("id, victim_first_name, victim_last_name, prank_theme, call_status, recording_url, created_at")
+      .select("id, victim_first_name, victim_last_name, prank_theme, call_status, recording_url, created_at, scheduled_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(5);
@@ -89,6 +90,20 @@ const Dashboard = () => {
       setPranks(data || []);
     }
     setLoading(false);
+  };
+
+  const handleCancelPrank = async (prankId: string) => {
+    const { error } = await supabase
+      .from("pranks")
+      .update({ call_status: "cancelled" })
+      .eq("id", prankId);
+    
+    if (error) {
+      toast({ title: "Errore", description: "Impossibile annullare lo scherzo", variant: "destructive" });
+    } else {
+      toast({ title: "Scherzo annullato", description: "Lo scherzo programmato è stato annullato" });
+      fetchPranks();
+    }
   };
 
   const handleLogout = async () => {
@@ -103,6 +118,8 @@ const Dashboard = () => {
       case "in_progress": return "bg-blue-500/10 text-blue-600 border-blue-500/20";
       case "failed": return "bg-red-500/10 text-red-600 border-red-500/20";
       case "recording_available": return "bg-purple-500/10 text-purple-600 border-purple-500/20";
+      case "scheduled": return "bg-orange-500/10 text-orange-600 border-orange-500/20";
+      case "cancelled": return "bg-gray-500/10 text-gray-600 border-gray-500/20";
       default: return "bg-yellow-500/10 text-yellow-600 border-yellow-500/20";
     }
   };
@@ -114,6 +131,8 @@ const Dashboard = () => {
       case "completed": return "Completata";
       case "failed": return "Fallita";
       case "recording_available": return "Registrazione";
+      case "scheduled": return "Programmata";
+      case "cancelled": return "Annullata";
       default: return status;
     }
   };
@@ -227,6 +246,7 @@ const Dashboard = () => {
                   getStatusColor={getStatusColor}
                   getStatusLabel={getStatusLabel}
                   onRepeat={() => navigate(`/create-prank?repeat=${prank.id}`)}
+                  onCancel={() => handleCancelPrank(prank.id)}
                 />
               ))}
             </div>

@@ -10,8 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Phone, User, Mic, Globe, Clock, Sparkles, Send, Volume2 } from "lucide-react";
+import { ArrowLeft, Phone, User, Mic, Globe, Clock, Sparkles, Send, Volume2, CalendarClock } from "lucide-react";
 import { z } from "zod";
+import { format } from "date-fns";
+import { it } from "date-fns/locale";
 
 const phoneSchema = z.string().regex(/^\+?[1-9]\d{6,14}$/, "Numero di telefono non valido");
 
@@ -104,6 +106,9 @@ const CreatePrank = () => {
   const [maxDuration, setMaxDuration] = useState(60);
   const [creativityLevel, setCreativityLevel] = useState([50]);
   const [sendRecording, setSendRecording] = useState(false);
+  const [scheduleCall, setScheduleCall] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState("");
+  const [scheduledTime, setScheduledTime] = useState("");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -166,9 +171,24 @@ const CreatePrank = () => {
     e.preventDefault();
     if (!validateForm() || !user) return;
 
+    // Validate schedule if enabled
+    if (scheduleCall) {
+      if (!scheduledDate || !scheduledTime) {
+        toast({ title: "Errore", description: "Seleziona data e ora per la schedulazione", variant: "destructive" });
+        return;
+      }
+      const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
+      if (scheduledDateTime <= new Date()) {
+        toast({ title: "Errore", description: "La data deve essere nel futuro", variant: "destructive" });
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
+      const scheduledAt = scheduleCall ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : null;
+      
       const { data: prank, error } = await supabase
         .from("pranks")
         .insert({
@@ -183,38 +203,46 @@ const CreatePrank = () => {
           max_duration: maxDuration,
           creativity_level: creativityLevel[0],
           send_recording: sendRecording,
-          call_status: "pending",
+          call_status: scheduleCall ? "scheduled" : "pending",
+          scheduled_at: scheduledAt,
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      toast({
-        title: "Scherzo creato! 🎭",
-        description: "Avvio della chiamata in corso...",
-      });
-
-      // Trigger Twilio call via edge function
-      const { error: callError } = await supabase.functions.invoke('initiate-call', {
-        body: { prankId: prank.id }
-      });
-
-      if (callError) {
-        console.error('Error initiating call:', callError);
+      if (scheduleCall) {
         toast({
-          title: "Errore chiamata",
-          description: "Lo scherzo è stato salvato ma la chiamata non è partita. Riprova dalla cronologia.",
-          variant: "destructive",
+          title: "Scherzo schedulato! 📅",
+          description: `La chiamata partirà il ${format(new Date(scheduledAt!), "d MMMM 'alle' HH:mm", { locale: it })}`,
         });
+        navigate("/dashboard");
       } else {
         toast({
-          title: "Chiamata avviata! 📞",
-          description: `Stiamo chiamando ${victimFirstName}...`,
+          title: "Scherzo creato! 🎭",
+          description: "Avvio della chiamata in corso...",
         });
-      }
 
-      navigate("/dashboard");
+        // Trigger Twilio call via edge function
+        const { error: callError } = await supabase.functions.invoke('initiate-call', {
+          body: { prankId: prank.id }
+        });
+
+        if (callError) {
+          console.error('Error initiating call:', callError);
+          toast({
+            title: "Errore chiamata",
+            description: "Lo scherzo è stato salvato ma la chiamata non è partita. Riprova dalla cronologia.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Chiamata avviata! 📞",
+            description: `Stiamo chiamando ${victimFirstName}...`,
+          });
+        }
+        navigate("/dashboard");
+      }
     } catch (error: any) {
       toast({ title: "Errore", description: error.message, variant: "destructive" });
     } finally {
@@ -457,6 +485,49 @@ const CreatePrank = () => {
                   onCheckedChange={setSendRecording}
                 />
               </div>
+
+              {/* Scheduling */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="schedule" className="flex items-center gap-2">
+                      <CalendarClock className="w-4 h-4" /> Programma Chiamata
+                    </Label>
+                    <p className="text-xs text-muted-foreground">Pianifica per dopo</p>
+                  </div>
+                  <Switch
+                    id="schedule"
+                    checked={scheduleCall}
+                    onCheckedChange={setScheduleCall}
+                  />
+                </div>
+
+                {scheduleCall && (
+                  <div className="grid grid-cols-2 gap-3 animate-slide-up">
+                    <div className="space-y-2">
+                      <Label htmlFor="date">Data</Label>
+                      <Input
+                        id="date"
+                        type="date"
+                        value={scheduledDate}
+                        onChange={(e) => setScheduledDate(e.target.value)}
+                        min={new Date().toISOString().split('T')[0]}
+                        className="h-12"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="time">Ora</Label>
+                      <Input
+                        id="time"
+                        type="time"
+                        value={scheduledTime}
+                        onChange={(e) => setScheduledTime(e.target.value)}
+                        className="h-12"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
 
@@ -469,6 +540,11 @@ const CreatePrank = () => {
           >
             {loading ? (
               <span className="animate-pulse">Generazione in corso...</span>
+            ) : scheduleCall ? (
+              <>
+                <CalendarClock className="w-5 h-5 mr-2" />
+                Programma Scherzo
+              </>
             ) : (
               <>
                 <Send className="w-5 h-5 mr-2" />

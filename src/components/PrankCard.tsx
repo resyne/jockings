@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, RotateCcw, Calendar, Clock } from "lucide-react";
+import { Play, Pause, RotateCcw, Calendar, Clock, X, CalendarClock } from "lucide-react";
 import { useState, useRef } from "react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -14,6 +14,7 @@ interface Prank {
   call_status: string;
   recording_url: string | null;
   created_at: string;
+  scheduled_at?: string | null;
 }
 
 interface PrankCardProps {
@@ -21,10 +22,11 @@ interface PrankCardProps {
   getStatusColor: (status: string) => string;
   getStatusLabel: (status: string) => string;
   onRepeat: () => void;
+  onCancel?: () => void;
   showDetails?: boolean;
 }
 
-const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, showDetails = false }: PrankCardProps) => {
+const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, onCancel, showDetails = false }: PrankCardProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -43,6 +45,8 @@ const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, showDetail
     setIsPlaying(false);
   };
 
+  const isScheduled = prank.call_status === "scheduled";
+
   return (
     <Card className="shadow-soft hover:shadow-glow/20 transition-all">
       <CardContent className="p-4">
@@ -60,19 +64,38 @@ const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, showDetail
               {prank.prank_theme}
             </p>
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                {format(new Date(prank.created_at), "d MMM yyyy", { locale: it })}
-              </span>
-              <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {format(new Date(prank.created_at), "HH:mm")}
-              </span>
+              {isScheduled && prank.scheduled_at ? (
+                <span className="flex items-center gap-1 text-orange-600 font-medium">
+                  <CalendarClock className="w-3 h-3" />
+                  {format(new Date(prank.scheduled_at), "d MMM 'alle' HH:mm", { locale: it })}
+                </span>
+              ) : (
+                <>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    {format(new Date(prank.created_at), "d MMM yyyy", { locale: it })}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {format(new Date(prank.created_at), "HH:mm")}
+                  </span>
+                </>
+              )}
             </div>
           </div>
 
           <div className="flex flex-col gap-2">
-            {prank.recording_url && (
+            {isScheduled && onCancel ? (
+              <Button
+                size="icon"
+                variant="outline"
+                className="w-10 h-10 rounded-full border-red-500/30 text-red-600 hover:bg-red-500/10"
+                onClick={onCancel}
+                title="Annulla scherzo"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            ) : prank.recording_url ? (
               <Button
                 size="icon"
                 variant="outline"
@@ -85,16 +108,18 @@ const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, showDetail
                   <Play className="w-4 h-4" />
                 )}
               </Button>
+            ) : null}
+            {!isScheduled && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="w-10 h-10 rounded-full"
+                onClick={onRepeat}
+                title="Ripeti scherzo"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </Button>
             )}
-            <Button
-              size="icon"
-              variant="ghost"
-              className="w-10 h-10 rounded-full"
-              onClick={onRepeat}
-              title="Ripeti scherzo"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </Button>
           </div>
         </div>
 
