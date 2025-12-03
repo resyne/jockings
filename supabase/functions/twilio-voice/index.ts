@@ -154,17 +154,17 @@ serve(async (req) => {
       
       console.log('AI greeting:', greeting);
 
-      // Say greeting and gather response
+      // Say greeting and gather response with SSML for natural speech
       const twiml = `<?xml version="1.0" encoding="UTF-8"?>
       <Response>
-        <Say voice="${voiceConfig.voice}" language="${voiceConfig.language}">${escapeXml(greeting)}</Say>
+        <Say voice="${voiceConfig.voice}" language="${voiceConfig.language}"><speak><prosody rate="95%" pitch="-2%">${escapeXml(greeting)}</prosody></speak></Say>
         <Gather input="speech" language="${voiceConfig.language}" timeout="5" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1">
           <Say voice="${voiceConfig.voice}" language="${voiceConfig.language}"></Say>
         </Gather>
-        <Say voice="${voiceConfig.voice}" language="${voiceConfig.language}">Pronto? Mi sente?</Say>
+        <Say voice="${voiceConfig.voice}" language="${voiceConfig.language}"><speak><prosody rate="90%">Pronto? <break time="300ms"/> Mi sente?</prosody></speak></Say>
         <Gather input="speech" language="${voiceConfig.language}" timeout="5" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1">
         </Gather>
-        <Say voice="${voiceConfig.voice}" language="${voiceConfig.language}">Va bene, la richiamerò. Arrivederci.</Say>
+        <Say voice="${voiceConfig.voice}" language="${voiceConfig.language}"><speak><prosody rate="95%">Va bene, <break time="200ms"/> la richiamerò. Arrivederci.</prosody></speak></Say>
         <Hangup/>
       </Response>`;
 
@@ -183,10 +183,10 @@ serve(async (req) => {
         // No speech detected, prompt again
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
         <Response>
-          <Say voice="${voiceConfig.voice}" language="${voiceConfig.language}">Pronto? Mi sente?</Say>
+          <Say voice="${voiceConfig.voice}" language="${voiceConfig.language}"><speak><prosody rate="90%">Pronto? <break time="300ms"/> Mi sente?</prosody></speak></Say>
           <Gather input="speech" language="${voiceConfig.language}" timeout="5" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=${turn}">
           </Gather>
-          <Say voice="${voiceConfig.voice}" language="${voiceConfig.language}">Sembra che la linea sia disturbata. Arrivederci.</Say>
+          <Say voice="${voiceConfig.voice}" language="${voiceConfig.language}"><speak><prosody rate="95%">Sembra che la linea sia disturbata. <break time="200ms"/> Arrivederci.</prosody></speak></Say>
           <Hangup/>
         </Response>`;
         return new Response(twiml, { headers: { 'Content-Type': 'text/xml' } });
@@ -197,7 +197,7 @@ serve(async (req) => {
       if (turn >= maxTurns) {
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
         <Response>
-          <Say voice="${voiceConfig.voice}" language="${voiceConfig.language}">Va bene, devo andare. La richiamerò. Arrivederci!</Say>
+          <Say voice="${voiceConfig.voice}" language="${voiceConfig.language}"><speak><prosody rate="95%">Va bene, <break time="200ms"/> devo andare. La richiamerò. <break time="150ms"/> Arrivederci!</prosody></speak></Say>
           <Hangup/>
         </Response>`;
         return new Response(twiml, { headers: { 'Content-Type': 'text/xml' } });
@@ -228,16 +228,16 @@ serve(async (req) => {
       
       console.log('AI response:', aiResponse);
 
-      // Continue conversation
+      // Continue conversation with SSML for natural speech
       const twiml = `<?xml version="1.0" encoding="UTF-8"?>
       <Response>
-        <Say voice="${voiceConfig.voice}" language="${voiceConfig.language}">${escapeXml(aiResponse)}</Say>
+        <Say voice="${voiceConfig.voice}" language="${voiceConfig.language}"><speak><prosody rate="95%" pitch="-2%">${escapeXml(aiResponse)}</prosody></speak></Say>
         <Gather input="speech" language="${voiceConfig.language}" timeout="5" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=${turn + 1}">
         </Gather>
-        <Say voice="${voiceConfig.voice}" language="${voiceConfig.language}">Pronto?</Say>
+        <Say voice="${voiceConfig.voice}" language="${voiceConfig.language}"><speak><prosody rate="90%">Pronto?</prosody></speak></Say>
         <Gather input="speech" language="${voiceConfig.language}" timeout="3" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=${turn + 1}">
         </Gather>
-        <Say voice="${voiceConfig.voice}" language="${voiceConfig.language}">Va bene, la richiamerò. Arrivederci.</Say>
+        <Say voice="${voiceConfig.voice}" language="${voiceConfig.language}"><speak><prosody rate="95%">Va bene, <break time="200ms"/> la richiamerò. Arrivederci.</prosody></speak></Say>
         <Hangup/>
       </Response>`;
 
