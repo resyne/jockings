@@ -57,6 +57,38 @@ const Dashboard = () => {
     if (user) {
       fetchProfile();
       fetchPranks();
+
+      // Realtime subscription for pranks updates
+      const channel = supabase
+        .channel('pranks-realtime')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'pranks',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('Realtime update:', payload);
+            if (payload.eventType === 'UPDATE') {
+              setPranks(prev => prev.map(p => 
+                p.id === payload.new.id 
+                  ? { ...p, call_status: payload.new.call_status, recording_url: payload.new.recording_url }
+                  : p
+              ));
+            } else if (payload.eventType === 'INSERT') {
+              fetchPranks(); // Refresh list for new pranks
+            } else if (payload.eventType === 'DELETE') {
+              setPranks(prev => prev.filter(p => p.id !== payload.old.id));
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user]);
 
