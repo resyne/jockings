@@ -62,13 +62,14 @@ interface ElevenLabsSettings {
   speed: number;
 }
 
-// Generate audio using ElevenLabs API and return base64
-const generateElevenLabsAudio = async (
+// Generate audio using ElevenLabs API and store it, return the URL
+const generateElevenLabsAudioUrl = async (
   text: string, 
   voiceId: string, 
   settings: ElevenLabsSettings
 ): Promise<string> => {
   const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY');
+  const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
   
   if (!ELEVENLABS_API_KEY) {
     throw new Error('ELEVENLABS_API_KEY not configured');
@@ -91,7 +92,6 @@ const generateElevenLabsAudio = async (
         style: settings.style,
         use_speaker_boost: true,
       },
-      // Speed is applied via output settings
       output_format: 'mp3_44100_128',
     }),
   });
@@ -112,8 +112,29 @@ const generateElevenLabsAudio = async (
     const chunk = uint8Array.slice(i, i + chunkSize);
     base64 += String.fromCharCode.apply(null, Array.from(chunk));
   }
+  const audioBase64 = btoa(base64);
   
-  return btoa(base64);
+  // Generate unique ID for this audio
+  const audioId = crypto.randomUUID();
+  
+  // Store audio in serve-audio function
+  const storeResponse = await fetch(`${SUPABASE_URL}/functions/v1/serve-audio`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ id: audioId, audio: audioBase64 }),
+  });
+
+  if (!storeResponse.ok) {
+    console.error('Failed to store audio:', await storeResponse.text());
+    throw new Error('Failed to store audio');
+  }
+
+  console.log('Audio stored with ID:', audioId);
+  
+  // Return URL that Twilio can access
+  return `${SUPABASE_URL}/functions/v1/serve-audio?id=${audioId}`;
 };
 
 // Build system prompt from prank data
@@ -256,13 +277,12 @@ serve(async (req) => {
       
       if (voiceProvider === 'elevenlabs') {
         try {
-          const audioBase64 = await generateElevenLabsAudio(greeting, elevenLabsVoiceId, elSettings);
-          const audioUrl = `data:audio/mpeg;base64,${audioBase64}`;
+          const audioUrl = await generateElevenLabsAudioUrl(greeting, elevenLabsVoiceId, elSettings);
           
-          // ElevenLabs: Use Play with base64 audio
+          // ElevenLabs: Use Play with audio URL
           twiml = `<?xml version="1.0" encoding="UTF-8"?>
           <Response>
-            <Play>data:audio/mpeg;base64,${audioBase64}</Play>
+            <Play>${audioUrl}</Play>
             <Gather input="speech" language="${langCode}" timeout="5" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1&amp;provider=elevenlabs">
             </Gather>
             <Say voice="${pollyVoice.voice}" language="${langCode}">Pronto? Mi sente?</Say>
@@ -367,10 +387,10 @@ serve(async (req) => {
       
       if (useElevenLabs) {
         try {
-          const audioBase64 = await generateElevenLabsAudio(aiResponse, elevenLabsVoiceId, elSettings);
+          const audioUrl = await generateElevenLabsAudioUrl(aiResponse, elevenLabsVoiceId, elSettings);
           twiml = `<?xml version="1.0" encoding="UTF-8"?>
           <Response>
-            <Play>data:audio/mpeg;base64,${audioBase64}</Play>
+            <Play>${audioUrl}</Play>
             <Gather input="speech" language="${langCode}" timeout="5" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=${turn + 1}&amp;provider=elevenlabs">
             </Gather>
             <Say voice="${pollyVoice.voice}" language="${langCode}">Pronto?</Say>
