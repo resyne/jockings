@@ -68,8 +68,8 @@ serve(async (req) => {
         'ringing': 'ringing',
         'in-progress': 'in_progress',
         'completed': 'completed',
-        'busy': 'failed',
-        'no-answer': 'failed',
+        'busy': 'busy',
+        'no-answer': 'no_answer',
         'canceled': 'cancelled',
         'failed': 'failed',
       };
