@@ -82,13 +82,19 @@ serve(async (req) => {
     console.log('Twilio call initiated:', twilioData.sid);
 
     // Update prank with call SID
-    await supabase
+    const { error: updateError } = await supabase
       .from('pranks')
       .update({
         twilio_call_sid: twilioData.sid,
         call_status: 'initiated',
       })
       .eq('id', prankId);
+
+    if (updateError) {
+      console.error('Error updating prank with call SID:', updateError);
+    } else {
+      console.log('Prank updated with call SID:', twilioData.sid);
+    }
 
     return new Response(
       JSON.stringify({ success: true, callSid: twilioData.sid }),
