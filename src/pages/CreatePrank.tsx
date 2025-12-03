@@ -17,10 +17,7 @@ import { it } from "date-fns/locale";
 
 const phoneSchema = z.string().regex(/^\+?[1-9]\d{6,14}$/, "Numero di telefono non valido");
 
-const LANGUAGES = [
-  "Italiano", "Napoletano", "Siciliano", "Romano", "Milanese",
-  "English", "Español", "Français", "Deutsch"
-];
+const LANGUAGES = ["Italiano", "English"];
 
 const TONES = [
   { value: "enthusiastic", label: "Entusiasta 🎉" },
@@ -403,7 +400,6 @@ const CreatePrank = () => {
                     <SelectContent>
                       <SelectItem value="male">Maschile 👨</SelectItem>
                       <SelectItem value="female">Femminile 👩</SelectItem>
-                      <SelectItem value="neutral">Neutro 🧑</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
