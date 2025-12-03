@@ -16,6 +16,9 @@ export type Database = {
     Tables: {
       prank_presets: {
         Row: {
+          background_sound_enabled: boolean | null
+          background_sound_prompt: string | null
+          background_sound_url: string | null
           created_at: string
           icon: string | null
           id: string
@@ -26,6 +29,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          background_sound_enabled?: boolean | null
+          background_sound_prompt?: string | null
+          background_sound_url?: string | null
           created_at?: string
           icon?: string | null
           id?: string
@@ -36,6 +42,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          background_sound_enabled?: boolean | null
+          background_sound_prompt?: string | null
+          background_sound_url?: string | null
           created_at?: string
           icon?: string | null
           id?: string

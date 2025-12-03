@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, FileText, Save, Plus, Trash2, Shield, GripVertical } from "lucide-react";
+import { ArrowLeft, FileText, Save, Plus, Trash2, Shield, GripVertical, Volume2, Loader2, Play } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface PrankPreset {
@@ -19,6 +19,9 @@ interface PrankPreset {
   icon: string;
   is_active: boolean;
   sort_order: number;
+  background_sound_prompt: string | null;
+  background_sound_url: string | null;
+  background_sound_enabled: boolean;
 }
 
 const AdminPresets = () => {
@@ -31,6 +34,8 @@ const AdminPresets = () => {
   const [newTitle, setNewTitle] = useState("");
   const [newTheme, setNewTheme] = useState("");
   const [newIcon, setNewIcon] = useState("🎭");
+  const [generatingSound, setGeneratingSound] = useState(false);
+  const [testSoundUrl, setTestSoundUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !isAdmin) {
@@ -64,6 +69,9 @@ const AdminPresets = () => {
         icon: preset.icon,
         is_active: preset.is_active,
         sort_order: preset.sort_order,
+        background_sound_prompt: preset.background_sound_prompt,
+        background_sound_url: preset.background_sound_url,
+        background_sound_enabled: preset.background_sound_enabled,
       })
       .eq("id", preset.id);
 
@@ -72,6 +80,52 @@ const AdminPresets = () => {
     } else {
       toast({ title: "Salvato!", description: "Preset aggiornato" });
       fetchPresets();
+    }
+  };
+
+  const handleGenerateSound = async () => {
+    if (!selectedPreset?.background_sound_prompt) {
+      toast({ title: "Errore", description: "Inserisci prima un prompt per il suono", variant: "destructive" });
+      return;
+    }
+
+    setGeneratingSound(true);
+    setTestSoundUrl(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-sound-effect", {
+        body: {
+          prompt: selectedPreset.background_sound_prompt,
+          duration: 5,
+          presetId: selectedPreset.id,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.audioUrl) {
+        setTestSoundUrl(data.audioUrl);
+        setSelectedPreset({
+          ...selectedPreset,
+          background_sound_url: data.audioUrl,
+          background_sound_enabled: true
+        });
+        toast({ title: "Suono generato!", description: "Ascolta il risultato" });
+        fetchPresets();
+      } else if (data?.audioBase64) {
+        const audioUrl = `data:audio/mpeg;base64,${data.audioBase64}`;
+        setTestSoundUrl(audioUrl);
+        toast({ title: "Suono generato!", description: "Ascolta il risultato" });
+      }
+    } catch (error: any) {
+      console.error("Generate sound error:", error);
+      toast({ 
+        title: "Errore", 
+        description: error.message || "Impossibile generare il suono", 
+        variant: "destructive" 
+      });
+    } finally {
+      setGeneratingSound(false);
     }
   };
 
@@ -286,6 +340,81 @@ const AdminPresets = () => {
                         is_active: checked
                       })}
                     />
+                  </div>
+
+                  {/* Background Sound Section */}
+                  <div className="border-t pt-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Volume2 className="w-4 h-4 text-primary" />
+                        <Label>Suono di Sottofondo</Label>
+                      </div>
+                      <Switch
+                        checked={selectedPreset.background_sound_enabled}
+                        onCheckedChange={(checked) => setSelectedPreset({
+                          ...selectedPreset,
+                          background_sound_enabled: checked
+                        })}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">Prompt per ElevenLabs Sound Effects</Label>
+                      <Textarea
+                        value={selectedPreset.background_sound_prompt || ""}
+                        onChange={(e) => setSelectedPreset({
+                          ...selectedPreset,
+                          background_sound_prompt: e.target.value
+                        })}
+                        placeholder="Es: Office ambiance with phone ringing, keyboard typing, distant conversations"
+                        className="min-h-[80px] text-sm"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Descrivi l'ambiente sonoro in inglese. Es: "busy traffic street", "quiet office", "restaurant kitchen"
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleGenerateSound}
+                        disabled={generatingSound || !selectedPreset.background_sound_prompt}
+                        className="flex-1"
+                      >
+                        {generatingSound ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Generando...
+                          </>
+                        ) : (
+                          <>
+                            <Volume2 className="w-4 h-4 mr-2" />
+                            Genera Suono
+                          </>
+                        )}
+                      </Button>
+                      {(testSoundUrl || selectedPreset.background_sound_url) && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            const audio = new Audio(testSoundUrl || selectedPreset.background_sound_url || "");
+                            audio.play();
+                          }}
+                        >
+                          <Play className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+
+                    {(testSoundUrl || selectedPreset.background_sound_url) && (
+                      <audio 
+                        src={testSoundUrl || selectedPreset.background_sound_url || ""} 
+                        controls 
+                        className="w-full h-8"
+                      />
+                    )}
                   </div>
 
                   <div className="flex gap-2 pt-4">
