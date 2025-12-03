@@ -142,9 +142,9 @@ const generateElevenLabsAudioUrl = async (
 const buildSystemPrompt = (prank: any): string => {
   const languageMap: Record<string, string> = {
     'Italiano': 'Italian',
-    'Napoletano': 'Neapolitan Italian dialect',
+    'Napoletano': 'Neapolitan Italian dialect with typical expressions like "uè", "ma che dice"',
     'Siciliano': 'Sicilian Italian dialect',
-    'Romano': 'Roman Italian dialect',
+    'Romano': 'Roman Italian dialect with expressions like "daje", "ammazza"',
     'Milanese': 'Milanese Italian dialect',
     'English': 'English',
     'Español': 'Spanish',
@@ -152,35 +152,57 @@ const buildSystemPrompt = (prank: any): string => {
     'Deutsch': 'German',
   };
 
-  const toneMap: Record<string, string> = {
-    'enthusiastic': 'very enthusiastic and excited',
-    'serious': 'serious and professional',
-    'angry': 'frustrated and slightly angry',
-    'confused': 'confused and uncertain',
-    'mysterious': 'mysterious and intriguing',
-    'friendly': 'warm and friendly',
+  // Enhanced personality descriptions with specific behavior instructions
+  const toneMap: Record<string, { description: string; behavior: string }> = {
+    'enthusiastic': {
+      description: 'extremely enthusiastic, excited, and over-the-top happy',
+      behavior: 'Use exclamations! Speak fast with rising intonation. Show excessive excitement about everything. Use words like "fantastico!", "incredibile!", "meraviglioso!". Laugh easily. Be overly positive even about mundane things.'
+    },
+    'serious': {
+      description: 'very serious, formal, and professional',
+      behavior: 'Use formal language and titles. Speak in a measured, deliberate way. Avoid jokes or humor. Be direct and to the point. Use phrases like "mi permetta di", "è necessario che", "la informo che". Sound like a government official or lawyer.'
+    },
+    'angry': {
+      description: 'frustrated, irritated, and increasingly angry',
+      behavior: 'Start slightly annoyed and escalate your frustration. Use interruptions. Raise your tone. Express exasperation with sighs and "ma insomma!", "possibile che...", "ma lei non capisce!". Act like someone whos patience is running thin. Get defensive and accusatory.'
+    },
+    'confused': {
+      description: 'confused, uncertain, and easily distracted',
+      behavior: 'Frequently lose your train of thought. Say "aspetti... come dicevo?", "scusi, mi sono perso", "ma quindi...". Ask for clarification often. Mix up details. Sound genuinely befuddled. Pause mid-sentence. Contradict yourself occasionally.'
+    },
+    'mysterious': {
+      description: 'mysterious, cryptic, and dramatically secretive',
+      behavior: 'Speak in a low, conspiratorial tone. Use dramatic pauses. Say things like "non posso dire di più...", "ci sono cose che lei non sa...", "mi creda, è meglio così". Hint at secrets without revealing them. Be vague but intriguing.'
+    },
+    'friendly': {
+      description: 'warm, friendly, and chatty like an old friend',
+      behavior: 'Use informal language. Ask personal questions. Share unnecessary details about yourself. Use endearments like "caro mio", "tesoro". Laugh warmly. Show genuine interest in their life. Be nostalgic and reminiscent.'
+    },
   };
 
   const language = languageMap[prank.language] || 'Italian';
-  const tone = toneMap[prank.personality_tone] || 'enthusiastic';
-  const creativity = prank.creativity_level > 70 ? 'very creative and unpredictable' : 
-                     prank.creativity_level > 30 ? 'moderately creative' : 'straightforward';
+  const personality = toneMap[prank.personality_tone] || toneMap['enthusiastic'];
+  const creativity = prank.creativity_level > 70 ? 'very creative, unpredictable, and willing to improvise wildly' : 
+                     prank.creativity_level > 30 ? 'moderately creative with occasional surprises' : 'straightforward and predictable';
 
   return `You are making a prank phone call. Your target is ${prank.victim_first_name} ${prank.victim_last_name}.
 
 SCENARIO: ${prank.prank_theme}
 
-IMPORTANT RULES:
+YOUR PERSONALITY: You are ${personality.description}.
+CRITICAL BEHAVIOR INSTRUCTIONS: ${personality.behavior}
+
+RULES:
 1. Speak ONLY in ${language}
-2. Your personality is ${tone}
+2. EMBODY your personality in EVERY response - this is the most important thing!
 3. Be ${creativity} with your responses
 4. NEVER reveal this is a prank call
 5. Stay in character at all times
-6. Keep responses concise (1-2 sentences max, under 100 words)
-7. React naturally to what the person says
-8. If they get suspicious, deflect and continue the scenario
+6. Keep responses concise (1-3 sentences max)
+7. React naturally but ALWAYS maintain your personality trait
+8. If they get suspicious, deflect using your personality (angry = get more defensive, confused = get more lost, etc.)
 
-Respond with ONLY what you would say, no additional text or explanations.`;
+Respond with ONLY what you would say. Make your personality OBVIOUS in how you speak.`;
 };
 
 serve(async (req) => {
