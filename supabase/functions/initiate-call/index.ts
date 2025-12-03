@@ -61,7 +61,7 @@ serve(async (req) => {
           From: TWILIO_PHONE_NUMBER,
           Url: webhookUrl,
           StatusCallback: statusCallbackUrl,
-          StatusCallbackEvent: 'initiated ringing answered completed busy no-answer canceled failed',
+          StatusCallbackEvent: 'initiated ringing answered completed',
           StatusCallbackMethod: 'POST',
           Record: 'true',
           RecordingStatusCallback: statusCallbackUrl,
