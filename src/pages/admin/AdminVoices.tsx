@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Mic, Save, Plus, Trash2, Shield } from "lucide-react";
+import { ArrowLeft, Mic, Save, Plus, Trash2, Shield, Play, Volume2, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface VoiceSetting {
@@ -42,6 +42,8 @@ const AdminVoices = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newLanguage, setNewLanguage] = useState("Italiano");
   const [newGender, setNewGender] = useState("male");
+  const [testingVoice, setTestingVoice] = useState(false);
+  const [testAudioUrl, setTestAudioUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !isAdmin) {
@@ -131,6 +133,45 @@ const AdminVoices = () => {
       toast({ title: "Eliminato!", description: "Configurazione voce rimossa" });
       fetchVoiceSettings();
       setSelectedSetting(null);
+    }
+  };
+
+  const handleTestVoice = async (setting: VoiceSetting) => {
+    if (!setting.elevenlabs_voice_id) {
+      toast({ title: "Errore", description: "Inserisci prima un Voice ID", variant: "destructive" });
+      return;
+    }
+
+    setTestingVoice(true);
+    setTestAudioUrl(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("test-voice", {
+        body: {
+          voiceId: setting.elevenlabs_voice_id,
+          stability: setting.elevenlabs_stability,
+          similarity: setting.elevenlabs_similarity,
+          style: setting.elevenlabs_style,
+          speed: setting.elevenlabs_speed,
+          language: setting.language,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.audioUrl) {
+        setTestAudioUrl(data.audioUrl);
+        toast({ title: "Audio generato!", description: "Premi play per ascoltare" });
+      }
+    } catch (error: any) {
+      console.error("Test voice error:", error);
+      toast({ 
+        title: "Errore", 
+        description: error.message || "Impossibile generare l'audio di test", 
+        variant: "destructive" 
+      });
+    } finally {
+      setTestingVoice(false);
     }
   };
 
@@ -312,6 +353,45 @@ const AdminVoices = () => {
                       max={200}
                       step={5}
                     />
+                  </div>
+
+                  {/* Test Voice Section */}
+                  <div className="border-t pt-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Volume2 className="w-4 h-4 text-primary" />
+                        <Label>Prova Voce</Label>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleTestVoice(selectedSetting)}
+                        disabled={testingVoice || !selectedSetting.elevenlabs_voice_id}
+                      >
+                        {testingVoice ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Generando...
+                          </>
+                        ) : (
+                          <>
+                            <Play className="w-4 h-4 mr-2" />
+                            Genera Audio
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                    {testAudioUrl && (
+                      <audio 
+                        src={testAudioUrl} 
+                        controls 
+                        autoPlay 
+                        className="w-full"
+                      />
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Genera un audio di test con le impostazioni correnti
+                    </p>
                   </div>
 
                   <div className="flex gap-2 pt-4">

@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.get-recording]
 verify_jwt = true
+
+[functions.test-voice]
+verify_jwt = true
