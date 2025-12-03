@@ -7,7 +7,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Map voice gender to Twilio voice
+// Map voice gender to Twilio voice (using Neural voices for natural sound)
 const getTwilioVoice = (gender: string, language: string): { voice: string; language: string } => {
   const langMap: Record<string, string> = {
     'Italiano': 'it-IT',
@@ -21,16 +21,17 @@ const getTwilioVoice = (gender: string, language: string): { voice: string; lang
     'Deutsch': 'de-DE',
   };
 
+  // Neural voices are much more natural and fluent
   const voiceMap: Record<string, Record<string, string>> = {
-    'it-IT': { male: 'Polly.Giorgio', female: 'Polly.Carla', neutral: 'Polly.Giorgio' },
-    'en-US': { male: 'Polly.Matthew', female: 'Polly.Joanna', neutral: 'Polly.Matthew' },
-    'es-ES': { male: 'Polly.Enrique', female: 'Polly.Conchita', neutral: 'Polly.Enrique' },
-    'fr-FR': { male: 'Polly.Mathieu', female: 'Polly.Celine', neutral: 'Polly.Mathieu' },
-    'de-DE': { male: 'Polly.Hans', female: 'Polly.Marlene', neutral: 'Polly.Hans' },
+    'it-IT': { male: 'Polly.Adriano-Neural', female: 'Polly.Bianca-Neural', neutral: 'Polly.Adriano-Neural' },
+    'en-US': { male: 'Polly.Matthew-Neural', female: 'Polly.Joanna-Neural', neutral: 'Polly.Matthew-Neural' },
+    'es-ES': { male: 'Polly.Sergio-Neural', female: 'Polly.Lucia-Neural', neutral: 'Polly.Sergio-Neural' },
+    'fr-FR': { male: 'Polly.Remi-Neural', female: 'Polly.Lea-Neural', neutral: 'Polly.Remi-Neural' },
+    'de-DE': { male: 'Polly.Daniel-Neural', female: 'Polly.Vicki-Neural', neutral: 'Polly.Daniel-Neural' },
   };
 
   const lang = langMap[language] || 'it-IT';
-  const voice = voiceMap[lang]?.[gender] || voiceMap[lang]?.['male'] || 'Polly.Giorgio';
+  const voice = voiceMap[lang]?.[gender] || voiceMap[lang]?.['male'] || 'Polly.Adriano-Neural';
   
   return { voice, language: lang };
 };
