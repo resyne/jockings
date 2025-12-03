@@ -270,6 +270,20 @@ serve(async (req) => {
         .update({ call_status: 'in_progress' })
         .eq('id', prankId);
 
+      // Check for background sound in preset matching this prank theme
+      let backgroundSoundUrl: string | null = null;
+      const { data: presetData } = await supabase
+        .from('prank_presets')
+        .select('background_sound_url, background_sound_enabled')
+        .eq('theme', prank.prank_theme)
+        .eq('background_sound_enabled', true)
+        .single();
+      
+      if (presetData?.background_sound_url) {
+        backgroundSoundUrl = presetData.background_sound_url;
+        console.log('Background sound found:', backgroundSoundUrl);
+      }
+
       // Generate initial greeting with AI
       const systemPrompt = buildSystemPrompt(prank);
       
@@ -298,13 +312,17 @@ serve(async (req) => {
       // Generate TwiML based on voice provider
       let twiml: string;
       
+      // Background sound play element (if available)
+      const bgSoundPlay = backgroundSoundUrl ? `<Play>${backgroundSoundUrl}</Play>` : '';
+      
       if (voiceProvider === 'elevenlabs') {
         try {
           const audioUrl = await generateElevenLabsAudioUrl(greeting, elevenLabsVoiceId, elSettings);
           
-          // ElevenLabs: Use Play with audio URL
+          // ElevenLabs: Play background sound first, then voice
           twiml = `<?xml version="1.0" encoding="UTF-8"?>
           <Response>
+            ${bgSoundPlay}
             <Play>${audioUrl}</Play>
             <Gather input="speech" language="${langCode}" timeout="5" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1&amp;provider=elevenlabs">
             </Gather>
@@ -319,6 +337,7 @@ serve(async (req) => {
           // Fallback to Polly
           twiml = `<?xml version="1.0" encoding="UTF-8"?>
           <Response>
+            ${bgSoundPlay}
             <Say voice="${pollyVoice.voice}" language="${pollyVoice.language}">${escapeXml(greeting)}</Say>
             <Gather input="speech" language="${langCode}" timeout="5" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1">
             </Gather>

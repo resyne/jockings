@@ -50,3 +50,6 @@ verify_jwt = true
 
 [functions.serve-audio]
 verify_jwt = false
+
+[functions.generate-sound-effect]
+verify_jwt = true
