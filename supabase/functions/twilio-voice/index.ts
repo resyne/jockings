@@ -264,47 +264,35 @@ serve(async (req) => {
     if (action === 'start') {
       console.log('Starting prank call for:', prank.victim_first_name);
       
-      // Update status to in_progress
-      await supabase
-        .from('pranks')
-        .update({ call_status: 'in_progress' })
-        .eq('id', prankId);
-
-      // Check for background sound in preset matching this prank theme
-      let backgroundSoundUrl: string | null = null;
-      const { data: presetData } = await supabase
-        .from('prank_presets')
-        .select('background_sound_url, background_sound_enabled')
-        .eq('theme', prank.prank_theme)
-        .eq('background_sound_enabled', true)
-        .single();
-      
-      if (presetData?.background_sound_url) {
-        backgroundSoundUrl = presetData.background_sound_url;
-        console.log('Background sound found:', backgroundSoundUrl);
-      }
-
-      // Generate initial greeting with AI
+      // Run status update and AI generation in parallel for faster response
       const systemPrompt = buildSystemPrompt(prank);
       
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: 'Start the conversation with your opening line. Introduce yourself according to the scenario.' }
-          ],
-          max_tokens: 150,
-          temperature: 0.8,
-        }),
-      });
+      const [_, aiResponse] = await Promise.all([
+        // Update status (don't wait for result)
+        supabase
+          .from('pranks')
+          .update({ call_status: 'in_progress' })
+          .eq('id', prankId),
+        // Generate greeting with AI - use fastest approach
+        fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENAI_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: 'Inizia con un saluto breve (max 2 frasi). Presentati secondo lo scenario.' }
+            ],
+            max_tokens: 80, // Shorter greeting = faster TTS
+            temperature: 0.7,
+          }),
+        })
+      ]);
 
-      const aiData = await response.json();
+      const aiData = await aiResponse.json();
       const greeting = aiData.choices[0]?.message?.content || 'Pronto, buongiorno!';
       
       console.log('AI greeting:', greeting);
@@ -312,39 +300,30 @@ serve(async (req) => {
       // Generate TwiML based on voice provider
       let twiml: string;
       
-      // Background sound play element (if available)
-      const bgSoundPlay = backgroundSoundUrl ? `<Play>${backgroundSoundUrl}</Play>` : '';
-      
       if (voiceProvider === 'elevenlabs') {
         try {
           const audioUrl = await generateElevenLabsAudioUrl(greeting, elevenLabsVoiceId, elSettings);
           
-          // ElevenLabs: Play background sound first, then voice
           twiml = `<?xml version="1.0" encoding="UTF-8"?>
           <Response>
-            ${bgSoundPlay}
             <Play>${audioUrl}</Play>
-            <Gather input="speech" language="${langCode}" timeout="5" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1&amp;provider=elevenlabs">
+            <Gather input="speech" language="${langCode}" timeout="4" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1&amp;provider=elevenlabs">
             </Gather>
-            <Say voice="${pollyVoice.voice}" language="${langCode}">Pronto? Mi sente?</Say>
-            <Gather input="speech" language="${langCode}" timeout="5" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1&amp;provider=elevenlabs">
+            <Say voice="${pollyVoice.voice}" language="${langCode}">Pronto?</Say>
+            <Gather input="speech" language="${langCode}" timeout="4" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1&amp;provider=elevenlabs">
             </Gather>
-            <Say voice="${pollyVoice.voice}" language="${langCode}">Va bene, la richiamerò. Arrivederci.</Say>
             <Hangup/>
           </Response>`;
         } catch (elevenLabsError) {
           console.error('ElevenLabs error, falling back to Polly:', elevenLabsError);
-          // Fallback to Polly
           twiml = `<?xml version="1.0" encoding="UTF-8"?>
           <Response>
-            ${bgSoundPlay}
             <Say voice="${pollyVoice.voice}" language="${pollyVoice.language}">${escapeXml(greeting)}</Say>
-            <Gather input="speech" language="${langCode}" timeout="5" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1">
+            <Gather input="speech" language="${langCode}" timeout="4" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1">
             </Gather>
-            <Say voice="${pollyVoice.voice}" language="${langCode}">Pronto? Mi sente?</Say>
-            <Gather input="speech" language="${langCode}" timeout="5" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1">
+            <Say voice="${pollyVoice.voice}" language="${langCode}">Pronto?</Say>
+            <Gather input="speech" language="${langCode}" timeout="4" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1">
             </Gather>
-            <Say voice="${pollyVoice.voice}" language="${langCode}">Va bene, la richiamerò. Arrivederci.</Say>
             <Hangup/>
           </Response>`;
         }
