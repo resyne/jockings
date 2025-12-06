@@ -176,6 +176,23 @@ const AdminDashboard = () => {
               </div>
             </CardHeader>
           </Card>
+
+          <Card 
+            className="cursor-pointer hover:border-primary transition-colors"
+            onClick={() => navigate("/admin/phone-numbers")}
+          >
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-lg bg-teal-500/10">
+                  <Settings className="w-6 h-6 text-teal-500" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Numeri Twilio</CardTitle>
+                  <CardDescription>Gestisci numeri e code chiamate</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
         </div>
       </main>
     </div>

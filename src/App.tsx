@@ -14,6 +14,7 @@ import AdminVoices from "./pages/admin/AdminVoices";
 import AdminPresets from "./pages/admin/AdminPresets";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminCalls from "./pages/admin/AdminCalls";
+import AdminPhoneNumbers from "./pages/admin/AdminPhoneNumbers";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/admin/presets" element={<AdminPresets />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/calls" element={<AdminCalls />} />
+          <Route path="/admin/phone-numbers" element={<AdminPhoneNumbers />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
