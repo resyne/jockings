@@ -12,6 +12,10 @@ serve(async (req) => {
   }
 
   try {
+    // Get phoneNumberId from URL params
+    const url = new URL(req.url);
+    const phoneNumberId = url.searchParams.get('phoneNumberId');
+
     const formData = await req.formData();
     
     const callSid = formData.get('CallSid') as string;
@@ -27,7 +31,8 @@ serve(async (req) => {
       recordingUrl, 
       recordingSid,
       recordingStatus,
-      callDuration 
+      callDuration,
+      phoneNumberId
     });
 
     if (!callSid) {
@@ -38,6 +43,34 @@ serve(async (req) => {
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+
+    // Check if call is ending (completed, busy, no-answer, canceled, failed)
+    const endStatuses = ['completed', 'busy', 'no-answer', 'canceled', 'failed'];
+    const isCallEnding = callStatus && endStatuses.includes(callStatus);
+
+    // Decrement current_calls for the phone number when call ends
+    if (isCallEnding && phoneNumberId) {
+      console.log('Call ending, decrementing current_calls for phone:', phoneNumberId);
+      
+      const { data: phoneData, error: phoneError } = await supabase
+        .from('twilio_phone_numbers')
+        .select('current_calls')
+        .eq('id', phoneNumberId)
+        .single();
+
+      if (!phoneError && phoneData) {
+        const { error: updateError } = await supabase
+          .from('twilio_phone_numbers')
+          .update({ current_calls: Math.max(0, phoneData.current_calls - 1) })
+          .eq('id', phoneNumberId);
+
+        if (updateError) {
+          console.error('Error decrementing current_calls:', updateError);
+        } else {
+          console.log('Decremented current_calls for phone:', phoneNumberId);
+        }
+      }
+    }
 
     // Handle recording callback
     if (recordingStatus === 'completed' && recordingUrl) {
