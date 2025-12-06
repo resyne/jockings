@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      call_queue: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          phone_number_id: string | null
+          position: number | null
+          prank_id: string
+          scheduled_for: string | null
+          started_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          phone_number_id?: string | null
+          position?: number | null
+          prank_id: string
+          scheduled_for?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          phone_number_id?: string | null
+          position?: number | null
+          prank_id?: string
+          scheduled_for?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_queue_phone_number_id_fkey"
+            columns: ["phone_number_id"]
+            isOneToOne: false
+            referencedRelation: "twilio_phone_numbers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_queue_prank_id_fkey"
+            columns: ["prank_id"]
+            isOneToOne: false
+            referencedRelation: "pranks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prank_presets: {
         Row: {
           background_sound_enabled: boolean | null
@@ -164,6 +218,45 @@ export type Database = {
           updated_at?: string
           user_id?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      twilio_phone_numbers: {
+        Row: {
+          country_code: string
+          country_name: string
+          created_at: string
+          current_calls: number | null
+          friendly_name: string | null
+          id: string
+          is_active: boolean | null
+          max_concurrent_calls: number | null
+          phone_number: string
+          updated_at: string
+        }
+        Insert: {
+          country_code: string
+          country_name: string
+          created_at?: string
+          current_calls?: number | null
+          friendly_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_concurrent_calls?: number | null
+          phone_number: string
+          updated_at?: string
+        }
+        Update: {
+          country_code?: string
+          country_name?: string
+          created_at?: string
+          current_calls?: number | null
+          friendly_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_concurrent_calls?: number | null
+          phone_number?: string
+          updated_at?: string
         }
         Relationships: []
       }
