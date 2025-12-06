@@ -1,0 +1,2 @@
+INSERT INTO public.twilio_phone_numbers (phone_number, country_code, country_name, friendly_name, is_active, max_concurrent_calls)
+VALUES ('+19803501100', 'US', 'Stati Uniti', 'Numero principale', true, 1);
