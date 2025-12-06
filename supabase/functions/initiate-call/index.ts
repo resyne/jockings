@@ -6,6 +6,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Map language to preferred country codes
+const LANGUAGE_TO_COUNTRY_PRIORITY: Record<string, string[]> = {
+  'Italiano': ['IT', 'CH', 'AT'], // Italian prefers Italian numbers, then Swiss, Austrian
+  'English': ['US', 'GB', 'CA'],  // English prefers US, then UK, Canadian
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -20,11 +26,11 @@ serve(async (req) => {
 
     const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
     const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
-    const TWILIO_PHONE_NUMBER = Deno.env.get('TWILIO_PHONE_NUMBER');
+    const TWILIO_PHONE_NUMBER_FALLBACK = Deno.env.get('TWILIO_PHONE_NUMBER'); // Fallback
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
+    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
       throw new Error('Twilio credentials not configured');
     }
 
@@ -41,11 +47,85 @@ serve(async (req) => {
       throw new Error('Prank not found');
     }
 
-    console.log('Initiating call for prank:', prank.id, 'to:', prank.victim_phone);
+    console.log('Initiating call for prank:', prank.id, 'to:', prank.victim_phone, 'language:', prank.language);
+
+    // Get available phone numbers from database
+    const { data: phoneNumbers, error: phoneError } = await supabase
+      .from('twilio_phone_numbers')
+      .select('*')
+      .eq('is_active', true);
+
+    if (phoneError) {
+      console.error('Error fetching phone numbers:', phoneError);
+    }
+
+    // Select the best phone number based on language
+    let selectedPhoneNumber = TWILIO_PHONE_NUMBER_FALLBACK;
+    let selectedPhoneId: string | null = null;
+
+    if (phoneNumbers && phoneNumbers.length > 0) {
+      const preferredCountries = LANGUAGE_TO_COUNTRY_PRIORITY[prank.language] || ['US', 'GB'];
+      
+      console.log('Available phone numbers:', phoneNumbers.length);
+      console.log('Preferred countries for language', prank.language, ':', preferredCountries);
+
+      // Find a number that matches preferred countries and has capacity
+      let bestMatch = null;
+      
+      for (const countryCode of preferredCountries) {
+        const matchingNumbers = phoneNumbers.filter(
+          p => p.country_code === countryCode && p.current_calls < p.max_concurrent_calls
+        );
+        
+        if (matchingNumbers.length > 0) {
+          // Pick the one with the least current calls
+          bestMatch = matchingNumbers.reduce((a, b) => 
+            a.current_calls < b.current_calls ? a : b
+          );
+          break;
+        }
+      }
+
+      // If no preferred match, pick any available number with capacity
+      if (!bestMatch) {
+        const availableNumbers = phoneNumbers.filter(
+          p => p.current_calls < p.max_concurrent_calls
+        );
+        if (availableNumbers.length > 0) {
+          bestMatch = availableNumbers.reduce((a, b) => 
+            a.current_calls < b.current_calls ? a : b
+          );
+        }
+      }
+
+      if (bestMatch) {
+        selectedPhoneNumber = bestMatch.phone_number;
+        selectedPhoneId = bestMatch.id;
+        console.log('Selected phone number:', selectedPhoneNumber, 'from country:', bestMatch.country_name);
+
+        // Increment current_calls for the selected number
+        const { error: updatePhoneError } = await supabase
+          .from('twilio_phone_numbers')
+          .update({ current_calls: bestMatch.current_calls + 1 })
+          .eq('id', bestMatch.id);
+
+        if (updatePhoneError) {
+          console.error('Error updating phone number current_calls:', updatePhoneError);
+        }
+      } else {
+        console.log('No available numbers with capacity, using fallback:', TWILIO_PHONE_NUMBER_FALLBACK);
+      }
+    } else {
+      console.log('No phone numbers in database, using fallback:', TWILIO_PHONE_NUMBER_FALLBACK);
+    }
+
+    if (!selectedPhoneNumber) {
+      throw new Error('No phone number available for calls');
+    }
 
     // Build webhook URL with prank data
     const webhookUrl = `${SUPABASE_URL}/functions/v1/twilio-voice?prankId=${prankId}`;
-    const statusCallbackUrl = `${SUPABASE_URL}/functions/v1/twilio-status`;
+    const statusCallbackUrl = `${SUPABASE_URL}/functions/v1/twilio-status?phoneNumberId=${selectedPhoneId || ''}`;
 
     // Initiate Twilio call
     const twilioResponse = await fetch(
@@ -58,7 +138,7 @@ serve(async (req) => {
         },
         body: new URLSearchParams({
           To: prank.victim_phone,
-          From: TWILIO_PHONE_NUMBER,
+          From: selectedPhoneNumber,
           Url: webhookUrl,
           StatusCallback: statusCallbackUrl,
           StatusCallbackEvent: 'initiated ringing answered completed',
@@ -76,10 +156,27 @@ serve(async (req) => {
     
     if (!twilioResponse.ok) {
       console.error('Twilio error:', twilioData);
+      
+      // If call failed and we incremented the counter, decrement it back
+      if (selectedPhoneId) {
+        const { data: phoneData } = await supabase
+          .from('twilio_phone_numbers')
+          .select('current_calls')
+          .eq('id', selectedPhoneId)
+          .single();
+        
+        if (phoneData) {
+          await supabase
+            .from('twilio_phone_numbers')
+            .update({ current_calls: Math.max(0, phoneData.current_calls - 1) })
+            .eq('id', selectedPhoneId);
+        }
+      }
+      
       throw new Error(twilioData.message || 'Failed to initiate call');
     }
 
-    console.log('Twilio call initiated:', twilioData.sid);
+    console.log('Twilio call initiated:', twilioData.sid, 'from:', selectedPhoneNumber);
 
     // Update prank with call SID
     const { error: updateError } = await supabase
@@ -97,7 +194,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, callSid: twilioData.sid }),
+      JSON.stringify({ success: true, callSid: twilioData.sid, fromNumber: selectedPhoneNumber }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
