@@ -62,6 +62,7 @@ serve(async (req) => {
     // Select the best phone number based on language
     let selectedPhoneNumber = TWILIO_PHONE_NUMBER_FALLBACK;
     let selectedPhoneId: string | null = null;
+    let useAnonymousCallerId = false;
 
     if (phoneNumbers && phoneNumbers.length > 0) {
       const preferredCountries = LANGUAGE_TO_COUNTRY_PRIORITY[prank.language] || ['US', 'GB'];
@@ -101,7 +102,8 @@ serve(async (req) => {
       if (bestMatch) {
         selectedPhoneNumber = bestMatch.phone_number;
         selectedPhoneId = bestMatch.id;
-        console.log('Selected phone number:', selectedPhoneNumber, 'from country:', bestMatch.country_name);
+        useAnonymousCallerId = bestMatch.caller_id_anonymous || false;
+        console.log('Selected phone number:', selectedPhoneNumber, 'from country:', bestMatch.country_name, 'anonymous:', useAnonymousCallerId);
 
         // Increment current_calls for the selected number
         const { error: updatePhoneError } = await supabase
@@ -127,6 +129,27 @@ serve(async (req) => {
     const webhookUrl = `${SUPABASE_URL}/functions/v1/twilio-voice?prankId=${prankId}`;
     const statusCallbackUrl = `${SUPABASE_URL}/functions/v1/twilio-status?phoneNumberId=${selectedPhoneId || ''}`;
 
+    // Build call parameters
+    const callParams: Record<string, string> = {
+      To: prank.victim_phone,
+      From: selectedPhoneNumber,
+      Url: webhookUrl,
+      StatusCallback: statusCallbackUrl,
+      StatusCallbackEvent: 'initiated ringing answered completed',
+      StatusCallbackMethod: 'POST',
+      Record: 'true',
+      RecordingStatusCallback: statusCallbackUrl,
+      RecordingStatusCallbackEvent: 'completed',
+      RecordingStatusCallbackMethod: 'POST',
+      Timeout: '30',
+    };
+
+    // If anonymous caller ID is enabled, set CallerId to hide the number
+    if (useAnonymousCallerId) {
+      callParams.CallerId = '';
+      console.log('Using anonymous caller ID');
+    }
+
     // Initiate Twilio call
     const twilioResponse = await fetch(
       `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Calls.json`,
@@ -136,19 +159,7 @@ serve(async (req) => {
           'Authorization': 'Basic ' + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`),
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: new URLSearchParams({
-          To: prank.victim_phone,
-          From: selectedPhoneNumber,
-          Url: webhookUrl,
-          StatusCallback: statusCallbackUrl,
-          StatusCallbackEvent: 'initiated ringing answered completed',
-          StatusCallbackMethod: 'POST',
-          Record: 'true',
-          RecordingStatusCallback: statusCallbackUrl,
-          RecordingStatusCallbackEvent: 'completed',
-          RecordingStatusCallbackMethod: 'POST',
-          Timeout: '30',
-        }).toString(),
+        body: new URLSearchParams(callParams).toString(),
       }
     );
 
