@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Trash2, Phone, Globe, Users } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Phone, Globe, Users, EyeOff } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -35,6 +35,7 @@ interface PhoneNumber {
   is_active: boolean;
   max_concurrent_calls: number;
   current_calls: number;
+  caller_id_anonymous: boolean;
   created_at: string;
 }
 
@@ -172,6 +173,25 @@ const AdminPhoneNumbers = () => {
       toast.success(`Numero ${!currentState ? "attivato" : "disattivato"}`);
     } catch (error) {
       console.error("Error toggling phone number:", error);
+      toast.error("Errore nell'aggiornamento");
+    }
+  };
+
+  const handleToggleAnonymous = async (id: string, currentState: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("twilio_phone_numbers")
+        .update({ caller_id_anonymous: !currentState })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setPhoneNumbers(prev => 
+        prev.map(p => p.id === id ? { ...p, caller_id_anonymous: !currentState } : p)
+      );
+      toast.success(`Caller ID ${!currentState ? "anonimo" : "visibile"}`);
+    } catch (error) {
+      console.error("Error toggling anonymous:", error);
       toast.error("Errore nell'aggiornamento");
     }
   };
@@ -340,6 +360,7 @@ const AdminPhoneNumbers = () => {
                     <TableHead>Nome</TableHead>
                     <TableHead className="text-center">Max Chiamate</TableHead>
                     <TableHead className="text-center">In Corso</TableHead>
+                    <TableHead className="text-center">Anonimo</TableHead>
                     <TableHead className="text-center">Attivo</TableHead>
                     <TableHead className="text-right">Azioni</TableHead>
                   </TableRow>
@@ -371,6 +392,12 @@ const AdminPhoneNumbers = () => {
                         }`}>
                           {phone.current_calls}
                         </span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Switch
+                          checked={phone.caller_id_anonymous}
+                          onCheckedChange={() => handleToggleAnonymous(phone.id, phone.caller_id_anonymous)}
+                        />
                       </TableCell>
                       <TableCell className="text-center">
                         <Switch

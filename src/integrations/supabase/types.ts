@@ -223,6 +223,7 @@ export type Database = {
       }
       twilio_phone_numbers: {
         Row: {
+          caller_id_anonymous: boolean | null
           country_code: string
           country_name: string
           created_at: string
@@ -235,6 +236,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          caller_id_anonymous?: boolean | null
           country_code: string
           country_name: string
           created_at?: string
@@ -247,6 +249,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          caller_id_anonymous?: boolean | null
           country_code?: string
           country_name?: string
           created_at?: string
