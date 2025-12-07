@@ -144,10 +144,10 @@ serve(async (req) => {
       Timeout: '30',
     };
 
-    // If anonymous caller ID is enabled, set CallerId to hide the number
+    // Note: Anonymous caller ID is not supported via API parameter in most countries
+    // It must be configured directly in Twilio Console for each phone number
     if (useAnonymousCallerId) {
-      callParams.CallerId = '';
-      console.log('Using anonymous caller ID');
+      console.log('Anonymous caller ID requested - requires Twilio Console configuration for number:', selectedPhoneNumber);
     }
 
     // Initiate Twilio call
