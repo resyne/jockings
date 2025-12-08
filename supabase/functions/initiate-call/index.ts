@@ -293,6 +293,14 @@ serve(async (req) => {
     });
 
     const aiData = await aiResponse.json();
+    console.log('AI response status:', aiResponse.status);
+    console.log('AI response data:', JSON.stringify(aiData));
+    
+    if (!aiData.choices || !aiData.choices[0]) {
+      console.error('Invalid AI response - no choices:', aiData);
+      throw new Error(`AI API error: ${aiData.error?.message || 'No choices in response'}`);
+    }
+    
     const greeting = aiData.choices[0]?.message?.content || 'Pronto, buongiorno!';
     console.log('AI greeting:', greeting);
 
