@@ -39,6 +39,11 @@ const AI_MODELS = [
   { value: "openai/gpt-5-mini", label: "OpenAI GPT-5 Mini", description: "Più potente, più lento" },
 ];
 
+const CALL_PROVIDERS = [
+  { value: "twilio", label: "Twilio + ElevenLabs", description: "Sistema attuale (Twilio Voice + AI text + ElevenLabs TTS)" },
+  { value: "vapi", label: "VAPI", description: "🧪 Sperimentale - Voice AI nativo con VAPI" },
+];
+
 const AdminVoices = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -56,6 +61,8 @@ const AdminVoices = () => {
   const [aiModel, setAiModel] = useState("openai/gpt-4o-mini");
   const [savingAiModel, setSavingAiModel] = useState(false);
   const [voiceTestOpen, setVoiceTestOpen] = useState(false);
+  const [callProvider, setCallProvider] = useState("twilio");
+  const [savingCallProvider, setSavingCallProvider] = useState(false);
 
   useEffect(() => {
     if (!loading && !isAdmin) {
@@ -67,6 +74,7 @@ const AdminVoices = () => {
     if (isAdmin) {
       fetchVoiceSettings();
       fetchAiModel();
+      fetchCallProvider();
     }
   }, [isAdmin]);
 
@@ -79,6 +87,18 @@ const AdminVoices = () => {
     
     if (!error && data) {
       setAiModel(data.value);
+    }
+  };
+
+  const fetchCallProvider = async () => {
+    const { data, error } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "call_provider")
+      .single();
+    
+    if (!error && data) {
+      setCallProvider(data.value);
     }
   };
 
@@ -96,6 +116,37 @@ const AdminVoices = () => {
       toast({ title: "Errore", description: error.message, variant: "destructive" });
     } finally {
       setSavingAiModel(false);
+    }
+  };
+
+  const handleSaveCallProvider = async () => {
+    setSavingCallProvider(true);
+    try {
+      // Try update first, then upsert if not exists
+      const { data: existing } = await supabase
+        .from("app_settings")
+        .select("id")
+        .eq("key", "call_provider")
+        .single();
+
+      if (existing) {
+        const { error } = await supabase
+          .from("app_settings")
+          .update({ value: callProvider })
+          .eq("key", "call_provider");
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("app_settings")
+          .insert({ key: "call_provider", value: callProvider, description: "Call provider: twilio or vapi" });
+        if (error) throw error;
+      }
+      
+      toast({ title: "Salvato!", description: `Provider chiamate: ${callProvider.toUpperCase()}` });
+    } catch (error: any) {
+      toast({ title: "Errore", description: error.message, variant: "destructive" });
+    } finally {
+      setSavingCallProvider(false);
     }
   };
 
@@ -330,6 +381,52 @@ const AdminVoices = () => {
                 <>
                   <Save className="w-4 h-4 mr-2" />
                   Salva Modello AI
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Call Provider Configuration */}
+        <Card className="border-yellow-500/50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Phone className="w-5 h-5 text-yellow-500" />
+              Provider Chiamate (Test)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Seleziona il provider per le chiamate</Label>
+              <Select value={callProvider} onValueChange={setCallProvider}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CALL_PROVIDERS.map((provider) => (
+                    <SelectItem key={provider.value} value={provider.value}>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{provider.label}</span>
+                        <span className="text-xs text-muted-foreground">{provider.description}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-yellow-500">
+                ⚠️ VAPI è sperimentale. Selezionalo solo per test.
+              </p>
+            </div>
+            <Button onClick={handleSaveCallProvider} disabled={savingCallProvider} className="w-full" variant={callProvider === "vapi" ? "destructive" : "default"}>
+              {savingCallProvider ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Salva Provider ({callProvider.toUpperCase()})
                 </>
               )}
             </Button>
