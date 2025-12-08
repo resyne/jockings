@@ -59,20 +59,49 @@ serve(async (req) => {
       console.error('Error fetching phone numbers:', phoneError);
     }
 
-    // Get default verified caller ID
-    const { data: verifiedCallerIds, error: callerIdError } = await supabase
+    // Get all active verified caller IDs, ordered by is_default (default first)
+    const { data: allVerifiedCallerIds, error: callerIdError } = await supabase
       .from('verified_caller_ids')
       .select('*')
       .eq('is_active', true)
-      .eq('is_default', true)
-      .maybeSingle();
+      .order('is_default', { ascending: false });
 
     if (callerIdError) {
       console.error('Error fetching verified caller IDs:', callerIdError);
     }
 
-    const defaultCallerId = verifiedCallerIds?.phone_number;
-    console.log('Default verified caller ID:', defaultCallerId || 'not set');
+    // Select the best caller ID (default first, then any with capacity)
+    let selectedCallerId: string | null = null;
+    let selectedCallerIdRecord: { id: string; phone_number: string; current_calls: number } | null = null;
+
+    if (allVerifiedCallerIds && allVerifiedCallerIds.length > 0) {
+      console.log('Available verified caller IDs:', allVerifiedCallerIds.length);
+      
+      // Find caller ID with capacity (current_calls < max_concurrent_calls)
+      const availableCallerId = allVerifiedCallerIds.find(
+        c => c.current_calls < c.max_concurrent_calls
+      );
+
+      if (availableCallerId) {
+        selectedCallerId = availableCallerId.phone_number;
+        selectedCallerIdRecord = availableCallerId;
+        console.log('Selected caller ID:', selectedCallerId, 'is_default:', availableCallerId.is_default, 'current_calls:', availableCallerId.current_calls);
+
+        // Increment current_calls for the selected caller ID
+        const { error: updateCallerIdError } = await supabase
+          .from('verified_caller_ids')
+          .update({ current_calls: availableCallerId.current_calls + 1 })
+          .eq('id', availableCallerId.id);
+
+        if (updateCallerIdError) {
+          console.error('Error updating caller ID current_calls:', updateCallerIdError);
+        }
+      } else {
+        console.log('No caller IDs with available capacity');
+      }
+    } else {
+      console.log('No verified caller IDs configured');
+    }
 
     // Select the best phone number based on language
     let selectedPhoneNumber = TWILIO_PHONE_NUMBER_FALLBACK;
@@ -139,12 +168,13 @@ serve(async (req) => {
     }
 
     // Use verified caller ID if available, otherwise use the phone number
-    const callerIdToUse = defaultCallerId || selectedPhoneNumber;
+    const callerIdToUse = selectedCallerId || selectedPhoneNumber;
     console.log('Using caller ID:', callerIdToUse);
 
     // Build webhook URL with prank data
     const webhookUrl = `${SUPABASE_URL}/functions/v1/twilio-voice?prankId=${prankId}`;
-    const statusCallbackUrl = `${SUPABASE_URL}/functions/v1/twilio-status?phoneNumberId=${selectedPhoneId || ''}`;
+    const callerIdParam = selectedCallerIdRecord ? `&callerIdId=${selectedCallerIdRecord.id}` : '';
+    const statusCallbackUrl = `${SUPABASE_URL}/functions/v1/twilio-status?phoneNumberId=${selectedPhoneId || ''}${callerIdParam}`;
 
     // Build call parameters
     const callParams: Record<string, string> = {
