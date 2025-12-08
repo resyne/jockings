@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Mic, Save, Plus, Trash2, Shield, Play, Volume2, Loader2, Music } from "lucide-react";
+import { ArrowLeft, Mic, Save, Plus, Trash2, Shield, Play, Volume2, Loader2, Music, Brain } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
@@ -31,6 +31,13 @@ const LANGUAGES = ["Italiano", "English"];
 
 const GENDERS = ["male", "female"];
 
+const AI_MODELS = [
+  { value: "openai/gpt-4o-mini", label: "OpenAI GPT-4o Mini", description: "Veloce, economico (attuale)" },
+  { value: "google/gemini-2.5-flash", label: "Google Gemini 2.5 Flash", description: "Molto veloce, Lovable AI" },
+  { value: "google/gemini-2.5-flash-lite", label: "Google Gemini 2.5 Flash Lite", description: "Velocissimo, economico" },
+  { value: "openai/gpt-5-mini", label: "OpenAI GPT-5 Mini", description: "Più potente, più lento" },
+];
+
 const AdminVoices = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -45,6 +52,8 @@ const AdminVoices = () => {
   const [soundPrompt, setSoundPrompt] = useState("");
   const [generatingSound, setGeneratingSound] = useState(false);
   const [soundPreviewUrl, setSoundPreviewUrl] = useState<string | null>(null);
+  const [aiModel, setAiModel] = useState("openai/gpt-4o-mini");
+  const [savingAiModel, setSavingAiModel] = useState(false);
 
   useEffect(() => {
     if (!loading && !isAdmin) {
@@ -55,8 +64,38 @@ const AdminVoices = () => {
   useEffect(() => {
     if (isAdmin) {
       fetchVoiceSettings();
+      fetchAiModel();
     }
   }, [isAdmin]);
+
+  const fetchAiModel = async () => {
+    const { data, error } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "ai_model")
+      .single();
+    
+    if (!error && data) {
+      setAiModel(data.value);
+    }
+  };
+
+  const handleSaveAiModel = async () => {
+    setSavingAiModel(true);
+    try {
+      const { error } = await supabase
+        .from("app_settings")
+        .update({ value: aiModel })
+        .eq("key", "ai_model");
+
+      if (error) throw error;
+      toast({ title: "Salvato!", description: "Modello AI aggiornato" });
+    } catch (error: any) {
+      toast({ title: "Errore", description: error.message, variant: "destructive" });
+    } finally {
+      setSavingAiModel(false);
+    }
+  };
 
   const fetchVoiceSettings = async () => {
     const { data, error } = await supabase
@@ -246,7 +285,53 @@ const AdminVoices = () => {
         </div>
       </header>
 
-      <main className="px-4 py-6 max-w-4xl mx-auto">
+      <main className="px-4 py-6 max-w-4xl mx-auto space-y-6">
+        {/* AI Model Configuration */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Brain className="w-5 h-5 text-purple-500" />
+              Modello AI per Risposte
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Seleziona il modello AI</Label>
+              <Select value={aiModel} onValueChange={setAiModel}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {AI_MODELS.map((model) => (
+                    <SelectItem key={model.value} value={model.value}>
+                      <div className="flex flex-col">
+                        <span>{model.label}</span>
+                        <span className="text-xs text-muted-foreground">{model.description}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Questo modello genera il testo delle risposte AI. ElevenLabs viene sempre usato per la voce.
+              </p>
+            </div>
+            <Button onClick={handleSaveAiModel} disabled={savingAiModel} className="w-full">
+              {savingAiModel ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Salva Modello AI
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* List */}
           <div className="space-y-3">
