@@ -432,22 +432,26 @@ serve(async (req) => {
           .single()
       ]);
       
-      const aiModel = aiModelResult.data?.value || 'openai/gpt-4o-mini';
-      const useOpenAI = aiModel.startsWith('openai/') && !aiModel.includes('gpt-5');
+      const aiModel = aiModelResult.data?.value || 'google/gemini-2.5-flash';
       const conversationHistory = (historyResult.data?.conversation_history as any[]) || [];
       
+      // Determine if we should use Lovable AI gateway
+      // Lovable AI supports google/* and openai/gpt-5* models
+      const isLovableAI = aiModel.startsWith('google/') || aiModel.startsWith('openai/gpt-5');
+      
+      console.log('Using AI model:', aiModel, 'isLovableAI:', isLovableAI);
       console.log('Conversation history length:', conversationHistory.length);
       
       // Generate AI response with full conversation context
       const systemPrompt = buildSystemPrompt(prank);
       
-      const apiUrl = useOpenAI 
-        ? 'https://api.openai.com/v1/chat/completions'
-        : 'https://ai.gateway.lovable.dev/v1/chat/completions';
-      const apiKey = useOpenAI 
-        ? OPENAI_API_KEY 
-        : Deno.env.get('LOVABLE_API_KEY');
-      const modelName = useOpenAI ? 'gpt-4o-mini' : aiModel;
+      const apiUrl = isLovableAI 
+        ? 'https://ai.gateway.lovable.dev/v1/chat/completions'
+        : 'https://api.openai.com/v1/chat/completions';
+      const apiKey = isLovableAI 
+        ? Deno.env.get('LOVABLE_API_KEY') 
+        : OPENAI_API_KEY;
+      const modelName = aiModel;
       
       // Build messages with full conversation history
       const messages = [
