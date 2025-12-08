@@ -144,7 +144,9 @@ const generateElevenLabsAudioUrl = async (
   text: string, 
   voiceId: string, 
   settings: ElevenLabsSettings,
-  supabaseUrl: string
+  supabaseUrl: string,
+  modelId: string = 'eleven_turbo_v2_5',
+  useSpeakerBoost: boolean = false
 ): Promise<string> => {
   const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY');
   
@@ -152,7 +154,7 @@ const generateElevenLabsAudioUrl = async (
     throw new Error('ELEVENLABS_API_KEY not configured');
   }
 
-  console.log('Generating ElevenLabs audio for text:', text.substring(0, 50) + '...');
+  console.log('Generating ElevenLabs audio - Model:', modelId, 'SpeakerBoost:', useSpeakerBoost);
 
   const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
     method: 'POST',
@@ -162,12 +164,12 @@ const generateElevenLabsAudioUrl = async (
     },
     body: JSON.stringify({
       text,
-      model_id: 'eleven_turbo_v2_5',
+      model_id: modelId,
       voice_settings: {
         stability: settings.stability,
         similarity_boost: settings.similarity_boost,
         style: settings.style,
-        use_speaker_boost: false,
+        use_speaker_boost: useSpeakerBoost,
       },
       output_format: 'mp3_22050_32',
     }),
@@ -234,16 +236,18 @@ serve(async (req) => {
     console.log('=== PRE-GENERATING AUDIO BEFORE CALL ===');
 
     // Run all initial queries in parallel
-    const [prankResult, phoneNumbersResult, callerIdsResult, aiModelResult] = await Promise.all([
+    const [prankResult, phoneNumbersResult, callerIdsResult, aiModelResult, globalVoiceSettingsResult] = await Promise.all([
       supabase.from('pranks').select('*').eq('id', prankId).single(),
       supabase.from('twilio_phone_numbers').select('*').eq('is_active', true),
       supabase.from('verified_caller_ids').select('*').eq('is_active', true).order('is_default', { ascending: false }),
-      supabase.from('app_settings').select('value').eq('key', 'ai_model').single()
+      supabase.from('app_settings').select('value').eq('key', 'ai_model').single(),
+      supabase.from('app_settings').select('key, value').in('key', ['elevenlabs_stability', 'elevenlabs_similarity', 'elevenlabs_style', 'elevenlabs_speed', 'elevenlabs_speaker_boost', 'elevenlabs_model'])
     ]);
 
     const { data: prank, error: prankError } = prankResult;
     const { data: phoneNumbers, error: phoneError } = phoneNumbersResult;
     const { data: allVerifiedCallerIds, error: callerIdError } = callerIdsResult;
+    const globalVoiceSettings = globalVoiceSettingsResult.data || [];
 
     if (prankError || !prank) {
       throw new Error('Prank not found');
@@ -254,7 +258,13 @@ serve(async (req) => {
 
     console.log('Prank:', prank.id, 'Theme:', prank.prank_theme);
 
-    // Get AI model and voice settings
+    // Parse global voice settings
+    const globalSettings: Record<string, string> = {};
+    globalVoiceSettings.forEach((s: { key: string; value: string }) => {
+      globalSettings[s.key] = s.value;
+    });
+
+    // Get AI model and voice settings - USE GLOBAL SETTINGS
     const aiModel = aiModelResult.data?.value || 'google/gemini-2.5-flash-lite';
     const useOpenAI = aiModel.startsWith('openai/') && !aiModel.includes('gpt-5');
     const apiUrl = useOpenAI ? 'https://api.openai.com/v1/chat/completions' : 'https://ai.gateway.lovable.dev/v1/chat/completions';
@@ -264,12 +274,18 @@ serve(async (req) => {
     const customVoiceId = prank.elevenlabs_voice_id;
     const elevenLabsVoiceId = customVoiceId || getElevenLabsDefaultVoice(prank.voice_gender, prank.language);
     
+    // Use GLOBAL settings from app_settings (unified setup)
     const elSettings: ElevenLabsSettings = {
-      stability: prank.elevenlabs_stability ?? 0.5,
-      similarity_boost: prank.elevenlabs_similarity ?? 0.75,
-      style: prank.elevenlabs_style ?? 0,
-      speed: prank.elevenlabs_speed ?? 1.0,
+      stability: parseFloat(globalSettings['elevenlabs_stability']) || 0.5,
+      similarity_boost: parseFloat(globalSettings['elevenlabs_similarity']) || 0.75,
+      style: parseFloat(globalSettings['elevenlabs_style']) || 0,
+      speed: parseFloat(globalSettings['elevenlabs_speed']) || 1.0,
     };
+    
+    const elevenlabsModel = globalSettings['elevenlabs_model'] || 'eleven_turbo_v2_5';
+    const useSpeakerBoost = globalSettings['elevenlabs_speaker_boost'] === 'true';
+    
+    console.log('Using GLOBAL ElevenLabs settings:', elSettings, 'Model:', elevenlabsModel, 'SpeakerBoost:', useSpeakerBoost);
 
     // === STEP 1: Generate greeting text ===
     console.log('Step 1: Generating AI greeting...');
@@ -304,9 +320,9 @@ serve(async (req) => {
     const greeting = aiData.choices[0]?.message?.content || 'Pronto, buongiorno!';
     console.log('AI greeting:', greeting);
 
-    // === STEP 2: Generate greeting audio ===
+    // === STEP 2: Generate greeting audio with GLOBAL settings ===
     console.log('Step 2: Generating audio...');
-    const greetingUrl = await generateElevenLabsAudioUrl(greeting, elevenLabsVoiceId, elSettings, SUPABASE_URL);
+    const greetingUrl = await generateElevenLabsAudioUrl(greeting, elevenLabsVoiceId, elSettings, SUPABASE_URL, elevenlabsModel, useSpeakerBoost);
     console.log('Greeting URL:', greetingUrl);
 
     // === STEP 3: Save pre-generated URL to database ===
