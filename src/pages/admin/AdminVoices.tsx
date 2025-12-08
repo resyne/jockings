@@ -981,33 +981,18 @@ const AdminVoices = () => {
                         Messaggio che l'AI dirà quando termina la durata massima
                       </p>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Timeout Silenzio: {vapiSettings.silenceTimeoutSeconds}s</Label>
-                        <Slider
-                          value={[vapiSettings.silenceTimeoutSeconds]}
-                          onValueChange={([v]) => setVapiSettings({ ...vapiSettings, silenceTimeoutSeconds: v })}
-                          min={10}
-                          max={120}
-                          step={5}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Termina la chiamata dopo questo tempo di silenzio
-                        </p>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Durata Massima: {Math.floor(vapiSettings.maxDurationSeconds / 60)}m</Label>
-                        <Slider
-                          value={[vapiSettings.maxDurationSeconds]}
-                          onValueChange={([v]) => setVapiSettings({ ...vapiSettings, maxDurationSeconds: v })}
-                          min={60}
-                          max={600}
-                          step={30}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Durata massima della chiamata
-                        </p>
-                      </div>
+                    <div className="space-y-2">
+                      <Label>Timeout Silenzio: {vapiSettings.silenceTimeoutSeconds}s</Label>
+                      <Slider
+                        value={[vapiSettings.silenceTimeoutSeconds]}
+                        onValueChange={([v]) => setVapiSettings({ ...vapiSettings, silenceTimeoutSeconds: v })}
+                        min={10}
+                        max={120}
+                        step={5}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Termina la chiamata dopo questo tempo di silenzio
+                      </p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
