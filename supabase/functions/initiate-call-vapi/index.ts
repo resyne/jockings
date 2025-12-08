@@ -136,8 +136,8 @@ serve(async (req) => {
 
     console.log('=== VAPI TRANSIENT ASSISTANT CALL ===');
 
-    // Fetch prank and VAPI settings in parallel
-    const [prankResult, settingsResult] = await Promise.all([
+    // Fetch prank, VAPI settings, and voice presets in parallel
+    const [prankResult, settingsResult, presetsResult] = await Promise.all([
       supabase.from('pranks').select('*').eq('id', prankId).single(),
       supabase.from('app_settings').select('key, value').in('key', [
         'vapi_phone_number_id', 
@@ -154,7 +154,8 @@ serve(async (req) => {
         'vapi_background_sound',
         'vapi_backchanneling',
         'vapi_end_call_message',
-      ])
+      ]),
+      supabase.from('app_settings').select('value').eq('key', 'vapi_voice_presets').single()
     ]);
 
     const { data: prank, error: prankError } = prankResult;
@@ -204,16 +205,36 @@ serve(async (req) => {
     const transcriberLanguage = prank.language === 'Italiano' ? 'it' : 'en';
     const endCallMessage = prank.language === 'Italiano' ? 'Arrivederci!' : 'Goodbye!';
 
-    // Get voice ID - prioritize prank-specific voice, then admin settings
+    // Get voice settings - prioritize saved presets by language/gender
     let voiceId = settings['vapi_voice_id'];
-    if (prank.elevenlabs_voice_id) {
+    let voiceProvider = settings['vapi_voice_provider'];
+    
+    // Check for matching voice preset based on prank language and gender
+    const voicePresets = presetsResult.data?.value ? JSON.parse(presetsResult.data.value) : [];
+    const prankLanguage = prank.language === 'Italiano' ? 'Italiano' : 'English';
+    const prankGender = prank.voice_gender;
+    
+    const matchingPreset = voicePresets.find((preset: any) => 
+      preset.language === prankLanguage && preset.gender === prankGender
+    );
+    
+    if (matchingPreset) {
+      // Use the preset voice settings
+      voiceId = matchingPreset.voiceId;
+      voiceProvider = matchingPreset.voiceProvider;
+      console.log('=== USING VOICE PRESET ===');
+      console.log('Preset Label:', matchingPreset.label);
+      console.log('Preset Voice ID:', voiceId);
+      console.log('Preset Provider:', voiceProvider);
+    } else if (prank.elevenlabs_voice_id) {
+      // Fallback to prank-specific voice
       voiceId = prank.elevenlabs_voice_id;
     } else if (settings['vapi_voice_id'] === 'custom' && settings['vapi_custom_voice_id']) {
+      // Fallback to custom voice from admin settings
       voiceId = settings['vapi_custom_voice_id'];
     }
 
     // Map voice provider to VAPI format
-    let voiceProvider = settings['vapi_voice_provider'];
     if (voiceProvider === 'elevenlabs') {
       voiceProvider = '11labs'; // VAPI uses "11labs"
     }
