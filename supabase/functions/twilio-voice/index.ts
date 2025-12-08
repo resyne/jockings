@@ -290,8 +290,31 @@ serve(async (req) => {
     if (action === 'start') {
       console.log('Starting prank call for:', prank.victim_first_name);
       
+      // Fetch AI model setting from database
+      const { data: aiModelSetting } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'ai_model')
+        .single();
+      
+      const aiModel = aiModelSetting?.value || 'openai/gpt-4o-mini';
+      const useOpenAI = aiModel.startsWith('openai/') && !aiModel.includes('gpt-5');
+      
+      console.log('Using AI model:', aiModel, 'useOpenAI:', useOpenAI);
+      
       // Run all operations in parallel for faster response
       const systemPrompt = buildSystemPrompt(prank);
+      
+      // Determine API endpoint and key based on model
+      const apiUrl = useOpenAI 
+        ? 'https://api.openai.com/v1/chat/completions'
+        : 'https://ai.gateway.lovable.dev/v1/chat/completions';
+      const apiKey = useOpenAI 
+        ? OPENAI_API_KEY 
+        : Deno.env.get('LOVABLE_API_KEY');
+      
+      // Map model names for OpenAI (gpt-4o-mini doesn't need prefix)
+      const modelName = useOpenAI ? 'gpt-4o-mini' : aiModel;
       
       const [_, aiResponse, presetResult] = await Promise.all([
         // Update status (don't wait for result)
@@ -300,14 +323,14 @@ serve(async (req) => {
           .update({ call_status: 'in_progress' })
           .eq('id', prankId),
         // Generate greeting with AI
-        fetch('https://api.openai.com/v1/chat/completions', {
+        fetch(apiUrl, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${OPENAI_API_KEY}`,
+            'Authorization': `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'gpt-4o-mini',
+            model: modelName,
             messages: [
               { role: 'system', content: systemPrompt },
               { role: 'user', content: 'Inizia con un saluto breve (max 2 frasi). Presentati secondo lo scenario.' }
@@ -387,17 +410,35 @@ serve(async (req) => {
         return new Response(twiml, { headers: { 'Content-Type': 'text/xml' } });
       }
 
+      // Fetch AI model setting from database
+      const { data: aiModelSetting } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'ai_model')
+        .single();
+      
+      const aiModel = aiModelSetting?.value || 'openai/gpt-4o-mini';
+      const useOpenAI = aiModel.startsWith('openai/') && !aiModel.includes('gpt-5');
+      
       // Generate AI response
       const systemPrompt = buildSystemPrompt(prank);
       
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      const apiUrl = useOpenAI 
+        ? 'https://api.openai.com/v1/chat/completions'
+        : 'https://ai.gateway.lovable.dev/v1/chat/completions';
+      const apiKey = useOpenAI 
+        ? OPENAI_API_KEY 
+        : Deno.env.get('LOVABLE_API_KEY');
+      const modelName = useOpenAI ? 'gpt-4o-mini' : aiModel;
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: modelName,
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: `The person said: "${speechResult}". Rispondi BREVEMENTE (max 1-2 frasi).` }
