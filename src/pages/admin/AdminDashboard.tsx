@@ -193,6 +193,23 @@ const AdminDashboard = () => {
               </div>
             </CardHeader>
           </Card>
+
+          <Card 
+            className="cursor-pointer hover:border-primary transition-colors"
+            onClick={() => navigate("/admin/caller-ids")}
+          >
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-lg bg-yellow-500/10">
+                  <Phone className="w-6 h-6 text-yellow-500" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Caller ID Verificati</CardTitle>
+                  <CardDescription>Gestisci i numeri verificati per le chiamate</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
         </div>
       </main>
     </div>
