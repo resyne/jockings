@@ -234,6 +234,23 @@ const AdminVoices = () => {
     friendly_name: string | null;
     country_name: string;
   }>>([]);
+  
+  // VAPI Voice Presets
+  interface VapiVoicePreset {
+    id: string;
+    language: string;
+    gender: string;
+    voiceId: string;
+    voiceProvider: string;
+  }
+  const [vapiVoicePresets, setVapiVoicePresets] = useState<VapiVoicePreset[]>([]);
+  const [isAddVapiPresetOpen, setIsAddVapiPresetOpen] = useState(false);
+  const [newVapiPreset, setNewVapiPreset] = useState<Omit<VapiVoicePreset, 'id'>>({
+    language: "Italiano",
+    gender: "male",
+    voiceId: "",
+    voiceProvider: "11labs"
+  });
 
   useEffect(() => {
     if (!loading && !isAdmin) {
@@ -248,6 +265,7 @@ const AdminVoices = () => {
       fetchGlobalVoiceSettings();
       fetchCallProvider();
       fetchPhoneNumbers();
+      fetchVapiVoicePresets();
     }
   }, [isAdmin]);
 
@@ -272,6 +290,65 @@ const AdminVoices = () => {
       if (defaultCaller && !vapiSettings.phoneNumberId) {
         setVapiSettings(prev => ({ ...prev, phoneNumberId: defaultCaller.phone_number }));
       }
+    }
+  };
+
+  const fetchVapiVoicePresets = async () => {
+    const { data } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "vapi_voice_presets")
+      .maybeSingle();
+    
+    if (data?.value) {
+      try {
+        const presets = JSON.parse(data.value);
+        setVapiVoicePresets(presets);
+      } catch (e) {
+        console.error("Error parsing VAPI voice presets:", e);
+      }
+    }
+  };
+
+  const handleSaveVapiPreset = async () => {
+    if (!newVapiPreset.voiceId) {
+      toast({ title: "Errore", description: "Inserisci un Voice ID", variant: "destructive" });
+      return;
+    }
+    
+    const newPreset = {
+      id: crypto.randomUUID(),
+      ...newVapiPreset
+    };
+    
+    const updatedPresets = [...vapiVoicePresets, newPreset];
+    
+    const { error } = await supabase
+      .from("app_settings")
+      .upsert({ key: "vapi_voice_presets", value: JSON.stringify(updatedPresets) }, { onConflict: "key" });
+    
+    if (error) {
+      toast({ title: "Errore", description: error.message, variant: "destructive" });
+    } else {
+      setVapiVoicePresets(updatedPresets);
+      setIsAddVapiPresetOpen(false);
+      setNewVapiPreset({ language: "Italiano", gender: "male", voiceId: "", voiceProvider: "11labs" });
+      toast({ title: "Salvato!", description: "Preset voce VAPI aggiunto" });
+    }
+  };
+
+  const handleDeleteVapiPreset = async (presetId: string) => {
+    const updatedPresets = vapiVoicePresets.filter(p => p.id !== presetId);
+    
+    const { error } = await supabase
+      .from("app_settings")
+      .upsert({ key: "vapi_voice_presets", value: JSON.stringify(updatedPresets) }, { onConflict: "key" });
+    
+    if (error) {
+      toast({ title: "Errore", description: error.message, variant: "destructive" });
+    } else {
+      setVapiVoicePresets(updatedPresets);
+      toast({ title: "Eliminato!", description: "Preset voce rimosso" });
     }
   };
 
@@ -827,70 +904,217 @@ const AdminVoices = () => {
                     <Volume2 className="w-4 h-4" />
                     Voce TTS
                   </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  
+                  {/* Voice Presets List */}
+                  {vapiVoicePresets.length > 0 && (
                     <div className="space-y-2">
-                      <Label>Provider Voce</Label>
-                      <Select 
-                        value={vapiSettings.voiceProvider} 
-                        onValueChange={(value) => setVapiSettings({ ...vapiSettings, voiceProvider: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {VAPI_VOICE_PROVIDERS.map((provider) => (
-                            <SelectItem key={provider.value} value={provider.value}>
-                              <div className="flex flex-col">
-                                <span>{provider.label}</span>
-                                <span className="text-xs text-muted-foreground">{provider.description}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label className="text-sm font-medium">Preset Voce Salvati</Label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {vapiVoicePresets.map((preset) => (
+                          <div 
+                            key={preset.id} 
+                            className="flex items-center justify-between p-2 rounded-lg bg-background border"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium">
+                                {preset.gender === "male" ? "👨" : "👩"} {preset.language}
+                              </span>
+                              <span className="text-xs text-muted-foreground font-mono">
+                                {preset.voiceId.substring(0, 12)}...
+                              </span>
+                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleDeleteVapiPreset(preset.id)}
+                            >
+                              <Trash2 className="w-3 h-3 text-destructive" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Voice ID</Label>
-                      {vapiSettings.voiceProvider === "elevenlabs" ? (
+                  )}
+                  
+                  {/* Add New Preset */}
+                  <Dialog open={isAddVapiPresetOpen} onOpenChange={setIsAddVapiPresetOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="w-full">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Aggiungi Preset Voce
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Nuovo Preset Voce VAPI</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Lingua</Label>
+                            <Select 
+                              value={newVapiPreset.language} 
+                              onValueChange={(value) => setNewVapiPreset({ ...newVapiPreset, language: value })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {LANGUAGES.map((lang) => (
+                                  <SelectItem key={lang} value={lang}>{lang}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Genere</Label>
+                            <Select 
+                              value={newVapiPreset.gender} 
+                              onValueChange={(value) => setNewVapiPreset({ ...newVapiPreset, gender: value })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="male">Maschile</SelectItem>
+                                <SelectItem value="female">Femminile</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Provider Voce</Label>
+                          <Select 
+                            value={newVapiPreset.voiceProvider} 
+                            onValueChange={(value) => setNewVapiPreset({ ...newVapiPreset, voiceProvider: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {VAPI_VOICE_PROVIDERS.map((provider) => (
+                                <SelectItem key={provider.value} value={provider.value}>
+                                  {provider.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Voice ID</Label>
+                          {newVapiPreset.voiceProvider === "11labs" ? (
+                            <Select 
+                              value={newVapiPreset.voiceId} 
+                              onValueChange={(value) => setNewVapiPreset({ ...newVapiPreset, voiceId: value })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleziona una voce" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {VAPI_ELEVENLABS_VOICES.filter(v => v.value !== "custom").map((voice) => (
+                                  <SelectItem key={voice.value} value={voice.value}>
+                                    {voice.label} - {voice.description}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <Input
+                              value={newVapiPreset.voiceId}
+                              onChange={(e) => setNewVapiPreset({ ...newVapiPreset, voiceId: e.target.value })}
+                              placeholder="Inserisci Voice ID"
+                              className="font-mono text-sm"
+                            />
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            Puoi inserire un Voice ID personalizzato dalla libreria ElevenLabs
+                          </p>
+                          {newVapiPreset.voiceProvider === "11labs" && (
+                            <Input
+                              value={newVapiPreset.voiceId}
+                              onChange={(e) => setNewVapiPreset({ ...newVapiPreset, voiceId: e.target.value })}
+                              placeholder="Oppure inserisci Voice ID manualmente"
+                              className="font-mono text-sm mt-2"
+                            />
+                          )}
+                        </div>
+                        <Button onClick={handleSaveVapiPreset} className="w-full">
+                          <Save className="w-4 h-4 mr-2" />
+                          Salva Preset
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                  
+                  <div className="border-t pt-4 mt-4">
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Impostazioni voce di default (usate se non c'è un preset per lingua/genere)
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Provider Voce Default</Label>
                         <Select 
-                          value={vapiSettings.voiceId} 
-                          onValueChange={(value) => setVapiSettings({ ...vapiSettings, voiceId: value })}
+                          value={vapiSettings.voiceProvider} 
+                          onValueChange={(value) => setVapiSettings({ ...vapiSettings, voiceProvider: value })}
                         >
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {VAPI_ELEVENLABS_VOICES.map((voice) => (
-                              <SelectItem key={voice.value} value={voice.value}>
+                            {VAPI_VOICE_PROVIDERS.map((provider) => (
+                              <SelectItem key={provider.value} value={provider.value}>
                                 <div className="flex flex-col">
-                                  <span>{voice.label}</span>
-                                  <span className="text-xs text-muted-foreground">{voice.description}</span>
+                                  <span>{provider.label}</span>
+                                  <span className="text-xs text-muted-foreground">{provider.description}</span>
                                 </div>
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                      ) : (
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Voice ID Default</Label>
+                        {vapiSettings.voiceProvider === "11labs" ? (
+                          <Select 
+                            value={vapiSettings.voiceId} 
+                            onValueChange={(value) => setVapiSettings({ ...vapiSettings, voiceId: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {VAPI_ELEVENLABS_VOICES.map((voice) => (
+                                <SelectItem key={voice.value} value={voice.value}>
+                                  <div className="flex flex-col">
+                                    <span>{voice.label}</span>
+                                    <span className="text-xs text-muted-foreground">{voice.description}</span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Input
+                            value={vapiSettings.voiceId}
+                            onChange={(e) => setVapiSettings({ ...vapiSettings, voiceId: e.target.value })}
+                            placeholder="Voice ID del provider selezionato"
+                            className="font-mono text-sm"
+                          />
+                        )}
+                      </div>
+                    </div>
+                    {vapiSettings.voiceId === "custom" && (
+                      <div className="space-y-2 mt-4">
+                        <Label>Voice ID Personalizzato</Label>
                         <Input
-                          value={vapiSettings.voiceId}
-                          onChange={(e) => setVapiSettings({ ...vapiSettings, voiceId: e.target.value })}
-                          placeholder="Voice ID del provider selezionato"
+                          value={vapiSettings.customVoiceId}
+                          onChange={(e) => setVapiSettings({ ...vapiSettings, customVoiceId: e.target.value })}
+                          placeholder="Inserisci il Voice ID personalizzato"
                           className="font-mono text-sm"
                         />
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
-                  {vapiSettings.voiceId === "custom" && (
-                    <div className="space-y-2">
-                      <Label>Voice ID Personalizzato</Label>
-                      <Input
-                        value={vapiSettings.customVoiceId}
-                        onChange={(e) => setVapiSettings({ ...vapiSettings, customVoiceId: e.target.value })}
-                        placeholder="Inserisci il Voice ID personalizzato"
-                        className="font-mono text-sm"
-                      />
-                    </div>
-                  )}
                 </div>
 
                 {/* Transcriber Section */}
