@@ -54,6 +54,91 @@ const AI_MODELS = [
   { value: "openai/gpt-5-mini", label: "OpenAI GPT-5 Mini", description: "Più potente, più lento" },
 ];
 
+// VAPI Configuration Options
+const VAPI_VOICE_PROVIDERS = [
+  { value: "elevenlabs", label: "ElevenLabs", description: "Alta qualità, bassa latenza" },
+  { value: "openai", label: "OpenAI", description: "Veloce, buona qualità" },
+  { value: "azure", label: "Azure", description: "Microsoft TTS" },
+  { value: "deepgram", label: "Deepgram", description: "Ultra veloce" },
+  { value: "playht", label: "PlayHT", description: "Voci realistiche" },
+];
+
+const VAPI_TRANSCRIBER_PROVIDERS = [
+  { value: "deepgram", label: "Deepgram", description: "⚡ Consigliato - Veloce e accurato", recommended: true },
+  { value: "gladia", label: "Gladia", description: "Multilingue" },
+  { value: "azure", label: "Azure", description: "Microsoft Speech" },
+  { value: "talkscriber", label: "Talkscriber", description: "Specializzato" },
+];
+
+const VAPI_AI_MODELS = [
+  { value: "gpt-4o-mini", label: "OpenAI GPT-4o Mini", description: "⚡ Veloce - Consigliato", recommended: true },
+  { value: "gpt-4o", label: "OpenAI GPT-4o", description: "Più potente" },
+  { value: "gpt-4", label: "OpenAI GPT-4", description: "Legacy" },
+  { value: "gemini-2.5-flash", label: "Google Gemini 2.5 Flash", description: "Veloce" },
+  { value: "claude-3-haiku-20240307", label: "Claude 3 Haiku", description: "Veloce e economico" },
+];
+
+const VAPI_ELEVENLABS_VOICES = [
+  { value: "21m00Tcm4TlvDq8ikWAM", label: "Rachel (English)", description: "Femminile, naturale" },
+  { value: "EXAVITQu4vr4xnSDxMaL", label: "Bella (English)", description: "Femminile, giovane" },
+  { value: "yoZ06aMxZJJ28mfd3POQ", label: "Sam (English)", description: "Maschile, professionale" },
+  { value: "pNInz6obpgDQGcFmaJgB", label: "Adam (English)", description: "Maschile, profondo" },
+  { value: "custom", label: "Voice ID Personalizzato", description: "Inserisci il tuo Voice ID" },
+];
+
+const DEEPGRAM_MODELS = [
+  { value: "nova-2", label: "Nova 2", description: "⚡ Più veloce e accurato", recommended: true },
+  { value: "nova-2-general", label: "Nova 2 General", description: "General purpose" },
+  { value: "nova-2-meeting", label: "Nova 2 Meeting", description: "Ottimizzato per meeting" },
+  { value: "nova-2-phonecall", label: "Nova 2 Phonecall", description: "Ottimizzato per telefonate" },
+];
+
+interface VapiSettings {
+  phoneNumberId: string;
+  assistantId: string;
+  // Model
+  aiProvider: string;
+  aiModel: string;
+  temperature: number;
+  maxTokens: number;
+  // Voice
+  voiceProvider: string;
+  voiceId: string;
+  customVoiceId: string;
+  // Transcriber
+  transcriberProvider: string;
+  transcriberModel: string;
+  transcriberLanguage: string;
+  // Call settings
+  firstMessage: string;
+  silenceTimeoutSeconds: number;
+  maxDurationSeconds: number;
+  backgroundSound: string;
+  backchannelingEnabled: boolean;
+  endCallMessage: string;
+}
+
+const DEFAULT_VAPI_SETTINGS: VapiSettings = {
+  phoneNumberId: "",
+  assistantId: "",
+  aiProvider: "openai",
+  aiModel: "gpt-4o-mini",
+  temperature: 0.7,
+  maxTokens: 150,
+  voiceProvider: "elevenlabs",
+  voiceId: "21m00Tcm4TlvDq8ikWAM",
+  customVoiceId: "",
+  transcriberProvider: "deepgram",
+  transcriberModel: "nova-2",
+  transcriberLanguage: "it",
+  firstMessage: "Pronto?",
+  silenceTimeoutSeconds: 30,
+  maxDurationSeconds: 300,
+  backgroundSound: "off",
+  backchannelingEnabled: false,
+  endCallMessage: "Arrivederci!",
+};
+
 const DEFAULT_GLOBAL_SETTINGS: GlobalVoiceSettings = {
   stability: 0.5,
   similarity: 0.75,
@@ -87,8 +172,7 @@ const AdminVoices = () => {
   
   // Call Provider selection
   const [callProvider, setCallProvider] = useState<"twilio" | "vapi">("twilio");
-  const [vapiPhoneNumberId, setVapiPhoneNumberId] = useState("");
-  const [vapiAssistantId, setVapiAssistantId] = useState("");
+  const [vapiSettings, setVapiSettings] = useState<VapiSettings>(DEFAULT_VAPI_SETTINGS);
   const [savingCallProvider, setSavingCallProvider] = useState(false);
 
   useEffect(() => {
@@ -174,14 +258,52 @@ const AdminVoices = () => {
     const { data } = await supabase
       .from("app_settings")
       .select("key, value")
-      .in("key", ["call_provider", "vapi_phone_number_id", "vapi_assistant_id"]);
+      .in("key", [
+        "call_provider", 
+        "vapi_phone_number_id", 
+        "vapi_assistant_id",
+        "vapi_ai_provider",
+        "vapi_ai_model",
+        "vapi_temperature",
+        "vapi_max_tokens",
+        "vapi_voice_provider",
+        "vapi_voice_id",
+        "vapi_custom_voice_id",
+        "vapi_transcriber_provider",
+        "vapi_transcriber_model",
+        "vapi_transcriber_language",
+        "vapi_first_message",
+        "vapi_silence_timeout",
+        "vapi_max_duration",
+        "vapi_background_sound",
+        "vapi_backchanneling",
+        "vapi_end_call_message",
+      ]);
     
     if (data) {
+      const newSettings = { ...DEFAULT_VAPI_SETTINGS };
       data.forEach(({ key, value }) => {
         if (key === "call_provider") setCallProvider(value as "twilio" | "vapi");
-        if (key === "vapi_phone_number_id") setVapiPhoneNumberId(value);
-        if (key === "vapi_assistant_id") setVapiAssistantId(value);
+        if (key === "vapi_phone_number_id") newSettings.phoneNumberId = value;
+        if (key === "vapi_assistant_id") newSettings.assistantId = value;
+        if (key === "vapi_ai_provider") newSettings.aiProvider = value;
+        if (key === "vapi_ai_model") newSettings.aiModel = value;
+        if (key === "vapi_temperature") newSettings.temperature = parseFloat(value);
+        if (key === "vapi_max_tokens") newSettings.maxTokens = parseInt(value);
+        if (key === "vapi_voice_provider") newSettings.voiceProvider = value;
+        if (key === "vapi_voice_id") newSettings.voiceId = value;
+        if (key === "vapi_custom_voice_id") newSettings.customVoiceId = value;
+        if (key === "vapi_transcriber_provider") newSettings.transcriberProvider = value;
+        if (key === "vapi_transcriber_model") newSettings.transcriberModel = value;
+        if (key === "vapi_transcriber_language") newSettings.transcriberLanguage = value;
+        if (key === "vapi_first_message") newSettings.firstMessage = value;
+        if (key === "vapi_silence_timeout") newSettings.silenceTimeoutSeconds = parseInt(value);
+        if (key === "vapi_max_duration") newSettings.maxDurationSeconds = parseInt(value);
+        if (key === "vapi_background_sound") newSettings.backgroundSound = value;
+        if (key === "vapi_backchanneling") newSettings.backchannelingEnabled = value === "true";
+        if (key === "vapi_end_call_message") newSettings.endCallMessage = value;
       });
+      setVapiSettings(newSettings);
     }
   };
 
@@ -190,8 +312,24 @@ const AdminVoices = () => {
     try {
       const settingsToSave = [
         { key: "call_provider", value: callProvider },
-        { key: "vapi_phone_number_id", value: vapiPhoneNumberId },
-        { key: "vapi_assistant_id", value: vapiAssistantId },
+        { key: "vapi_phone_number_id", value: vapiSettings.phoneNumberId },
+        { key: "vapi_assistant_id", value: vapiSettings.assistantId },
+        { key: "vapi_ai_provider", value: vapiSettings.aiProvider },
+        { key: "vapi_ai_model", value: vapiSettings.aiModel },
+        { key: "vapi_temperature", value: vapiSettings.temperature.toString() },
+        { key: "vapi_max_tokens", value: vapiSettings.maxTokens.toString() },
+        { key: "vapi_voice_provider", value: vapiSettings.voiceProvider },
+        { key: "vapi_voice_id", value: vapiSettings.voiceId },
+        { key: "vapi_custom_voice_id", value: vapiSettings.customVoiceId },
+        { key: "vapi_transcriber_provider", value: vapiSettings.transcriberProvider },
+        { key: "vapi_transcriber_model", value: vapiSettings.transcriberModel },
+        { key: "vapi_transcriber_language", value: vapiSettings.transcriberLanguage },
+        { key: "vapi_first_message", value: vapiSettings.firstMessage },
+        { key: "vapi_silence_timeout", value: vapiSettings.silenceTimeoutSeconds.toString() },
+        { key: "vapi_max_duration", value: vapiSettings.maxDurationSeconds.toString() },
+        { key: "vapi_background_sound", value: vapiSettings.backgroundSound },
+        { key: "vapi_backchanneling", value: vapiSettings.backchannelingEnabled.toString() },
+        { key: "vapi_end_call_message", value: vapiSettings.endCallMessage },
       ];
 
       for (const setting of settingsToSave) {
@@ -455,33 +593,320 @@ const AdminVoices = () => {
             </div>
 
             {callProvider === "vapi" && (
-              <div className="space-y-4 pt-4 border-t">
-                <div className="space-y-2">
-                  <Label>VAPI Phone Number ID</Label>
-                  <Input
-                    value={vapiPhoneNumberId}
-                    onChange={(e) => setVapiPhoneNumberId(e.target.value)}
-                    placeholder="Inserisci Phone Number ID da VAPI Dashboard"
-                    className="font-mono text-sm"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Trova l'ID in{" "}
-                    <a href="https://dashboard.vapi.ai/phone-numbers" target="_blank" rel="noopener" className="text-primary underline">
-                      VAPI Dashboard → Phone Numbers
-                    </a>
-                  </p>
+              <div className="space-y-6 pt-4 border-t">
+                {/* Basic VAPI Settings */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>VAPI Phone Number ID *</Label>
+                    <Input
+                      value={vapiSettings.phoneNumberId}
+                      onChange={(e) => setVapiSettings({ ...vapiSettings, phoneNumberId: e.target.value })}
+                      placeholder="Inserisci Phone Number ID"
+                      className="font-mono text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      <a href="https://dashboard.vapi.ai/phone-numbers" target="_blank" rel="noopener" className="text-primary underline">
+                        VAPI Dashboard → Phone Numbers
+                      </a>
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>VAPI Assistant ID (opzionale)</Label>
+                    <Input
+                      value={vapiSettings.assistantId}
+                      onChange={(e) => setVapiSettings({ ...vapiSettings, assistantId: e.target.value })}
+                      placeholder="Usa un assistente pre-configurato"
+                      className="font-mono text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Lascia vuoto per creare dinamicamente
+                    </p>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>VAPI Assistant ID (opzionale)</Label>
-                  <Input
-                    value={vapiAssistantId}
-                    onChange={(e) => setVapiAssistantId(e.target.value)}
-                    placeholder="Inserisci Assistant ID se hai un assistente pre-configurato"
-                    className="font-mono text-sm"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Se vuoi usare un assistente VAPI pre-configurato invece di creare dinamicamente
-                  </p>
+
+                {/* AI Model Section */}
+                <div className="p-4 rounded-lg bg-purple-500/5 border border-purple-500/20 space-y-4">
+                  <h4 className="font-medium flex items-center gap-2 text-purple-600">
+                    <Brain className="w-4 h-4" />
+                    Modello AI
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Modello</Label>
+                      <Select 
+                        value={vapiSettings.aiModel} 
+                        onValueChange={(value) => setVapiSettings({ ...vapiSettings, aiModel: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {VAPI_AI_MODELS.map((model) => (
+                            <SelectItem key={model.value} value={model.value}>
+                              <div className="flex flex-col">
+                                <span className={model.recommended ? "font-medium" : ""}>{model.label}</span>
+                                <span className="text-xs text-muted-foreground">{model.description}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Temperature: {vapiSettings.temperature.toFixed(1)}</Label>
+                      <Slider
+                        value={[vapiSettings.temperature * 100]}
+                        onValueChange={([v]) => setVapiSettings({ ...vapiSettings, temperature: v / 100 })}
+                        max={100}
+                        step={5}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        0 = preciso, 1 = creativo
+                      </p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Max Tokens: {vapiSettings.maxTokens}</Label>
+                    <Slider
+                      value={[vapiSettings.maxTokens]}
+                      onValueChange={([v]) => setVapiSettings({ ...vapiSettings, maxTokens: v })}
+                      min={50}
+                      max={500}
+                      step={10}
+                    />
+                  </div>
+                </div>
+
+                {/* Voice Section */}
+                <div className="p-4 rounded-lg bg-orange-500/5 border border-orange-500/20 space-y-4">
+                  <h4 className="font-medium flex items-center gap-2 text-orange-600">
+                    <Volume2 className="w-4 h-4" />
+                    Voce TTS
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Provider Voce</Label>
+                      <Select 
+                        value={vapiSettings.voiceProvider} 
+                        onValueChange={(value) => setVapiSettings({ ...vapiSettings, voiceProvider: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {VAPI_VOICE_PROVIDERS.map((provider) => (
+                            <SelectItem key={provider.value} value={provider.value}>
+                              <div className="flex flex-col">
+                                <span>{provider.label}</span>
+                                <span className="text-xs text-muted-foreground">{provider.description}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Voice ID</Label>
+                      {vapiSettings.voiceProvider === "elevenlabs" ? (
+                        <Select 
+                          value={vapiSettings.voiceId} 
+                          onValueChange={(value) => setVapiSettings({ ...vapiSettings, voiceId: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {VAPI_ELEVENLABS_VOICES.map((voice) => (
+                              <SelectItem key={voice.value} value={voice.value}>
+                                <div className="flex flex-col">
+                                  <span>{voice.label}</span>
+                                  <span className="text-xs text-muted-foreground">{voice.description}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input
+                          value={vapiSettings.voiceId}
+                          onChange={(e) => setVapiSettings({ ...vapiSettings, voiceId: e.target.value })}
+                          placeholder="Voice ID del provider selezionato"
+                          className="font-mono text-sm"
+                        />
+                      )}
+                    </div>
+                  </div>
+                  {vapiSettings.voiceId === "custom" && (
+                    <div className="space-y-2">
+                      <Label>Voice ID Personalizzato</Label>
+                      <Input
+                        value={vapiSettings.customVoiceId}
+                        onChange={(e) => setVapiSettings({ ...vapiSettings, customVoiceId: e.target.value })}
+                        placeholder="Inserisci il Voice ID personalizzato"
+                        className="font-mono text-sm"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Transcriber Section */}
+                <div className="p-4 rounded-lg bg-blue-500/5 border border-blue-500/20 space-y-4">
+                  <h4 className="font-medium flex items-center gap-2 text-blue-600">
+                    <Mic className="w-4 h-4" />
+                    Trascrizione (STT)
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>Provider</Label>
+                      <Select 
+                        value={vapiSettings.transcriberProvider} 
+                        onValueChange={(value) => setVapiSettings({ ...vapiSettings, transcriberProvider: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {VAPI_TRANSCRIBER_PROVIDERS.map((provider) => (
+                            <SelectItem key={provider.value} value={provider.value}>
+                              <div className="flex flex-col">
+                                <span className={provider.recommended ? "font-medium" : ""}>{provider.label}</span>
+                                <span className="text-xs text-muted-foreground">{provider.description}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {vapiSettings.transcriberProvider === "deepgram" && (
+                      <div className="space-y-2">
+                        <Label>Modello</Label>
+                        <Select 
+                          value={vapiSettings.transcriberModel} 
+                          onValueChange={(value) => setVapiSettings({ ...vapiSettings, transcriberModel: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {DEEPGRAM_MODELS.map((model) => (
+                              <SelectItem key={model.value} value={model.value}>
+                                <div className="flex flex-col">
+                                  <span className={model.recommended ? "font-medium" : ""}>{model.label}</span>
+                                  <span className="text-xs text-muted-foreground">{model.description}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      <Label>Lingua</Label>
+                      <Select 
+                        value={vapiSettings.transcriberLanguage} 
+                        onValueChange={(value) => setVapiSettings({ ...vapiSettings, transcriberLanguage: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="it">Italiano</SelectItem>
+                          <SelectItem value="en">English</SelectItem>
+                          <SelectItem value="multi">Multi-lingua</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Call Settings Section */}
+                <div className="p-4 rounded-lg bg-green-500/5 border border-green-500/20 space-y-4">
+                  <h4 className="font-medium flex items-center gap-2 text-green-600">
+                    <Phone className="w-4 h-4" />
+                    Impostazioni Chiamata
+                  </h4>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Primo Messaggio</Label>
+                      <Input
+                        value={vapiSettings.firstMessage}
+                        onChange={(e) => setVapiSettings({ ...vapiSettings, firstMessage: e.target.value })}
+                        placeholder="Messaggio iniziale della chiamata"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Il messaggio che l'AI dirà all'inizio della chiamata
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Messaggio Fine Chiamata</Label>
+                      <Input
+                        value={vapiSettings.endCallMessage}
+                        onChange={(e) => setVapiSettings({ ...vapiSettings, endCallMessage: e.target.value })}
+                        placeholder="Messaggio finale"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Timeout Silenzio: {vapiSettings.silenceTimeoutSeconds}s</Label>
+                        <Slider
+                          value={[vapiSettings.silenceTimeoutSeconds]}
+                          onValueChange={([v]) => setVapiSettings({ ...vapiSettings, silenceTimeoutSeconds: v })}
+                          min={10}
+                          max={120}
+                          step={5}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Termina la chiamata dopo questo tempo di silenzio
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Durata Massima: {Math.floor(vapiSettings.maxDurationSeconds / 60)}m</Label>
+                        <Slider
+                          value={[vapiSettings.maxDurationSeconds]}
+                          onValueChange={([v]) => setVapiSettings({ ...vapiSettings, maxDurationSeconds: v })}
+                          min={60}
+                          max={600}
+                          step={30}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Durata massima della chiamata
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Suono di Sottofondo</Label>
+                        <Select 
+                          value={vapiSettings.backgroundSound} 
+                          onValueChange={(value) => setVapiSettings({ ...vapiSettings, backgroundSound: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="off">Nessuno</SelectItem>
+                            <SelectItem value="office">Ufficio</SelectItem>
+                            <SelectItem value="convention">Convention</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                        <div>
+                          <Label className="font-medium">Backchanneling</Label>
+                          <p className="text-xs text-muted-foreground">
+                            Risposte come "mhm", "ok"
+                          </p>
+                        </div>
+                        <Button
+                          variant={vapiSettings.backchannelingEnabled ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setVapiSettings({ ...vapiSettings, backchannelingEnabled: !vapiSettings.backchannelingEnabled })}
+                        >
+                          {vapiSettings.backchannelingEnabled ? "ON" : "OFF"}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

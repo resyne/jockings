@@ -82,7 +82,26 @@ serve(async (req) => {
     // Fetch prank and VAPI settings
     const [prankResult, settingsResult] = await Promise.all([
       supabase.from('pranks').select('*').eq('id', prankId).single(),
-      supabase.from('app_settings').select('key, value').in('key', ['vapi_phone_number_id', 'vapi_assistant_id'])
+      supabase.from('app_settings').select('key, value').in('key', [
+        'vapi_phone_number_id', 
+        'vapi_assistant_id',
+        'vapi_ai_provider',
+        'vapi_ai_model',
+        'vapi_temperature',
+        'vapi_max_tokens',
+        'vapi_voice_provider',
+        'vapi_voice_id',
+        'vapi_custom_voice_id',
+        'vapi_transcriber_provider',
+        'vapi_transcriber_model',
+        'vapi_transcriber_language',
+        'vapi_first_message',
+        'vapi_silence_timeout',
+        'vapi_max_duration',
+        'vapi_background_sound',
+        'vapi_backchanneling',
+        'vapi_end_call_message',
+      ])
     ]);
 
     const { data: prank, error: prankError } = prankResult;
@@ -90,10 +109,26 @@ serve(async (req) => {
       throw new Error('Prank not found');
     }
 
-    // Parse settings
-    const settings: Record<string, string> = {};
+    // Parse settings with defaults
+    const settings: Record<string, string> = {
+      vapi_ai_model: 'gpt-4o-mini',
+      vapi_temperature: '0.7',
+      vapi_max_tokens: '150',
+      vapi_voice_provider: 'elevenlabs',
+      vapi_voice_id: '21m00Tcm4TlvDq8ikWAM',
+      vapi_transcriber_provider: 'deepgram',
+      vapi_transcriber_model: 'nova-2',
+      vapi_transcriber_language: 'it',
+      vapi_first_message: 'Pronto?',
+      vapi_silence_timeout: '30',
+      vapi_max_duration: '300',
+      vapi_background_sound: 'off',
+      vapi_backchanneling: 'false',
+      vapi_end_call_message: 'Arrivederci!',
+    };
+    
     settingsResult.data?.forEach((s: { key: string; value: string }) => {
-      settings[s.key] = s.value;
+      if (s.value) settings[s.key] = s.value;
     });
 
     const vapiPhoneNumberId = settings['vapi_phone_number_id'];
@@ -105,9 +140,24 @@ serve(async (req) => {
 
     console.log('Prank:', prank.id, 'Phone:', prank.victim_phone);
     console.log('VAPI Phone ID:', vapiPhoneNumberId, 'Assistant ID:', vapiAssistantId || 'dynamic');
+    console.log('Settings:', JSON.stringify(settings, null, 2));
 
     // Build the system prompt
     const systemPrompt = buildVapiPrompt(prank);
+    const greeting = getTimeBasedGreeting(prank.language);
+    
+    // Get first message - personalized with victim name
+    const firstMessage = settings['vapi_first_message'] === 'Pronto?' 
+      ? `${greeting}, parlo con ${prank.victim_first_name}?`
+      : settings['vapi_first_message'].replace('{name}', prank.victim_first_name);
+
+    // Get voice ID - use custom if set, otherwise configured, otherwise from prank
+    let voiceId = settings['vapi_voice_id'];
+    if (settings['vapi_voice_id'] === 'custom' && settings['vapi_custom_voice_id']) {
+      voiceId = settings['vapi_custom_voice_id'];
+    } else if (prank.elevenlabs_voice_id) {
+      voiceId = prank.elevenlabs_voice_id;
+    }
 
     // Prepare VAPI call request
     const vapiCallBody: any = {
@@ -118,44 +168,62 @@ serve(async (req) => {
       },
     };
 
-    // If we have a pre-configured assistant, use it
+    // If we have a pre-configured assistant, use it with overrides
     if (vapiAssistantId) {
       vapiCallBody.assistantId = vapiAssistantId;
-      // Override the prompt
       vapiCallBody.assistantOverrides = {
-        firstMessage: `${getTimeBasedGreeting(prank.language)}, parlo con ${prank.victim_first_name}?`,
+        firstMessage,
         model: {
           messages: [{ role: 'system', content: systemPrompt }]
         }
       };
     } else {
-      // Create dynamic assistant configuration
-      vapiCallBody.assistant = {
+      // Create dynamic assistant configuration with all settings
+      const assistantConfig: any = {
         name: `Prank-${prankId}`,
-        firstMessage: `${getTimeBasedGreeting(prank.language)}, parlo con ${prank.victim_first_name}?`,
+        firstMessage,
         model: {
           provider: 'openai',
-          model: 'gpt-4o-mini',
+          model: settings['vapi_ai_model'],
           messages: [{ role: 'system', content: systemPrompt }],
-          temperature: 0.8,
-          maxTokens: 100,
+          temperature: parseFloat(settings['vapi_temperature']),
+          maxTokens: parseInt(settings['vapi_max_tokens']),
         },
         voice: {
-          provider: 'elevenlabs',
-          voiceId: prank.elevenlabs_voice_id || (prank.voice_gender === 'male' ? 'onwK4e9ZLuTAKqWW03F9' : 'EXAVITQu4vr4xnSDxMaL'),
-          stability: 0.5,
-          similarityBoost: 0.75,
+          provider: settings['vapi_voice_provider'],
+          voiceId,
         },
         transcriber: {
-          provider: 'deepgram',
-          model: 'nova-2',
-          language: prank.language === 'Italiano' ? 'it' : 'en',
+          provider: settings['vapi_transcriber_provider'],
+          model: settings['vapi_transcriber_model'],
+          language: settings['vapi_transcriber_language'] === 'multi' 
+            ? undefined 
+            : settings['vapi_transcriber_language'],
         },
         endCallFunctionEnabled: true,
+        endCallMessage: settings['vapi_end_call_message'],
         recordingEnabled: true,
-        silenceTimeoutSeconds: 30,
-        maxDurationSeconds: prank.max_duration || 120,
+        silenceTimeoutSeconds: parseInt(settings['vapi_silence_timeout']),
+        maxDurationSeconds: Math.min(parseInt(settings['vapi_max_duration']), prank.max_duration || 300),
       };
+
+      // Add ElevenLabs-specific settings if using ElevenLabs
+      if (settings['vapi_voice_provider'] === 'elevenlabs') {
+        assistantConfig.voice.stability = 0.5;
+        assistantConfig.voice.similarityBoost = 0.75;
+      }
+
+      // Add background sound if enabled
+      if (settings['vapi_background_sound'] && settings['vapi_background_sound'] !== 'off') {
+        assistantConfig.backgroundSound = settings['vapi_background_sound'];
+      }
+
+      // Add backchanneling if enabled
+      if (settings['vapi_backchanneling'] === 'true') {
+        assistantConfig.backchannelingEnabled = true;
+      }
+
+      vapiCallBody.assistant = assistantConfig;
     }
 
     console.log('Calling VAPI API...');
