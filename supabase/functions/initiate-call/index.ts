@@ -59,10 +59,24 @@ serve(async (req) => {
       console.error('Error fetching phone numbers:', phoneError);
     }
 
+    // Get default verified caller ID
+    const { data: verifiedCallerIds, error: callerIdError } = await supabase
+      .from('verified_caller_ids')
+      .select('*')
+      .eq('is_active', true)
+      .eq('is_default', true)
+      .maybeSingle();
+
+    if (callerIdError) {
+      console.error('Error fetching verified caller IDs:', callerIdError);
+    }
+
+    const defaultCallerId = verifiedCallerIds?.phone_number;
+    console.log('Default verified caller ID:', defaultCallerId || 'not set');
+
     // Select the best phone number based on language
     let selectedPhoneNumber = TWILIO_PHONE_NUMBER_FALLBACK;
     let selectedPhoneId: string | null = null;
-    let useAnonymousCallerId = false;
 
     if (phoneNumbers && phoneNumbers.length > 0) {
       const preferredCountries = LANGUAGE_TO_COUNTRY_PRIORITY[prank.language] || ['US', 'GB'];
@@ -102,8 +116,7 @@ serve(async (req) => {
       if (bestMatch) {
         selectedPhoneNumber = bestMatch.phone_number;
         selectedPhoneId = bestMatch.id;
-        useAnonymousCallerId = bestMatch.caller_id_anonymous || false;
-        console.log('Selected phone number:', selectedPhoneNumber, 'from country:', bestMatch.country_name, 'anonymous:', useAnonymousCallerId);
+        console.log('Selected phone number:', selectedPhoneNumber, 'from country:', bestMatch.country_name);
 
         // Increment current_calls for the selected number
         const { error: updatePhoneError } = await supabase
@@ -125,6 +138,10 @@ serve(async (req) => {
       throw new Error('No phone number available for calls');
     }
 
+    // Use verified caller ID if available, otherwise use the phone number
+    const callerIdToUse = defaultCallerId || selectedPhoneNumber;
+    console.log('Using caller ID:', callerIdToUse);
+
     // Build webhook URL with prank data
     const webhookUrl = `${SUPABASE_URL}/functions/v1/twilio-voice?prankId=${prankId}`;
     const statusCallbackUrl = `${SUPABASE_URL}/functions/v1/twilio-status?phoneNumberId=${selectedPhoneId || ''}`;
@@ -132,7 +149,7 @@ serve(async (req) => {
     // Build call parameters
     const callParams: Record<string, string> = {
       To: prank.victim_phone,
-      From: selectedPhoneNumber,
+      From: callerIdToUse,
       Url: webhookUrl,
       StatusCallback: statusCallbackUrl,
       StatusCallbackEvent: 'initiated ringing answered completed',
@@ -143,12 +160,6 @@ serve(async (req) => {
       RecordingStatusCallbackMethod: 'POST',
       Timeout: '30',
     };
-
-    // Note: Anonymous caller ID is not supported via API parameter in most countries
-    // It must be configured directly in Twilio Console for each phone number
-    if (useAnonymousCallerId) {
-      console.log('Anonymous caller ID requested - requires Twilio Console configuration for number:', selectedPhoneNumber);
-    }
 
     // Initiate Twilio call
     const twilioResponse = await fetch(
