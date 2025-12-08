@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Mic, Save, Plus, Trash2, Shield, Play, Volume2, Loader2, Music, Brain, Phone } from "lucide-react";
+import { ArrowLeft, Mic, Save, Plus, Trash2, Shield, Play, Volume2, Loader2, Music, Brain, Phone, Zap } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { VoiceTestDialog } from "@/components/VoiceTestDialog";
@@ -84,6 +84,12 @@ const AdminVoices = () => {
   const [globalSettings, setGlobalSettings] = useState<GlobalVoiceSettings>(DEFAULT_GLOBAL_SETTINGS);
   const [elevenlabsModel, setElevenlabsModel] = useState("eleven_turbo_v2_5");
   const [savingGlobalSettings, setSavingGlobalSettings] = useState(false);
+  
+  // Call Provider selection
+  const [callProvider, setCallProvider] = useState<"twilio" | "vapi">("twilio");
+  const [vapiPhoneNumberId, setVapiPhoneNumberId] = useState("");
+  const [vapiAssistantId, setVapiAssistantId] = useState("");
+  const [savingCallProvider, setSavingCallProvider] = useState(false);
 
   useEffect(() => {
     if (!loading && !isAdmin) {
@@ -96,6 +102,7 @@ const AdminVoices = () => {
       fetchVoiceSettings();
       fetchAiModel();
       fetchGlobalVoiceSettings();
+      fetchCallProvider();
     }
   }, [isAdmin]);
 
@@ -160,6 +167,45 @@ const AdminVoices = () => {
       toast({ title: "Errore", description: error.message, variant: "destructive" });
     } finally {
       setSavingGlobalSettings(false);
+    }
+  };
+
+  const fetchCallProvider = async () => {
+    const { data } = await supabase
+      .from("app_settings")
+      .select("key, value")
+      .in("key", ["call_provider", "vapi_phone_number_id", "vapi_assistant_id"]);
+    
+    if (data) {
+      data.forEach(({ key, value }) => {
+        if (key === "call_provider") setCallProvider(value as "twilio" | "vapi");
+        if (key === "vapi_phone_number_id") setVapiPhoneNumberId(value);
+        if (key === "vapi_assistant_id") setVapiAssistantId(value);
+      });
+    }
+  };
+
+  const handleSaveCallProvider = async () => {
+    setSavingCallProvider(true);
+    try {
+      const settingsToSave = [
+        { key: "call_provider", value: callProvider },
+        { key: "vapi_phone_number_id", value: vapiPhoneNumberId },
+        { key: "vapi_assistant_id", value: vapiAssistantId },
+      ];
+
+      for (const setting of settingsToSave) {
+        const { error } = await supabase
+          .from("app_settings")
+          .upsert({ key: setting.key, value: setting.value }, { onConflict: "key" });
+        if (error) throw error;
+      }
+
+      toast({ title: "Salvato!", description: `Provider chiamate: ${callProvider === "vapi" ? "VAPI" : "Twilio/ElevenLabs"}` });
+    } catch (error: any) {
+      toast({ title: "Errore", description: error.message, variant: "destructive" });
+    } finally {
+      setSavingCallProvider(false);
     }
   };
 
@@ -367,7 +413,97 @@ const AdminVoices = () => {
       </header>
 
       <main className="px-4 py-6 max-w-4xl mx-auto space-y-6">
-        {/* Global ElevenLabs Setup - UNIFIED FOR ALL VOICES */}
+        {/* Call Provider Selection */}
+        <Card className="border-2 border-purple-500/30 bg-gradient-to-br from-purple-500/5 to-transparent">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Zap className="w-5 h-5 text-purple-500" />
+              Provider Chiamate
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setCallProvider("twilio")}
+                className={`p-4 rounded-lg border-2 transition-all text-left ${
+                  callProvider === "twilio" 
+                    ? "border-purple-500 bg-purple-500/10" 
+                    : "border-border hover:border-purple-500/50"
+                }`}
+              >
+                <div className="font-medium">Twilio + ElevenLabs</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Architettura attuale. Più controllo ma latenza maggiore.
+                </p>
+              </button>
+              <button
+                onClick={() => setCallProvider("vapi")}
+                className={`p-4 rounded-lg border-2 transition-all text-left ${
+                  callProvider === "vapi" 
+                    ? "border-purple-500 bg-purple-500/10" 
+                    : "border-border hover:border-purple-500/50"
+                }`}
+              >
+                <div className="font-medium flex items-center gap-2">
+                  VAPI
+                  <span className="text-xs bg-green-500/20 text-green-600 px-1.5 py-0.5 rounded">Streaming</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Audio streaming nativo. Latenza minima.
+                </p>
+              </button>
+            </div>
+
+            {callProvider === "vapi" && (
+              <div className="space-y-4 pt-4 border-t">
+                <div className="space-y-2">
+                  <Label>VAPI Phone Number ID</Label>
+                  <Input
+                    value={vapiPhoneNumberId}
+                    onChange={(e) => setVapiPhoneNumberId(e.target.value)}
+                    placeholder="Inserisci Phone Number ID da VAPI Dashboard"
+                    className="font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Trova l'ID in{" "}
+                    <a href="https://dashboard.vapi.ai/phone-numbers" target="_blank" rel="noopener" className="text-primary underline">
+                      VAPI Dashboard → Phone Numbers
+                    </a>
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>VAPI Assistant ID (opzionale)</Label>
+                  <Input
+                    value={vapiAssistantId}
+                    onChange={(e) => setVapiAssistantId(e.target.value)}
+                    placeholder="Inserisci Assistant ID se hai un assistente pre-configurato"
+                    className="font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Se vuoi usare un assistente VAPI pre-configurato invece di creare dinamicamente
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <Button onClick={handleSaveCallProvider} disabled={savingCallProvider} className="w-full">
+              {savingCallProvider ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Salva Provider
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Global ElevenLabs Setup - UNIFIED FOR ALL VOICES - Only show for Twilio */}
+        {callProvider === "twilio" && (
         <Card className="border-2 border-orange-500/30 bg-gradient-to-br from-orange-500/5 to-transparent">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -509,8 +645,10 @@ const AdminVoices = () => {
             </Button>
           </CardContent>
         </Card>
+        )}
 
-        {/* AI Model Configuration */}
+        {/* AI Model Configuration - Only show for Twilio */}
+        {callProvider === "twilio" && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -557,7 +695,10 @@ const AdminVoices = () => {
             </Button>
           </CardContent>
         </Card>
+        )}
 
+        {/* Voice configurations - Only show for Twilio */}
+        {callProvider === "twilio" && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* List */}
           <div className="space-y-3">
@@ -781,6 +922,7 @@ const AdminVoices = () => {
             )}
           </div>
         </div>
+        )}
       </main>
 
       {/* Voice Test Dialog */}

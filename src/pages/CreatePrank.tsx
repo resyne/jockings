@@ -162,13 +162,23 @@ const CreatePrank = () => {
     setLoading(true);
 
     try {
-      // Fetch voice settings for the selected language and gender
-      const { data: voiceSettings } = await supabase
-        .from("voice_settings")
-        .select("*")
-        .eq("language", language)
-        .eq("gender", voiceGender)
-        .single();
+      // Fetch voice settings and call provider in parallel
+      const [voiceSettingsResult, callProviderResult] = await Promise.all([
+        supabase
+          .from("voice_settings")
+          .select("*")
+          .eq("language", language)
+          .eq("gender", voiceGender)
+          .single(),
+        supabase
+          .from("app_settings")
+          .select("value")
+          .eq("key", "call_provider")
+          .single()
+      ]);
+
+      const voiceSettings = voiceSettingsResult.data;
+      const callProvider = callProviderResult.data?.value || "twilio";
 
       const scheduledAt = scheduleCall ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : null;
       
@@ -212,8 +222,11 @@ const CreatePrank = () => {
           description: "Avvio della chiamata in corso...",
         });
 
-        // Trigger Twilio call via edge function
-        const { error: callError } = await supabase.functions.invoke('initiate-call', {
+        // Use the correct edge function based on call provider
+        const edgeFunction = callProvider === "vapi" ? "initiate-call-vapi" : "initiate-call";
+        console.log("Using call provider:", callProvider, "Edge function:", edgeFunction);
+
+        const { error: callError } = await supabase.functions.invoke(edgeFunction, {
           body: { prankId: prank.id }
         });
 
