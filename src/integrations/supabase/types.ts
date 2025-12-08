@@ -140,6 +140,7 @@ export type Database = {
       pranks: {
         Row: {
           call_status: string
+          conversation_history: Json | null
           created_at: string
           creativity_level: number
           elevenlabs_similarity: number | null
@@ -166,6 +167,7 @@ export type Database = {
         }
         Insert: {
           call_status?: string
+          conversation_history?: Json | null
           created_at?: string
           creativity_level?: number
           elevenlabs_similarity?: number | null
@@ -192,6 +194,7 @@ export type Database = {
         }
         Update: {
           call_status?: string
+          conversation_history?: Json | null
           created_at?: string
           creativity_level?: number
           elevenlabs_similarity?: number | null

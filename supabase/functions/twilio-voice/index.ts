@@ -320,7 +320,7 @@ serve(async (req) => {
         // Update status (don't wait for result)
         supabase
           .from('pranks')
-          .update({ call_status: 'in_progress' })
+          .update({ call_status: 'in_progress', conversation_history: [] })
           .eq('id', prankId),
         // Generate greeting with AI
         fetch(apiUrl, {
@@ -354,6 +354,14 @@ serve(async (req) => {
       
       console.log('AI greeting:', greeting);
       if (backgroundSoundUrl) console.log('Background sound:', backgroundSoundUrl);
+
+      // Save greeting to conversation history
+      await supabase
+        .from('pranks')
+        .update({ 
+          conversation_history: [{ role: 'assistant', content: greeting }] 
+        })
+        .eq('id', prankId);
 
       // Generate TwiML based on voice provider
       let twiml: string;
@@ -410,17 +418,27 @@ serve(async (req) => {
         return new Response(twiml, { headers: { 'Content-Type': 'text/xml' } });
       }
 
-      // Fetch AI model setting from database
-      const { data: aiModelSetting } = await supabase
-        .from('app_settings')
-        .select('value')
-        .eq('key', 'ai_model')
-        .single();
+      // Fetch AI model setting and conversation history from database
+      const [aiModelResult, historyResult] = await Promise.all([
+        supabase
+          .from('app_settings')
+          .select('value')
+          .eq('key', 'ai_model')
+          .single(),
+        supabase
+          .from('pranks')
+          .select('conversation_history')
+          .eq('id', prankId)
+          .single()
+      ]);
       
-      const aiModel = aiModelSetting?.value || 'openai/gpt-4o-mini';
+      const aiModel = aiModelResult.data?.value || 'openai/gpt-4o-mini';
       const useOpenAI = aiModel.startsWith('openai/') && !aiModel.includes('gpt-5');
+      const conversationHistory = (historyResult.data?.conversation_history as any[]) || [];
       
-      // Generate AI response
+      console.log('Conversation history length:', conversationHistory.length);
+      
+      // Generate AI response with full conversation context
       const systemPrompt = buildSystemPrompt(prank);
       
       const apiUrl = useOpenAI 
@@ -431,6 +449,15 @@ serve(async (req) => {
         : Deno.env.get('LOVABLE_API_KEY');
       const modelName = useOpenAI ? 'gpt-4o-mini' : aiModel;
       
+      // Build messages with full conversation history
+      const messages = [
+        { role: 'system', content: systemPrompt },
+        ...conversationHistory,
+        { role: 'user', content: speechResult }
+      ];
+      
+      console.log('Sending to AI with', messages.length, 'messages');
+      
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -439,10 +466,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           model: modelName,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: `The person said: "${speechResult}". Rispondi BREVEMENTE (max 1-2 frasi).` }
-          ],
+          messages,
           max_tokens: 80,
           temperature: 0.7,
         }),
@@ -452,6 +476,18 @@ serve(async (req) => {
       const aiResponse = aiData.choices[0]?.message?.content || 'Capisco, capisco...';
       
       console.log('AI response:', aiResponse);
+
+      // Update conversation history in database
+      const updatedHistory = [
+        ...conversationHistory,
+        { role: 'user', content: speechResult },
+        { role: 'assistant', content: aiResponse }
+      ];
+      
+      await supabase
+        .from('pranks')
+        .update({ conversation_history: updatedHistory })
+        .eq('id', prankId);
 
       // Only use ElevenLabs - no fallback
       const audioUrl = await generateElevenLabsAudioUrl(aiResponse, elevenLabsVoiceId, elSettings);
