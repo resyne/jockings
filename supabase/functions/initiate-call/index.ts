@@ -412,15 +412,21 @@ serve(async (req) => {
     console.log('Background URL:', backgroundUrl);
 
     // === STEP 3: Save pre-generated URLs to database ===
-    await supabase
+    const { error: updateError } = await supabase
       .from('pranks')
       .update({
         pregenerated_greeting_url: greetingUrl,
         pregenerated_background_url: backgroundUrl,
         conversation_history: [{ role: 'assistant', content: greeting }],
-        call_status: 'initiating'
+        call_status: 'initiated'
       })
       .eq('id', prankId);
+
+    if (updateError) {
+      console.error('Failed to save pre-generated URLs:', updateError);
+    } else {
+      console.log('Pre-generated URLs saved successfully');
+    }
 
     console.log('=== AUDIO PRE-GENERATED, NOW INITIATING CALL ===');
 
