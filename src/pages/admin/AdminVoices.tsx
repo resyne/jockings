@@ -9,9 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Mic, Save, Plus, Trash2, Shield, Play, Volume2, Loader2, Music, Brain } from "lucide-react";
+import { ArrowLeft, Mic, Save, Plus, Trash2, Shield, Play, Volume2, Loader2, Music, Brain, Phone } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { VoiceTestDialog } from "@/components/VoiceTestDialog";
 
 interface VoiceSetting {
   id: string;
@@ -54,6 +55,7 @@ const AdminVoices = () => {
   const [soundPreviewUrl, setSoundPreviewUrl] = useState<string | null>(null);
   const [aiModel, setAiModel] = useState("openai/gpt-4o-mini");
   const [savingAiModel, setSavingAiModel] = useState(false);
+  const [voiceTestOpen, setVoiceTestOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !isAdmin) {
@@ -492,6 +494,28 @@ const AdminVoices = () => {
                     </p>
                   </div>
 
+                  {/* Test Call Section */}
+                  <div className="border-t pt-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-4 h-4 text-green-500" />
+                        <Label>Test Chiamata Live</Label>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setVoiceTestOpen(true)}
+                        className="border-green-500 text-green-600 hover:bg-green-50"
+                      >
+                        <Phone className="w-4 h-4 mr-2" />
+                        Avvia Test
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Prova una conversazione dal vivo con l'AI usando questa configurazione voce
+                    </p>
+                  </div>
+
                   {/* Background Sound Section */}
                   <div className="border-t pt-4 space-y-3">
                     <div className="flex items-center gap-2">
@@ -593,6 +617,18 @@ const AdminVoices = () => {
           </div>
         </div>
       </main>
+
+      {/* Voice Test Dialog */}
+      {selectedSetting && (
+        <VoiceTestDialog
+          open={voiceTestOpen}
+          onOpenChange={setVoiceTestOpen}
+          language={selectedSetting.language}
+          gender={selectedSetting.gender}
+          voiceId={selectedSetting.elevenlabs_voice_id}
+          personality="friendly"
+        />
+      )}
     </div>
   );
 };
