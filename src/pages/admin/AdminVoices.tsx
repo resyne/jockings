@@ -54,43 +54,95 @@ const AI_MODELS = [
   { value: "openai/gpt-5-mini", label: "OpenAI GPT-5 Mini", description: "Più potente, più lento" },
 ];
 
-// VAPI Configuration Options
+// VAPI Configuration Options - Voice Providers (TTS)
 const VAPI_VOICE_PROVIDERS = [
-  { value: "elevenlabs", label: "ElevenLabs", description: "Alta qualità, bassa latenza" },
+  { value: "11labs", label: "ElevenLabs", description: "⚡ Alta qualità, bassa latenza", recommended: true },
   { value: "openai", label: "OpenAI", description: "Veloce, buona qualità" },
   { value: "azure", label: "Azure", description: "Microsoft TTS" },
   { value: "deepgram", label: "Deepgram", description: "Ultra veloce" },
   { value: "playht", label: "PlayHT", description: "Voci realistiche" },
+  { value: "cartesia", label: "Cartesia", description: "Sonic - Ultra bassa latenza" },
+  { value: "rime-ai", label: "Rime AI", description: "Voci naturali" },
+  { value: "lmnt", label: "LMNT", description: "Voci espressive" },
+  { value: "neets", label: "Neets", description: "Economico" },
+  { value: "tavus", label: "Tavus", description: "Video AI voices" },
 ];
 
+// VAPI Transcriber Providers (STT)
 const VAPI_TRANSCRIBER_PROVIDERS = [
   { value: "deepgram", label: "Deepgram", description: "⚡ Consigliato - Veloce e accurato", recommended: true },
-  { value: "gladia", label: "Gladia", description: "Multilingue" },
+  { value: "gladia", label: "Gladia", description: "Multilingue avanzato" },
   { value: "azure", label: "Azure", description: "Microsoft Speech" },
-  { value: "talkscriber", label: "Talkscriber", description: "Specializzato" },
+  { value: "talkscriber", label: "Talkscriber", description: "Specializzato telefonate" },
+  { value: "assembly-ai", label: "AssemblyAI", description: "Alta precisione" },
+  { value: "custom-transcriber", label: "Custom", description: "Transcriber personalizzato" },
 ];
 
+// VAPI AI Models (LLM) - Organized by provider
 const VAPI_AI_MODELS = [
-  { value: "gpt-4o-mini", label: "OpenAI GPT-4o Mini", description: "⚡ Veloce - Consigliato", recommended: true },
-  { value: "gpt-4o", label: "OpenAI GPT-4o", description: "Più potente" },
-  { value: "gpt-4", label: "OpenAI GPT-4", description: "Legacy" },
-  { value: "gemini-2.5-flash", label: "Google Gemini 2.5 Flash", description: "Veloce" },
-  { value: "claude-3-haiku-20240307", label: "Claude 3 Haiku", description: "Veloce e economico" },
+  // OpenAI
+  { value: "gpt-4o-mini", label: "OpenAI GPT-4o Mini", description: "⚡ Veloce - Consigliato", recommended: true, provider: "openai" },
+  { value: "gpt-4o", label: "OpenAI GPT-4o", description: "Potente, multimodale", provider: "openai" },
+  { value: "gpt-4.1", label: "OpenAI GPT-4.1", description: "Developer focused", provider: "openai" },
+  { value: "gpt-4.1-mini", label: "OpenAI GPT-4.1 Mini", description: "Veloce, economico", provider: "openai" },
+  { value: "gpt-4-turbo", label: "OpenAI GPT-4 Turbo", description: "Legacy turbo", provider: "openai" },
+  { value: "gpt-3.5-turbo", label: "OpenAI GPT-3.5 Turbo", description: "Economico, veloce", provider: "openai" },
+  // Anthropic Claude
+  { value: "claude-3-5-sonnet-20241022", label: "Claude 3.5 Sonnet", description: "Bilanciato", provider: "anthropic" },
+  { value: "claude-3-7-sonnet-20250219", label: "Claude 3.7 Sonnet", description: "Reasoning avanzato", provider: "anthropic" },
+  { value: "claude-3-opus-20240229", label: "Claude 3 Opus", description: "Più potente", provider: "anthropic" },
+  { value: "claude-3-haiku-20240307", label: "Claude 3 Haiku", description: "Ultra veloce", provider: "anthropic" },
+  // Google
+  { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash", description: "⚡ Ultra veloce", provider: "google" },
+  { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash", description: "Veloce", provider: "google" },
+  { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro", description: "Potente", provider: "google" },
+  // Groq
+  { value: "llama-3.3-70b-versatile", label: "Llama 3.3 70B", description: "Groq - Ultra veloce", provider: "groq" },
+  { value: "llama-3.1-8b-instant", label: "Llama 3.1 8B", description: "Groq - Istantaneo", provider: "groq" },
+  { value: "mixtral-8x7b-32768", label: "Mixtral 8x7B", description: "Groq - Open source", provider: "groq" },
+  // Together AI
+  { value: "meta-llama/Llama-3-70b-chat-hf", label: "Llama 3 70B", description: "Together AI", provider: "together-ai" },
+  // Cerebras
+  { value: "llama3.1-8b", label: "Llama 3.1 8B Cerebras", description: "Ultra bassa latenza", provider: "cerebras" },
 ];
 
+// ElevenLabs Voices
 const VAPI_ELEVENLABS_VOICES = [
-  { value: "21m00Tcm4TlvDq8ikWAM", label: "Rachel (English)", description: "Femminile, naturale" },
-  { value: "EXAVITQu4vr4xnSDxMaL", label: "Bella (English)", description: "Femminile, giovane" },
-  { value: "yoZ06aMxZJJ28mfd3POQ", label: "Sam (English)", description: "Maschile, professionale" },
-  { value: "pNInz6obpgDQGcFmaJgB", label: "Adam (English)", description: "Maschile, profondo" },
+  // Top voices
+  { value: "9BWtsMINqrJLrRacOk9x", label: "Aria", description: "Femminile, espressiva" },
+  { value: "CwhRBWXzGAHq8TQ4Fs17", label: "Roger", description: "Maschile, professionale" },
+  { value: "EXAVITQu4vr4xnSDxMaL", label: "Sarah", description: "Femminile, naturale" },
+  { value: "FGY2WhTYpPnrIDTdsKH5", label: "Laura", description: "Femminile, calda" },
+  { value: "IKne3meq5aSn9XLyUdCD", label: "Charlie", description: "Maschile, amichevole" },
+  { value: "JBFqnCBsd6RMkjVDRZzb", label: "George", description: "Maschile, autorevole" },
+  { value: "N2lVS1w4EtoT3dr4eOWO", label: "Callum", description: "Maschile, britannico" },
+  { value: "SAz9YHcvj6GT2YYXdXww", label: "River", description: "Non-binary, moderno" },
+  { value: "TX3LPaxmHKxFdv7VOQHJ", label: "Liam", description: "Maschile, giovane" },
+  { value: "XB0fDUnXU5powFXDhCwa", label: "Charlotte", description: "Femminile, elegante" },
+  { value: "Xb7hH8MSUJpSbSDYk0k2", label: "Alice", description: "Femminile, britannica" },
+  { value: "XrExE9yKIg1WjnnlVkGX", label: "Matilda", description: "Femminile, calma" },
+  { value: "bIHbv24MWmeRgasZH58o", label: "Will", description: "Maschile, narratore" },
+  { value: "cgSgspJ2msm6clMCkdW9", label: "Jessica", description: "Femminile, americana" },
+  { value: "cjVigY5qzO86Huf0OWal", label: "Eric", description: "Maschile, profondo" },
+  { value: "iP95p4xoKVk53GoZ742B", label: "Chris", description: "Maschile, energico" },
+  { value: "nPczCjzI2devNBz1zQrb", label: "Brian", description: "Maschile, narratore" },
+  { value: "onwK4e9ZLuTAKqWW03F9", label: "Daniel", description: "Maschile, britannico" },
+  { value: "pFZP5JQG7iQjIQuC4Bku", label: "Lily", description: "Femminile, britannica" },
+  { value: "pqHfZKP75CvOlQylNhV4", label: "Bill", description: "Maschile, americano" },
+  { value: "21m00Tcm4TlvDq8ikWAM", label: "Rachel", description: "Femminile, calma" },
   { value: "custom", label: "Voice ID Personalizzato", description: "Inserisci il tuo Voice ID" },
 ];
 
+// Deepgram STT Models
 const DEEPGRAM_MODELS = [
   { value: "nova-2", label: "Nova 2", description: "⚡ Più veloce e accurato", recommended: true },
   { value: "nova-2-general", label: "Nova 2 General", description: "General purpose" },
   { value: "nova-2-meeting", label: "Nova 2 Meeting", description: "Ottimizzato per meeting" },
-  { value: "nova-2-phonecall", label: "Nova 2 Phonecall", description: "Ottimizzato per telefonate" },
+  { value: "nova-2-phonecall", label: "Nova 2 Phonecall", description: "⚡ Ottimizzato per telefonate", recommended: true },
+  { value: "nova-2-conversationalai", label: "Nova 2 ConversationalAI", description: "Ottimizzato per AI" },
+  { value: "nova", label: "Nova", description: "Versione precedente" },
+  { value: "enhanced", label: "Enhanced", description: "Qualità migliorata" },
+  { value: "base", label: "Base", description: "Economico" },
 ];
 
 interface VapiSettings {
