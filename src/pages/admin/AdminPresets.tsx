@@ -369,9 +369,31 @@ const AdminPresets = () => {
                         placeholder="Es: Office ambiance with phone ringing, keyboard typing, distant conversations"
                         className="min-h-[80px] text-sm"
                       />
-                      <p className="text-xs text-muted-foreground">
-                        Descrivi l'ambiente sonoro in inglese. Es: "busy traffic street", "quiet office", "restaurant kitchen"
-                      </p>
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground font-medium">Suggerimenti prompt:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {[
+                            "busy office with phones ringing",
+                            "city traffic and car horns",
+                            "restaurant kitchen ambiance",
+                            "call center background noise",
+                            "factory machinery sounds",
+                            "airport terminal announcements"
+                          ].map((suggestion) => (
+                            <button
+                              key={suggestion}
+                              type="button"
+                              onClick={() => setSelectedPreset({
+                                ...selectedPreset,
+                                background_sound_prompt: suggestion
+                              })}
+                              className="text-xs px-2 py-1 rounded-full bg-muted hover:bg-primary hover:text-primary-foreground transition-colors"
+                            >
+                              {suggestion}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-2">
