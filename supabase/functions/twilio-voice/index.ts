@@ -491,16 +491,23 @@ serve(async (req) => {
 
       // Only use ElevenLabs - no fallback
       const audioUrl = await generateElevenLabsAudioUrl(aiResponse, elevenLabsVoiceId, elSettings);
+      console.log('Generated audio URL for response:', audioUrl);
+      
       const twiml = `<?xml version="1.0" encoding="UTF-8"?>
       <Response>
         <Play>${audioUrl}</Play>
+        <Gather input="speech" language="${langCode}" timeout="8" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=${turn + 1}">
+        </Gather>
+        <Pause length="3"/>
         <Gather input="speech" language="${langCode}" timeout="5" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=${turn + 1}">
         </Gather>
-        <Pause length="2"/>
-        <Gather input="speech" language="${langCode}" timeout="3" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=${turn + 1}">
+        <Say voice="${pollyVoice.voice}" language="${langCode}">Pronto? È ancora lì?</Say>
+        <Gather input="speech" language="${langCode}" timeout="5" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=${turn + 1}">
         </Gather>
         <Hangup/>
       </Response>`;
+      
+      console.log('Returning TwiML for turn', turn + 1);
 
       return new Response(twiml, { headers: { 'Content-Type': 'text/xml' } });
     }
