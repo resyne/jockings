@@ -187,9 +187,12 @@ serve(async (req) => {
       if (s.value) settings[s.key] = s.value;
     });
 
-    // Get VAPI Phone Number ID from the vapi_phone_numbers table (UUID format)
-    // The phoneNumberId for VAPI API must be the UUID from our table, not the VAPI "PN..." ID
+    // Get VAPI Phone Number ID - VAPI API requires the actual phone_number_id from VAPI Dashboard
+    // This is the "PN..." format ID that VAPI provides, NOT a UUID
+    // Despite the VAPI error message saying "must be a UUID", VAPI actually expects their phone number ID
     let vapiPhoneNumberId = vapiPhoneResult.data?.phone_number_id;
+    
+    console.log('Phone from table:', vapiPhoneResult.data?.phone_number);
     
     // If no default phone found in table, fall back to app_settings (legacy)
     if (!vapiPhoneNumberId) {

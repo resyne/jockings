@@ -78,32 +78,27 @@ const VAPI_TRANSCRIBER_PROVIDERS = [
   { value: "custom-transcriber", label: "Custom", description: "Transcriber personalizzato" },
 ];
 
-// VAPI AI Models (LLM) - Organized by provider
+// VAPI AI Models (LLM) - Organized by provider - ONLY models supported by VAPI
 const VAPI_AI_MODELS = [
-  // OpenAI
+  // OpenAI - Most recommended for VAPI
   { value: "gpt-4o-mini", label: "OpenAI GPT-4o Mini", description: "⚡ Veloce - Consigliato", recommended: true, provider: "openai" },
   { value: "gpt-4o", label: "OpenAI GPT-4o", description: "Potente, multimodale", provider: "openai" },
-  { value: "gpt-4.1", label: "OpenAI GPT-4.1", description: "Developer focused", provider: "openai" },
-  { value: "gpt-4.1-mini", label: "OpenAI GPT-4.1 Mini", description: "Veloce, economico", provider: "openai" },
-  { value: "gpt-4-turbo", label: "OpenAI GPT-4 Turbo", description: "Legacy turbo", provider: "openai" },
+  { value: "gpt-4-turbo", label: "OpenAI GPT-4 Turbo", description: "Alta qualità", provider: "openai" },
   { value: "gpt-3.5-turbo", label: "OpenAI GPT-3.5 Turbo", description: "Economico, veloce", provider: "openai" },
+  { value: "gpt-5", label: "OpenAI GPT-5", description: "Nuovo modello avanzato", provider: "openai" },
+  { value: "gpt-5-mini", label: "OpenAI GPT-5 Mini", description: "Veloce, nuovo", provider: "openai" },
   // Anthropic Claude
   { value: "claude-3-5-sonnet-20241022", label: "Claude 3.5 Sonnet", description: "Bilanciato", provider: "anthropic" },
-  { value: "claude-3-7-sonnet-20250219", label: "Claude 3.7 Sonnet", description: "Reasoning avanzato", provider: "anthropic" },
   { value: "claude-3-opus-20240229", label: "Claude 3 Opus", description: "Più potente", provider: "anthropic" },
   { value: "claude-3-haiku-20240307", label: "Claude 3 Haiku", description: "Ultra veloce", provider: "anthropic" },
   // Google
   { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash", description: "⚡ Ultra veloce", provider: "google" },
   { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash", description: "Veloce", provider: "google" },
   { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro", description: "Potente", provider: "google" },
-  // Groq
-  { value: "llama-3.3-70b-versatile", label: "Llama 3.3 70B", description: "Groq - Ultra veloce", provider: "groq" },
+  // Groq - Ultra fast inference
+  { value: "llama-3.1-70b-versatile", label: "Llama 3.1 70B", description: "Groq - Ultra veloce", provider: "groq" },
   { value: "llama-3.1-8b-instant", label: "Llama 3.1 8B", description: "Groq - Istantaneo", provider: "groq" },
   { value: "mixtral-8x7b-32768", label: "Mixtral 8x7B", description: "Groq - Open source", provider: "groq" },
-  // Together AI
-  { value: "meta-llama/Llama-3-70b-chat-hf", label: "Llama 3 70B", description: "Together AI", provider: "together-ai" },
-  // Cerebras
-  { value: "llama3.1-8b", label: "Llama 3.1 8B Cerebras", description: "Ultra bassa latenza", provider: "cerebras" },
 ];
 
 // ElevenLabs Voices
@@ -820,18 +815,19 @@ const AdminVoices = () => {
                         </DialogHeader>
                         <div className="space-y-4 py-4">
                           <div className="space-y-2">
-                            <Label>Phone Number ID VAPI *</Label>
+                            <Label>Phone Number ID VAPI (UUID) *</Label>
                             <Input
                               value={newVapiPhone.phone_number_id}
                               onChange={(e) => setNewVapiPhone({ ...newVapiPhone, phone_number_id: e.target.value })}
-                              placeholder="abc123-def456-ghi789..."
+                              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                               className="font-mono text-sm"
                             />
                             <p className="text-xs text-muted-foreground">
-                              Copia l'ID dal{" "}
+                              Copia l'<strong>UUID</strong> (formato: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx) dal{" "}
                               <a href="https://dashboard.vapi.ai/phone-numbers" target="_blank" rel="noopener" className="text-primary underline">
                                 VAPI Dashboard
                               </a>
+                              . NON usare il SID Twilio (PN...).
                             </p>
                           </div>
                           <div className="space-y-2">
