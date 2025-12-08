@@ -192,14 +192,11 @@ const AdminVoices = () => {
   };
 
   const handleSave = async (setting: VoiceSetting) => {
+    // Only save voice ID - other settings are global now
     const { error } = await supabase
       .from("voice_settings")
       .update({
         elevenlabs_voice_id: setting.elevenlabs_voice_id,
-        elevenlabs_stability: setting.elevenlabs_stability,
-        elevenlabs_similarity: setting.elevenlabs_similarity,
-        elevenlabs_style: setting.elevenlabs_style,
-        elevenlabs_speed: setting.elevenlabs_speed,
         is_active: setting.is_active,
       })
       .eq("id", setting.id);
@@ -207,7 +204,7 @@ const AdminVoices = () => {
     if (error) {
       toast({ title: "Errore", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Salvato!", description: "Configurazione voce aggiornata" });
+      toast({ title: "Salvato!", description: "Voice ID aggiornato" });
       fetchVoiceSettings();
       setSelectedSetting(null);
     }
@@ -269,13 +266,14 @@ const AdminVoices = () => {
     setTestAudioUrl(null);
 
     try {
+      // Use global settings for test
       const { data, error } = await supabase.functions.invoke("test-voice", {
         body: {
           voiceId: setting.elevenlabs_voice_id,
-          stability: setting.elevenlabs_stability,
-          similarity: setting.elevenlabs_similarity,
-          style: setting.elevenlabs_style,
-          speed: setting.elevenlabs_speed,
+          stability: globalSettings.stability,
+          similarity: globalSettings.similarity,
+          style: globalSettings.style,
+          speed: globalSettings.speed,
           language: setting.language,
         },
       });
@@ -599,7 +597,7 @@ const AdminVoices = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label>ElevenLabs Voice ID</Label>
+                    <Label className="font-medium">ElevenLabs Voice ID</Label>
                     <Input
                       value={selectedSetting.elevenlabs_voice_id || ""}
                       onChange={(e) => setSelectedSetting({
@@ -607,6 +605,7 @@ const AdminVoices = () => {
                         elevenlabs_voice_id: e.target.value
                       })}
                       placeholder="Voice ID da ElevenLabs"
+                      className="font-mono"
                     />
                     <p className="text-xs text-muted-foreground">
                       Trova voice IDs su{" "}
@@ -616,69 +615,9 @@ const AdminVoices = () => {
                     </p>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Stabilità: {Math.round(selectedSetting.elevenlabs_stability * 100)}%</Label>
-                    <Slider
-                      value={[selectedSetting.elevenlabs_stability * 100]}
-                      onValueChange={([v]) => setSelectedSetting({
-                        ...selectedSetting,
-                        elevenlabs_stability: v / 100
-                      })}
-                      max={100}
-                      step={1}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      🎯 <strong>Basso (0-30%):</strong> Più espressivo e variabile. <strong>Alto (70-100%):</strong> Più costante e monotono. Per prank, 40-60% è ideale.
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Similarity Boost: {Math.round(selectedSetting.elevenlabs_similarity * 100)}%</Label>
-                    <Slider
-                      value={[selectedSetting.elevenlabs_similarity * 100]}
-                      onValueChange={([v]) => setSelectedSetting({
-                        ...selectedSetting,
-                        elevenlabs_similarity: v / 100
-                      })}
-                      max={100}
-                      step={1}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      🔊 Quanto la voce assomiglia all'originale. <strong>Alto (75-100%):</strong> Più fedele ma può creare artefatti. <strong>Medio (50-75%):</strong> Bilanciato.
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Stile: {Math.round(selectedSetting.elevenlabs_style * 100)}%</Label>
-                    <Slider
-                      value={[selectedSetting.elevenlabs_style * 100]}
-                      onValueChange={([v]) => setSelectedSetting({
-                        ...selectedSetting,
-                        elevenlabs_style: v / 100
-                      })}
-                      max={100}
-                      step={1}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      🎭 Amplifica lo stile della voce. <strong>0%:</strong> Neutro. <strong>Alto:</strong> Più teatrale/esagerato. Per chiamate realistiche, tieni basso (0-30%).
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Velocità: {selectedSetting.elevenlabs_speed.toFixed(2)}x</Label>
-                    <Slider
-                      value={[selectedSetting.elevenlabs_speed * 100]}
-                      onValueChange={([v]) => setSelectedSetting({
-                        ...selectedSetting,
-                        elevenlabs_speed: v / 100
-                      })}
-                      min={50}
-                      max={200}
-                      step={5}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      ⚡ <strong>0.8-1.0x:</strong> Naturale e calmo. <strong>1.0-1.2x:</strong> Energico/agitato. Adatta alla personalità del prank.
-                    </p>
+                  <div className="p-3 rounded-lg bg-muted/50 text-sm text-muted-foreground">
+                    <p className="font-medium text-foreground mb-1">ℹ️ Parametri audio</p>
+                    <p>I parametri Stabilità, Similarity, Stile e Velocità sono configurati nel <strong>Setup Globale ElevenLabs</strong> sopra e valgono per tutte le voci.</p>
                   </div>
 
                   {/* Test Voice Section */}
@@ -716,7 +655,7 @@ const AdminVoices = () => {
                       />
                     )}
                     <p className="text-xs text-muted-foreground">
-                      Genera un audio di test con le impostazioni correnti
+                      Genera un audio di test con i settings globali
                     </p>
                   </div>
 
