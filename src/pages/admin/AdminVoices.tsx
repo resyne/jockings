@@ -174,6 +174,14 @@ const AdminVoices = () => {
   const [callProvider, setCallProvider] = useState<"twilio" | "vapi">("twilio");
   const [vapiSettings, setVapiSettings] = useState<VapiSettings>(DEFAULT_VAPI_SETTINGS);
   const [savingCallProvider, setSavingCallProvider] = useState(false);
+  const [useCustomPhoneId, setUseCustomPhoneId] = useState(false);
+  const [customPhoneId, setCustomPhoneId] = useState("");
+  const [availablePhoneNumbers, setAvailablePhoneNumbers] = useState<Array<{
+    id: string;
+    phone_number: string;
+    friendly_name: string | null;
+    country_name: string;
+  }>>([]);
 
   useEffect(() => {
     if (!loading && !isAdmin) {
@@ -187,8 +195,21 @@ const AdminVoices = () => {
       fetchAiModel();
       fetchGlobalVoiceSettings();
       fetchCallProvider();
+      fetchPhoneNumbers();
     }
   }, [isAdmin]);
+
+  const fetchPhoneNumbers = async () => {
+    const { data } = await supabase
+      .from("twilio_phone_numbers")
+      .select("id, phone_number, friendly_name, country_name")
+      .eq("is_active", true)
+      .order("country_name", { ascending: true });
+    
+    if (data) {
+      setAvailablePhoneNumbers(data);
+    }
+  };
 
   const fetchAiModel = async () => {
     const { data, error } = await supabase
@@ -597,16 +618,75 @@ const AdminVoices = () => {
                 {/* Basic VAPI Settings */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>VAPI Phone Number ID *</Label>
-                    <Input
-                      value={vapiSettings.phoneNumberId}
-                      onChange={(e) => setVapiSettings({ ...vapiSettings, phoneNumberId: e.target.value })}
-                      placeholder="Inserisci Phone Number ID"
-                      className="font-mono text-sm"
-                    />
+                    <Label>Numero di Telefono VAPI *</Label>
+                    {availablePhoneNumbers.length > 0 && !useCustomPhoneId ? (
+                      <>
+                        <Select 
+                          value={vapiSettings.phoneNumberId || "placeholder"} 
+                          onValueChange={(value) => {
+                            if (value === "custom") {
+                              setUseCustomPhoneId(true);
+                              setCustomPhoneId("");
+                            } else {
+                              setVapiSettings({ ...vapiSettings, phoneNumberId: value });
+                            }
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleziona un numero..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="custom">
+                              <span className="text-muted-foreground">✏️ Inserisci ID manualmente</span>
+                            </SelectItem>
+                            {availablePhoneNumbers.map((phone) => (
+                              <SelectItem key={phone.id} value={phone.phone_number}>
+                                <div className="flex flex-col">
+                                  <span className="font-mono">{phone.phone_number}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {phone.friendly_name || phone.country_name}
+                                  </span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </>
+                    ) : (
+                      <div className="space-y-2">
+                        <Input
+                          value={useCustomPhoneId ? customPhoneId : vapiSettings.phoneNumberId}
+                          onChange={(e) => {
+                            if (useCustomPhoneId) {
+                              setCustomPhoneId(e.target.value);
+                              setVapiSettings({ ...vapiSettings, phoneNumberId: e.target.value });
+                            } else {
+                              setVapiSettings({ ...vapiSettings, phoneNumberId: e.target.value });
+                            }
+                          }}
+                          placeholder="Inserisci Phone Number ID VAPI"
+                          className="font-mono text-sm"
+                        />
+                        {availablePhoneNumbers.length > 0 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setUseCustomPhoneId(false);
+                              setCustomPhoneId("");
+                            }}
+                            className="text-xs"
+                          >
+                            ← Torna alla selezione numeri
+                          </Button>
+                        )}
+                      </div>
+                    )}
                     <p className="text-xs text-muted-foreground">
+                      Seleziona un numero importato o inserisci l'ID da{" "}
                       <a href="https://dashboard.vapi.ai/phone-numbers" target="_blank" rel="noopener" className="text-primary underline">
-                        VAPI Dashboard → Phone Numbers
+                        VAPI Dashboard
                       </a>
                     </p>
                   </div>
