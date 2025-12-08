@@ -53,7 +53,9 @@ interface ElevenLabsSettings {
 const generateElevenLabsAudioUrl = async (
   text: string, 
   voiceId: string, 
-  settings: ElevenLabsSettings
+  settings: ElevenLabsSettings,
+  modelId: string = 'eleven_turbo_v2_5',
+  useSpeakerBoost: boolean = false
 ): Promise<string> => {
   const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY');
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
@@ -62,9 +64,8 @@ const generateElevenLabsAudioUrl = async (
     throw new Error('ELEVENLABS_API_KEY not configured');
   }
 
-  console.log('ElevenLabs settings:', settings);
+  console.log('ElevenLabs - Model:', modelId, 'SpeakerBoost:', useSpeakerBoost, 'Settings:', settings);
 
-  // Use eleven_turbo_v2_5 for faster generation (supports 32 languages including Italian)
   const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
     method: 'POST',
     headers: {
@@ -73,14 +74,14 @@ const generateElevenLabsAudioUrl = async (
     },
     body: JSON.stringify({
       text,
-      model_id: 'eleven_turbo_v2_5', // Much faster than eleven_multilingual_v2
+      model_id: modelId,
       voice_settings: {
         stability: settings.stability,
         similarity_boost: settings.similarity_boost,
         style: settings.style,
-        use_speaker_boost: false, // Disable for faster processing
+        use_speaker_boost: useSpeakerBoost,
       },
-      output_format: 'mp3_22050_32', // Lower quality but faster, fine for phone calls
+      output_format: 'mp3_22050_32',
     }),
   });
 
@@ -204,36 +205,46 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
-    // Get prank details
-    const { data: prank, error } = await supabase
-      .from('pranks')
-      .select('*')
-      .eq('id', prankId)
-      .single();
+    // Get prank details and global voice settings in parallel
+    const [prankResult, globalSettingsResult] = await Promise.all([
+      supabase.from('pranks').select('*').eq('id', prankId).single(),
+      supabase.from('app_settings').select('key, value').in('key', ['elevenlabs_stability', 'elevenlabs_similarity', 'elevenlabs_style', 'elevenlabs_speed', 'elevenlabs_speaker_boost', 'elevenlabs_model'])
+    ]);
+
+    const { data: prank, error } = prankResult;
+    const globalVoiceSettings = globalSettingsResult.data || [];
 
     if (error || !prank) {
       throw new Error('Prank not found');
     }
 
+    // Parse global settings
+    const globalSettings: Record<string, string> = {};
+    globalVoiceSettings.forEach((s: { key: string; value: string }) => {
+      globalSettings[s.key] = s.value;
+    });
+
     const voiceProvider = prank.voice_provider || 'openai';
     const langCode = getLanguageCode(prank.language);
     const pollyVoice = getTwilioPollyVoice(prank.voice_gender, prank.language);
-    // Use custom voice ID if set, otherwise use default based on gender/language
     const customVoiceId = (prank as any).elevenlabs_voice_id;
     const elevenLabsVoiceId = customVoiceId || getElevenLabsDefaultVoice(prank.voice_gender, prank.language);
     
     console.log('ElevenLabs voice:', customVoiceId ? `custom (${elevenLabsVoiceId})` : `default (${elevenLabsVoiceId})`);
     const webhookBase = `https://vtsankkghplkfhrlxefs.supabase.co/functions/v1/twilio-voice`;
     
-    // ElevenLabs settings from prank record
+    // Use GLOBAL ElevenLabs settings from app_settings
     const elSettings: ElevenLabsSettings = {
-      stability: (prank as any).elevenlabs_stability ?? 0.5,
-      similarity_boost: (prank as any).elevenlabs_similarity ?? 0.75,
-      style: (prank as any).elevenlabs_style ?? 0,
-      speed: (prank as any).elevenlabs_speed ?? 1.0,
+      stability: parseFloat(globalSettings['elevenlabs_stability']) || 0.5,
+      similarity_boost: parseFloat(globalSettings['elevenlabs_similarity']) || 0.75,
+      style: parseFloat(globalSettings['elevenlabs_style']) || 0,
+      speed: parseFloat(globalSettings['elevenlabs_speed']) || 1.0,
     };
     
-    console.log('Voice provider:', voiceProvider, 'Language:', langCode, 'EL Settings:', elSettings);
+    const elevenlabsModel = globalSettings['elevenlabs_model'] || 'eleven_turbo_v2_5';
+    const useSpeakerBoost = globalSettings['elevenlabs_speaker_boost'] === 'true';
+    
+    console.log('GLOBAL ElevenLabs settings:', elSettings, 'Model:', elevenlabsModel);
 
     if (action === 'start') {
       console.log('Starting prank call for:', prank.victim_first_name);

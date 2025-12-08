@@ -28,9 +28,24 @@ interface VoiceSetting {
   is_active: boolean;
 }
 
+interface GlobalVoiceSettings {
+  stability: number;
+  similarity: number;
+  style: number;
+  speed: number;
+  use_speaker_boost: boolean;
+}
+
 const LANGUAGES = ["Italiano", "English"];
 
 const GENDERS = ["male", "female"];
+
+const ELEVENLABS_MODELS = [
+  { value: "eleven_turbo_v2_5", label: "Turbo v2.5", description: "⚡ Più veloce - 32 lingue - Consigliato", recommended: true },
+  { value: "eleven_multilingual_v2", label: "Multilingual v2", description: "Alta qualità - 29 lingue" },
+  { value: "eleven_turbo_v2", label: "Turbo v2", description: "Veloce - Solo inglese" },
+  { value: "eleven_flash_v2_5", label: "Flash v2.5", description: "Ultra veloce - Bassa latenza" },
+];
 
 const AI_MODELS = [
   { value: "google/gemini-2.5-flash-lite", label: "Google Gemini 2.5 Flash Lite", description: "⚡ Velocissimo - Consigliato", recommended: true },
@@ -38,6 +53,14 @@ const AI_MODELS = [
   { value: "openai/gpt-4o-mini", label: "OpenAI GPT-4o Mini", description: "Veloce, economico" },
   { value: "openai/gpt-5-mini", label: "OpenAI GPT-5 Mini", description: "Più potente, più lento" },
 ];
+
+const DEFAULT_GLOBAL_SETTINGS: GlobalVoiceSettings = {
+  stability: 0.5,
+  similarity: 0.75,
+  style: 0,
+  speed: 1,
+  use_speaker_boost: false,
+};
 
 const AdminVoices = () => {
   const navigate = useNavigate();
@@ -53,9 +76,14 @@ const AdminVoices = () => {
   const [soundPrompt, setSoundPrompt] = useState("");
   const [generatingSound, setGeneratingSound] = useState(false);
   const [soundPreviewUrl, setSoundPreviewUrl] = useState<string | null>(null);
-  const [aiModel, setAiModel] = useState("openai/gpt-4o-mini");
+  const [aiModel, setAiModel] = useState("google/gemini-2.5-flash-lite");
   const [savingAiModel, setSavingAiModel] = useState(false);
   const [voiceTestOpen, setVoiceTestOpen] = useState(false);
+  
+  // Global ElevenLabs settings
+  const [globalSettings, setGlobalSettings] = useState<GlobalVoiceSettings>(DEFAULT_GLOBAL_SETTINGS);
+  const [elevenlabsModel, setElevenlabsModel] = useState("eleven_turbo_v2_5");
+  const [savingGlobalSettings, setSavingGlobalSettings] = useState(false);
 
   useEffect(() => {
     if (!loading && !isAdmin) {
@@ -67,6 +95,7 @@ const AdminVoices = () => {
     if (isAdmin) {
       fetchVoiceSettings();
       fetchAiModel();
+      fetchGlobalVoiceSettings();
     }
   }, [isAdmin]);
 
@@ -79,6 +108,58 @@ const AdminVoices = () => {
     
     if (!error && data) {
       setAiModel(data.value);
+    }
+  };
+
+  const fetchGlobalVoiceSettings = async () => {
+    // Fetch global voice settings from app_settings
+    const { data: settingsData } = await supabase
+      .from("app_settings")
+      .select("key, value")
+      .in("key", ["elevenlabs_stability", "elevenlabs_similarity", "elevenlabs_style", "elevenlabs_speed", "elevenlabs_speaker_boost", "elevenlabs_model"]);
+    
+    if (settingsData && settingsData.length > 0) {
+      const settings: Partial<GlobalVoiceSettings> = {};
+      let model = "eleven_turbo_v2_5";
+      
+      settingsData.forEach(({ key, value }) => {
+        if (key === "elevenlabs_stability") settings.stability = parseFloat(value);
+        if (key === "elevenlabs_similarity") settings.similarity = parseFloat(value);
+        if (key === "elevenlabs_style") settings.style = parseFloat(value);
+        if (key === "elevenlabs_speed") settings.speed = parseFloat(value);
+        if (key === "elevenlabs_speaker_boost") settings.use_speaker_boost = value === "true";
+        if (key === "elevenlabs_model") model = value;
+      });
+      
+      setGlobalSettings({ ...DEFAULT_GLOBAL_SETTINGS, ...settings });
+      setElevenlabsModel(model);
+    }
+  };
+
+  const handleSaveGlobalSettings = async () => {
+    setSavingGlobalSettings(true);
+    try {
+      const settingsToSave = [
+        { key: "elevenlabs_stability", value: globalSettings.stability.toString() },
+        { key: "elevenlabs_similarity", value: globalSettings.similarity.toString() },
+        { key: "elevenlabs_style", value: globalSettings.style.toString() },
+        { key: "elevenlabs_speed", value: globalSettings.speed.toString() },
+        { key: "elevenlabs_speaker_boost", value: globalSettings.use_speaker_boost.toString() },
+        { key: "elevenlabs_model", value: elevenlabsModel },
+      ];
+
+      for (const setting of settingsToSave) {
+        const { error } = await supabase
+          .from("app_settings")
+          .upsert({ key: setting.key, value: setting.value }, { onConflict: "key" });
+        if (error) throw error;
+      }
+
+      toast({ title: "Salvato!", description: "Setup globale ElevenLabs aggiornato" });
+    } catch (error: any) {
+      toast({ title: "Errore", description: error.message, variant: "destructive" });
+    } finally {
+      setSavingGlobalSettings(false);
     }
   };
 
@@ -288,6 +369,149 @@ const AdminVoices = () => {
       </header>
 
       <main className="px-4 py-6 max-w-4xl mx-auto space-y-6">
+        {/* Global ElevenLabs Setup - UNIFIED FOR ALL VOICES */}
+        <Card className="border-2 border-orange-500/30 bg-gradient-to-br from-orange-500/5 to-transparent">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Volume2 className="w-5 h-5 text-orange-500" />
+              Setup Globale ElevenLabs
+              <span className="text-xs bg-orange-500/20 text-orange-600 px-2 py-0.5 rounded-full ml-2">
+                Vale per tutte le voci
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* ElevenLabs Model */}
+            <div className="space-y-2">
+              <Label className="font-medium">Modello TTS</Label>
+              <Select value={elevenlabsModel} onValueChange={setElevenlabsModel}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ELEVENLABS_MODELS.map((model) => (
+                    <SelectItem key={model.value} value={model.value}>
+                      <div className="flex flex-col">
+                        <span className={model.recommended ? "font-medium" : ""}>{model.label}</span>
+                        <span className="text-xs text-muted-foreground">{model.description}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Turbo v2.5 è il più veloce e consigliato per chiamate in tempo reale.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Stability */}
+              <div className="space-y-3">
+                <Label className="font-medium">
+                  Stabilità: {Math.round(globalSettings.stability * 100)}%
+                </Label>
+                <Slider
+                  value={[globalSettings.stability * 100]}
+                  onValueChange={([v]) => setGlobalSettings({ ...globalSettings, stability: v / 100 })}
+                  max={100}
+                  step={1}
+                />
+                <p className="text-xs text-muted-foreground">
+                  🎯 <strong>Basso (0-30%):</strong> Più espressivo e variabile<br/>
+                  <strong>Alto (70-100%):</strong> Più costante e prevedibile<br/>
+                  <span className="text-orange-600">Consigliato prank: 40-60%</span>
+                </p>
+              </div>
+
+              {/* Similarity Boost */}
+              <div className="space-y-3">
+                <Label className="font-medium">
+                  Similarity Boost: {Math.round(globalSettings.similarity * 100)}%
+                </Label>
+                <Slider
+                  value={[globalSettings.similarity * 100]}
+                  onValueChange={([v]) => setGlobalSettings({ ...globalSettings, similarity: v / 100 })}
+                  max={100}
+                  step={1}
+                />
+                <p className="text-xs text-muted-foreground">
+                  🔊 Fedeltà alla voce originale<br/>
+                  <strong>Alto:</strong> Più fedele ma può creare artefatti<br/>
+                  <span className="text-orange-600">Consigliato: 50-75%</span>
+                </p>
+              </div>
+
+              {/* Style Exaggeration */}
+              <div className="space-y-3">
+                <Label className="font-medium">
+                  Style Exaggeration: {Math.round(globalSettings.style * 100)}%
+                </Label>
+                <Slider
+                  value={[globalSettings.style * 100]}
+                  onValueChange={([v]) => setGlobalSettings({ ...globalSettings, style: v / 100 })}
+                  max={100}
+                  step={1}
+                />
+                <p className="text-xs text-muted-foreground">
+                  🎭 Amplifica lo stile della voce<br/>
+                  <strong>0%:</strong> Neutro | <strong>Alto:</strong> Più teatrale<br/>
+                  <span className="text-orange-600">Per realismo: 0-30%</span>
+                </p>
+              </div>
+
+              {/* Speed */}
+              <div className="space-y-3">
+                <Label className="font-medium">
+                  Velocità: {globalSettings.speed.toFixed(2)}x
+                </Label>
+                <Slider
+                  value={[globalSettings.speed * 100]}
+                  onValueChange={([v]) => setGlobalSettings({ ...globalSettings, speed: v / 100 })}
+                  min={50}
+                  max={200}
+                  step={5}
+                />
+                <p className="text-xs text-muted-foreground">
+                  ⚡ Velocità parlata<br/>
+                  <strong>0.5x:</strong> Lento | <strong>2x:</strong> Veloce<br/>
+                  <span className="text-orange-600">Normale: 0.9-1.1x</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Speaker Boost */}
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+              <div>
+                <Label className="font-medium">Speaker Boost</Label>
+                <p className="text-xs text-muted-foreground">
+                  Migliora la chiarezza ma aumenta latenza. Disabilitato = più veloce.
+                </p>
+              </div>
+              <Button
+                variant={globalSettings.use_speaker_boost ? "default" : "outline"}
+                size="sm"
+                onClick={() => setGlobalSettings({ ...globalSettings, use_speaker_boost: !globalSettings.use_speaker_boost })}
+              >
+                {globalSettings.use_speaker_boost ? "ON" : "OFF"}
+              </Button>
+            </div>
+
+            <Button onClick={handleSaveGlobalSettings} disabled={savingGlobalSettings} className="w-full">
+              {savingGlobalSettings ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Salva Setup Globale ElevenLabs
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+
         {/* AI Model Configuration */}
         <Card>
           <CardHeader className="pb-3">
