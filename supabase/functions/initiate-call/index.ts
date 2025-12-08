@@ -56,6 +56,30 @@ serve(async (req) => {
 
     console.log('Initiating call for prank:', prank.id, 'to:', prank.victim_phone, 'language:', prank.language);
 
+    // Auto-reset stale caller IDs (not updated in last 10 minutes but have current_calls > 0)
+    const STALE_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes
+    const now = new Date();
+    
+    if (allVerifiedCallerIds && allVerifiedCallerIds.length > 0) {
+      const staleCallerIds = allVerifiedCallerIds.filter(c => {
+        if (c.current_calls <= 0) return false;
+        const updatedAt = new Date(c.updated_at);
+        return (now.getTime() - updatedAt.getTime()) > STALE_THRESHOLD_MS;
+      });
+      
+      if (staleCallerIds.length > 0) {
+        console.log('Resetting', staleCallerIds.length, 'stale caller IDs');
+        for (const stale of staleCallerIds) {
+          await supabase
+            .from('verified_caller_ids')
+            .update({ current_calls: 0 })
+            .eq('id', stale.id);
+          // Update local copy
+          stale.current_calls = 0;
+        }
+      }
+    }
+
     // Select the best caller ID (default first, then any with capacity)
     let selectedCallerId: string | null = null;
     let selectedCallerIdRecord: { id: string; phone_number: string; current_calls: number } | null = null;
