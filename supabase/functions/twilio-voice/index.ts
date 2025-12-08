@@ -477,7 +477,7 @@ serve(async (req) => {
       const requestBody: any = {
         model: modelName,
         messages,
-        max_tokens: 80,
+        max_tokens: 300,
       };
       
       // Only add temperature for models that support it (not GPT-5 or newer)
