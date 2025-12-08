@@ -1,0 +1,1 @@
+UPDATE app_settings SET value = 'google/gemini-2.5-flash-lite' WHERE key = 'ai_model';

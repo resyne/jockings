@@ -33,9 +33,9 @@ const LANGUAGES = ["Italiano", "English"];
 const GENDERS = ["male", "female"];
 
 const AI_MODELS = [
+  { value: "google/gemini-2.5-flash-lite", label: "Google Gemini 2.5 Flash Lite", description: "⚡ Velocissimo - Consigliato", recommended: true },
+  { value: "google/gemini-2.5-flash", label: "Google Gemini 2.5 Flash", description: "Molto veloce, buona qualità" },
   { value: "openai/gpt-4o-mini", label: "OpenAI GPT-4o Mini", description: "Veloce, economico" },
-  { value: "google/gemini-2.5-flash", label: "Google Gemini 2.5 Flash", description: "Molto veloce, Lovable AI" },
-  { value: "google/gemini-2.5-flash-lite", label: "Google Gemini 2.5 Flash Lite", description: "Velocissimo, economico" },
   { value: "openai/gpt-5-mini", label: "OpenAI GPT-5 Mini", description: "Più potente, più lento" },
 ];
 
@@ -306,9 +306,11 @@ const AdminVoices = () => {
                 <SelectContent>
                   {AI_MODELS.map((model) => (
                     <SelectItem key={model.value} value={model.value}>
-                      <div className="flex flex-col">
-                        <span>{model.label}</span>
-                        <span className="text-xs text-muted-foreground">{model.description}</span>
+                      <div className="flex items-center gap-2">
+                        <div className="flex flex-col">
+                          <span className={model.recommended ? "font-medium" : ""}>{model.label}</span>
+                          <span className="text-xs text-muted-foreground">{model.description}</span>
+                        </div>
                       </div>
                     </SelectItem>
                   ))}
