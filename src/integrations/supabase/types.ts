@@ -320,6 +320,39 @@ export type Database = {
         }
         Relationships: []
       }
+      vapi_phone_numbers: {
+        Row: {
+          created_at: string
+          friendly_name: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          phone_number: string | null
+          phone_number_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          friendly_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          phone_number?: string | null
+          phone_number_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          friendly_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          phone_number?: string | null
+          phone_number_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       verified_caller_ids: {
         Row: {
           created_at: string

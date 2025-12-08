@@ -148,6 +148,7 @@ const DEEPGRAM_MODELS = [
 interface VapiSettings {
   phoneNumberId: string;
   assistantId: string;
+  callerId: string; // Caller ID to show to victim
   // Model
   aiProvider: string;
   aiModel: string;
@@ -170,9 +171,27 @@ interface VapiSettings {
   endCallMessage: string;
 }
 
+interface VapiPhoneNumber {
+  id: string;
+  phone_number_id: string;
+  phone_number: string | null;
+  friendly_name: string | null;
+  is_active: boolean;
+  is_default: boolean;
+}
+
+interface VerifiedCallerId {
+  id: string;
+  phone_number: string;
+  friendly_name: string | null;
+  is_active: boolean;
+  is_default: boolean;
+}
+
 const DEFAULT_VAPI_SETTINGS: VapiSettings = {
   phoneNumberId: "",
   assistantId: "",
+  callerId: "",
   aiProvider: "openai",
   aiModel: "gpt-4o-mini",
   temperature: 0.7,
@@ -226,14 +245,10 @@ const AdminVoices = () => {
   const [callProvider, setCallProvider] = useState<"twilio" | "vapi">("twilio");
   const [vapiSettings, setVapiSettings] = useState<VapiSettings>(DEFAULT_VAPI_SETTINGS);
   const [savingCallProvider, setSavingCallProvider] = useState(false);
-  const [useCustomPhoneId, setUseCustomPhoneId] = useState(false);
-  const [customPhoneId, setCustomPhoneId] = useState("");
-  const [availablePhoneNumbers, setAvailablePhoneNumbers] = useState<Array<{
-    id: string;
-    phone_number: string;
-    friendly_name: string | null;
-    country_name: string;
-  }>>([]);
+  const [vapiPhoneNumbers, setVapiPhoneNumbers] = useState<VapiPhoneNumber[]>([]);
+  const [verifiedCallerIds, setVerifiedCallerIds] = useState<VerifiedCallerId[]>([]);
+  const [isAddVapiPhoneOpen, setIsAddVapiPhoneOpen] = useState(false);
+  const [newVapiPhone, setNewVapiPhone] = useState({ phone_number_id: "", phone_number: "", friendly_name: "" });
   
   // VAPI Voice Presets
   interface VapiVoicePreset {
@@ -264,32 +279,95 @@ const AdminVoices = () => {
       fetchAiModel();
       fetchGlobalVoiceSettings();
       fetchCallProvider();
-      fetchPhoneNumbers();
+      fetchVapiPhoneNumbers();
+      fetchVerifiedCallerIds();
       fetchVapiVoicePresets();
     }
   }, [isAdmin]);
 
-  const fetchPhoneNumbers = async () => {
-    // Fetch verified caller IDs instead of twilio_phone_numbers
+  const fetchVapiPhoneNumbers = async () => {
+    const { data } = await supabase
+      .from("vapi_phone_numbers")
+      .select("*")
+      .order("is_default", { ascending: false });
+    
+    if (data) {
+      setVapiPhoneNumbers(data);
+      // Auto-select default if none set
+      const defaultPhone = data.find(p => p.is_default && p.is_active);
+      if (defaultPhone && !vapiSettings.phoneNumberId) {
+        setVapiSettings(prev => ({ ...prev, phoneNumberId: defaultPhone.phone_number_id }));
+      }
+    }
+  };
+
+  const fetchVerifiedCallerIds = async () => {
     const { data } = await supabase
       .from("verified_caller_ids")
-      .select("id, phone_number, friendly_name, is_default")
+      .select("id, phone_number, friendly_name, is_active, is_default")
       .eq("is_active", true)
       .order("is_default", { ascending: false });
     
     if (data) {
-      setAvailablePhoneNumbers(data.map(item => ({
-        id: item.id,
-        phone_number: item.phone_number,
-        friendly_name: item.friendly_name,
-        country_name: item.is_default ? "Principale" : ""
-      })));
-      
-      // Auto-select default caller ID if none is set
-      const defaultCaller = data.find(item => item.is_default);
-      if (defaultCaller && !vapiSettings.phoneNumberId) {
-        setVapiSettings(prev => ({ ...prev, phoneNumberId: defaultCaller.phone_number }));
+      setVerifiedCallerIds(data);
+      // Auto-select default caller ID if none set
+      const defaultCaller = data.find(c => c.is_default);
+      if (defaultCaller && !vapiSettings.callerId) {
+        setVapiSettings(prev => ({ ...prev, callerId: defaultCaller.phone_number }));
       }
+    }
+  };
+
+  const handleAddVapiPhone = async () => {
+    if (!newVapiPhone.phone_number_id) {
+      toast({ title: "Errore", description: "Inserisci il Phone Number ID VAPI", variant: "destructive" });
+      return;
+    }
+
+    const { error } = await supabase
+      .from("vapi_phone_numbers")
+      .insert({
+        phone_number_id: newVapiPhone.phone_number_id,
+        phone_number: newVapiPhone.phone_number || null,
+        friendly_name: newVapiPhone.friendly_name || null,
+        is_default: vapiPhoneNumbers.length === 0, // First one is default
+      });
+
+    if (error) {
+      toast({ title: "Errore", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Aggiunto!", description: "Numero VAPI aggiunto" });
+      fetchVapiPhoneNumbers();
+      setIsAddVapiPhoneOpen(false);
+      setNewVapiPhone({ phone_number_id: "", phone_number: "", friendly_name: "" });
+    }
+  };
+
+  const handleDeleteVapiPhone = async (id: string) => {
+    const { error } = await supabase
+      .from("vapi_phone_numbers")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      toast({ title: "Errore", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Eliminato!", description: "Numero VAPI rimosso" });
+      fetchVapiPhoneNumbers();
+    }
+  };
+
+  const handleSetDefaultVapiPhone = async (id: string) => {
+    const { error } = await supabase
+      .from("vapi_phone_numbers")
+      .update({ is_default: true })
+      .eq("id", id);
+
+    if (error) {
+      toast({ title: "Errore", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Aggiornato!", description: "Numero di default aggiornato" });
+      fetchVapiPhoneNumbers();
     }
   };
 
@@ -422,7 +500,8 @@ const AdminVoices = () => {
       .select("key, value")
       .in("key", [
         "call_provider", 
-        "vapi_phone_number_id", 
+        "vapi_phone_number_id",
+        "vapi_caller_id",
         "vapi_assistant_id",
         "vapi_ai_provider",
         "vapi_ai_model",
@@ -447,6 +526,7 @@ const AdminVoices = () => {
       data.forEach(({ key, value }) => {
         if (key === "call_provider") setCallProvider(value as "twilio" | "vapi");
         if (key === "vapi_phone_number_id") newSettings.phoneNumberId = value;
+        if (key === "vapi_caller_id") newSettings.callerId = value;
         if (key === "vapi_assistant_id") newSettings.assistantId = value;
         if (key === "vapi_ai_provider") newSettings.aiProvider = value;
         if (key === "vapi_ai_model") newSettings.aiModel = value;
@@ -475,6 +555,7 @@ const AdminVoices = () => {
       const settingsToSave = [
         { key: "call_provider", value: callProvider },
         { key: "vapi_phone_number_id", value: vapiSettings.phoneNumberId },
+        { key: "vapi_caller_id", value: vapiSettings.callerId },
         { key: "vapi_assistant_id", value: vapiSettings.assistantId },
         { key: "vapi_ai_provider", value: vapiSettings.aiProvider },
         { key: "vapi_ai_model", value: vapiSettings.aiModel },
@@ -712,93 +793,142 @@ const AdminVoices = () => {
 
             {callProvider === "vapi" && (
               <div className="space-y-6 pt-4 border-t">
-                {/* Basic VAPI Settings */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Numero di Telefono VAPI *</Label>
-                    {availablePhoneNumbers.length > 0 && !useCustomPhoneId ? (
-                      <>
-                        <Select 
-                          value={vapiSettings.phoneNumberId || "placeholder"} 
-                          onValueChange={(value) => {
-                            if (value === "custom") {
-                              setUseCustomPhoneId(true);
-                              setCustomPhoneId("");
-                            } else {
-                              setVapiSettings({ ...vapiSettings, phoneNumberId: value });
-                            }
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleziona un numero..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="custom">
-                              <span className="text-muted-foreground">✏️ Inserisci ID manualmente</span>
-                            </SelectItem>
-                            {availablePhoneNumbers.map((phone) => (
-                              <SelectItem key={phone.id} value={phone.phone_number}>
-                                <div className="flex flex-col">
-                                  <span className="font-mono">{phone.phone_number}</span>
-                                  <span className="text-xs text-muted-foreground">
-                                    {phone.friendly_name || phone.country_name}
-                                  </span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </>
-                    ) : (
-                      <div className="space-y-2">
-                        <Input
-                          value={useCustomPhoneId ? customPhoneId : vapiSettings.phoneNumberId}
-                          onChange={(e) => {
-                            if (useCustomPhoneId) {
-                              setCustomPhoneId(e.target.value);
-                              setVapiSettings({ ...vapiSettings, phoneNumberId: e.target.value });
-                            } else {
-                              setVapiSettings({ ...vapiSettings, phoneNumberId: e.target.value });
-                            }
-                          }}
-                          placeholder="Inserisci Phone Number ID VAPI"
-                          className="font-mono text-sm"
-                        />
-                        {availablePhoneNumbers.length > 0 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setUseCustomPhoneId(false);
-                              setCustomPhoneId("");
-                            }}
-                            className="text-xs"
-                          >
-                            ← Torna alla selezione numeri
+                {/* VAPI Phone Numbers Management */}
+                <div className="p-4 rounded-lg bg-indigo-500/5 border border-indigo-500/20 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium flex items-center gap-2 text-indigo-600">
+                      <Phone className="w-4 h-4" />
+                      Numeri Telefono VAPI
+                    </h4>
+                    <Dialog open={isAddVapiPhoneOpen} onOpenChange={setIsAddVapiPhoneOpen}>
+                      <DialogTrigger asChild>
+                        <Button size="sm" variant="outline">
+                          <Plus className="w-4 h-4 mr-1" />
+                          Aggiungi
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Aggiungi Numero VAPI</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <Label>Phone Number ID VAPI *</Label>
+                            <Input
+                              value={newVapiPhone.phone_number_id}
+                              onChange={(e) => setNewVapiPhone({ ...newVapiPhone, phone_number_id: e.target.value })}
+                              placeholder="abc123-def456-ghi789..."
+                              className="font-mono text-sm"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              Copia l'ID dal{" "}
+                              <a href="https://dashboard.vapi.ai/phone-numbers" target="_blank" rel="noopener" className="text-primary underline">
+                                VAPI Dashboard
+                              </a>
+                            </p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Numero Telefono (opzionale)</Label>
+                            <Input
+                              value={newVapiPhone.phone_number}
+                              onChange={(e) => setNewVapiPhone({ ...newVapiPhone, phone_number: e.target.value })}
+                              placeholder="+39..."
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Nome Descrittivo (opzionale)</Label>
+                            <Input
+                              value={newVapiPhone.friendly_name}
+                              onChange={(e) => setNewVapiPhone({ ...newVapiPhone, friendly_name: e.target.value })}
+                              placeholder="Numero principale Italia"
+                            />
+                          </div>
+                          <Button onClick={handleAddVapiPhone} className="w-full">
+                            Aggiungi Numero
                           </Button>
-                        )}
-                      </div>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      Seleziona un numero importato o inserisci l'ID da{" "}
-                      <a href="https://dashboard.vapi.ai/phone-numbers" target="_blank" rel="noopener" className="text-primary underline">
-                        VAPI Dashboard
-                      </a>
-                    </p>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
-                  <div className="space-y-2">
-                    <Label>VAPI Assistant ID (opzionale)</Label>
-                    <Input
-                      value={vapiSettings.assistantId}
-                      onChange={(e) => setVapiSettings({ ...vapiSettings, assistantId: e.target.value })}
-                      placeholder="Usa un assistente pre-configurato"
-                      className="font-mono text-sm"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Lascia vuoto per creare dinamicamente
+
+                  {vapiPhoneNumbers.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Nessun numero VAPI configurato. Aggiungine uno dal VAPI Dashboard.
                     </p>
-                  </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {vapiPhoneNumbers.map((phone) => (
+                        <div 
+                          key={phone.id} 
+                          className={`flex items-center justify-between p-3 rounded-lg border ${
+                            vapiSettings.phoneNumberId === phone.phone_number_id 
+                              ? "border-indigo-500 bg-indigo-500/10" 
+                              : "border-border"
+                          }`}
+                        >
+                          <div 
+                            className="flex-1 cursor-pointer"
+                            onClick={() => setVapiSettings({ ...vapiSettings, phoneNumberId: phone.phone_number_id })}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-sm">{phone.phone_number_id.substring(0, 20)}...</span>
+                              {phone.is_default && (
+                                <span className="text-xs bg-indigo-500/20 text-indigo-600 px-1.5 py-0.5 rounded">Default</span>
+                              )}
+                            </div>
+                            {(phone.phone_number || phone.friendly_name) && (
+                              <p className="text-xs text-muted-foreground">
+                                {phone.friendly_name || phone.phone_number}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {!phone.is_default && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleSetDefaultVapiPhone(phone.id)}
+                                title="Imposta come default"
+                              >
+                                ⭐
+                              </Button>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDeleteVapiPhone(phone.id)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Info and Assistant ID */}
+                <div className="p-3 rounded-lg bg-muted/50 border">
+                  <p className="text-sm text-muted-foreground">
+                    💡 <strong>Nota:</strong> Con VAPI, il numero visualizzato alla vittima (Caller ID) è quello configurato nel tuo numero VAPI. 
+                    Se hai bisogno di usare un caller ID diverso, devi aggiungerlo come nuovo numero nel{" "}
+                    <a href="https://dashboard.vapi.ai/phone-numbers" target="_blank" rel="noopener" className="text-primary underline">
+                      VAPI Dashboard
+                    </a>.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>VAPI Assistant ID (opzionale)</Label>
+                  <Input
+                    value={vapiSettings.assistantId}
+                    onChange={(e) => setVapiSettings({ ...vapiSettings, assistantId: e.target.value })}
+                    placeholder="Usa un assistente pre-configurato"
+                    className="font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Lascia vuoto per creare dinamicamente
+                  </p>
                 </div>
 
                 {/* AI Model Section */}
