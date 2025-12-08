@@ -200,14 +200,20 @@ const AdminVoices = () => {
   }, [isAdmin]);
 
   const fetchPhoneNumbers = async () => {
+    // Fetch verified caller IDs instead of twilio_phone_numbers
     const { data } = await supabase
-      .from("twilio_phone_numbers")
-      .select("id, phone_number, friendly_name, country_name")
+      .from("verified_caller_ids")
+      .select("id, phone_number, friendly_name, is_default")
       .eq("is_active", true)
-      .order("country_name", { ascending: true });
+      .order("is_default", { ascending: false });
     
     if (data) {
-      setAvailablePhoneNumbers(data);
+      setAvailablePhoneNumbers(data.map(item => ({
+        id: item.id,
+        phone_number: item.phone_number,
+        friendly_name: item.friendly_name,
+        country_name: item.is_default ? "Principale" : ""
+      })));
     }
   };
 
