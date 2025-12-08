@@ -112,41 +112,6 @@ IMPORTANT: The first 3 seconds are crucial. First impression determines the succ
   }
 };
 
-// Map model names to valid VAPI OpenAI models
-const getValidVapiModel = (modelName: string): string => {
-  // Valid VAPI OpenAI models
-  const validModels = [
-    'gpt-5', 'gpt-5-mini', 'gpt-5-nano',
-    'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4',
-    'gpt-3.5-turbo'
-  ];
-  
-  // Check if already valid
-  if (validModels.includes(modelName)) {
-    return modelName;
-  }
-  
-  // Map common variations
-  const modelMap: Record<string, string> = {
-    'openai/gpt-4o-mini': 'gpt-4o-mini',
-    'openai/gpt-4o': 'gpt-4o',
-    'openai/gpt-5': 'gpt-5',
-    'openai/gpt-5-mini': 'gpt-5-mini',
-    'google/gemini-2.5-flash': 'gpt-4o-mini', // Fallback for non-OpenAI models
-    'google/gemini-2.5-flash-lite': 'gpt-4o-mini',
-    'llama-3.3-70b-versatile': 'gpt-4o-mini', // Fallback for Groq models
-  };
-  
-  if (modelMap[modelName]) {
-    console.log(`Mapping model ${modelName} to ${modelMap[modelName]} for VAPI compatibility`);
-    return modelMap[modelName];
-  }
-  
-  // Default fallback
-  console.log(`Unknown model ${modelName}, defaulting to gpt-4o-mini`);
-  return 'gpt-4o-mini';
-};
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -176,6 +141,7 @@ serve(async (req) => {
       supabase.from('pranks').select('*').eq('id', prankId).single(),
       supabase.from('app_settings').select('key, value').in('key', [
         'vapi_phone_number_id',
+        'vapi_ai_provider',
         'vapi_ai_model',
         'vapi_temperature',
         'vapi_max_tokens',
@@ -202,13 +168,14 @@ serve(async (req) => {
 
     // Parse settings with defaults optimized for prank calls
     const settings: Record<string, string> = {
-      vapi_ai_model: 'gpt-4o-mini', // Default to a valid VAPI model
+      vapi_ai_provider: 'openai', // Default provider
+      vapi_ai_model: 'gpt-4o-mini', // Default model
       vapi_temperature: '1.0', // High temperature for creative, unpredictable responses
       vapi_max_tokens: '150',
       vapi_voice_provider: '11labs', // VAPI uses "11labs" not "elevenlabs"
       vapi_voice_id: 'onwK4e9ZLuTAKqWW03F9', // Default Italian male voice
       vapi_transcriber_provider: 'deepgram',
-      vapi_transcriber_model: 'nova-2', // Use nova-2 for multilingual support (not nova-2-phonecall which only supports en)
+      vapi_transcriber_model: 'nova-2', // Use nova-2 for multilingual support
       vapi_silence_timeout: '30',
       vapi_max_duration: '300',
       vapi_background_sound: 'off',
@@ -305,11 +272,11 @@ serve(async (req) => {
         // Dynamic first message - CRITICAL for prank success
         firstMessage: firstMessage,
         
-        // AI Model configuration - ensure valid OpenAI model for VAPI
+        // AI Model configuration - use provider from settings
         model: {
-          provider: 'openai',
-          model: getValidVapiModel(settings['vapi_ai_model']),
-          systemPrompt: systemPrompt, // DIRECT systemPrompt, not messages array
+          provider: settings['vapi_ai_provider'],
+          model: settings['vapi_ai_model'],
+          systemPrompt: systemPrompt,
           temperature: parseFloat(settings['vapi_temperature']),
           maxTokens: parseInt(settings['vapi_max_tokens']),
         },
