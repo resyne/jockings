@@ -13,46 +13,103 @@ const getTimeBasedGreeting = (language: string): string => {
   const hour = italyTime.getHours();
   
   if (language === 'Italian' || language === 'Italiano') {
-    return hour >= 6 && hour < 18 ? 'buongiorno' : 'buonasera';
+    return hour >= 6 && hour < 18 ? 'Buongiorno' : 'Buonasera';
   } else {
-    if (hour >= 6 && hour < 12) return 'good morning';
-    if (hour >= 12 && hour < 18) return 'good afternoon';
-    return 'good evening';
+    if (hour >= 6 && hour < 12) return 'Good morning';
+    if (hour >= 12 && hour < 18) return 'Good afternoon';
+    return 'Good evening';
   }
 };
 
-// Build system prompt for VAPI assistant
-const buildVapiPrompt = (prank: any): string => {
+// Build dynamic first message - CRITICAL for prank effectiveness
+const buildFirstMessage = (prank: any, greeting: string): string => {
+  const isItalian = prank.language === 'Italiano';
+  
+  // The first message must be immediate and personalized
+  if (isItalian) {
+    return `${greeting}! Parlo con ${prank.victim_first_name}?`;
+  } else {
+    return `${greeting}! Am I speaking with ${prank.victim_first_name}?`;
+  }
+};
+
+// Build system prompt for VAPI transient assistant - FULLY DYNAMIC
+const buildSystemPrompt = (prank: any): string => {
   const isItalian = prank.language === 'Italiano';
   const isMale = prank.voice_gender === 'male';
   const greeting = getTimeBasedGreeting(prank.language);
 
-  const toneMap: Record<string, string> = {
-    'enthusiastic': 'Entusiasta! Usa esclamazioni come "fantastico!", "incredibile!". Ridi facilmente.',
-    'serious': 'Serio e formale. Usa "mi permetta", "la informo che". Parla come un funzionario.',
-    'angry': 'Irritato e impaziente. Usa "ma insomma!", "possibile che...". Alza il tono.',
-    'confused': 'Confuso, perdi il filo. Usa "aspetti... come dicevo?", "scusi, mi sono perso".',
-    'mysterious': 'Misterioso e criptico. Usa "non posso dire di più...", "ci sono segreti...".',
-    'friendly': 'Amichevole e caloroso. Usa "caro mio", "tesoro". Fai domande personali.',
+  // Personality tone descriptions
+  const toneMapIT: Record<string, string> = {
+    'enthusiastic': 'Entusiasta e pieno di energia! Usa esclamazioni come "fantastico!", "incredibile!", "meraviglioso!". Ridi facilmente e trasmetti gioia.',
+    'serious': 'Serio, formale e professionale. Usa espressioni come "mi permetta di informarla", "la informo che", "come da regolamento". Parla come un funzionario statale.',
+    'angry': 'Irritato e impaziente. Usa espressioni come "ma insomma!", "possibile che...", "mi sta prendendo in giro?". Alza il tono quando non ottieni risposte.',
+    'confused': 'Confuso e smemorato. Perdi il filo del discorso. Usa "aspetti... come dicevo?", "scusi, mi sono perso", "ah sì, ecco...". Fai domande a caso.',
+    'mysterious': 'Misterioso e criptico. Parla a bassa voce. Usa "non posso dire di più...", "ci sono cose che non sa...", "faccia attenzione...". Fai pause drammatiche.',
+    'friendly': 'Amichevole e caloroso. Usa "caro mio", "tesoro", "carissimo/a". Fai domande personali sulla famiglia, sul lavoro. Ridi spesso.',
   };
 
+  const toneMapEN: Record<string, string> = {
+    'enthusiastic': 'Enthusiastic and full of energy! Use expressions like "fantastic!", "amazing!", "wonderful!". Laugh easily and transmit joy.',
+    'serious': 'Serious, formal and professional. Use expressions like "I must inform you", "according to regulations", "as per protocol". Speak like a government official.',
+    'angry': 'Irritated and impatient. Use expressions like "excuse me?!", "are you kidding me?", "this is unacceptable!". Raise your tone when you dont get answers.',
+    'confused': 'Confused and forgetful. Lose track of the conversation. Use "wait... what was I saying?", "sorry, I got lost", "oh yes, right...". Ask random questions.',
+    'mysterious': 'Mysterious and cryptic. Speak in a low voice. Use "I cannot say more...", "there are things you dont know...", "be careful...". Make dramatic pauses.',
+    'friendly': 'Friendly and warm. Use "my friend", "dear", "buddy". Ask personal questions about family, work. Laugh often.',
+  };
+
+  const toneMap = isItalian ? toneMapIT : toneMapEN;
   const tone = toneMap[prank.personality_tone] || toneMap['friendly'];
   const lang = isItalian ? 'italiano' : 'English';
-  const gender = isMale ? 'uomo' : 'donna';
+  const genderDesc = isItalian 
+    ? (isMale ? 'un uomo' : 'una donna')
+    : (isMale ? 'a man' : 'a woman');
 
-  return `Sei un AI che fa scherzi telefonici. Stai chiamando ${prank.victim_first_name} ${prank.victim_last_name}.
+  if (isItalian) {
+    return `Sei ${genderDesc} che sta facendo uno scherzo telefonico a ${prank.victim_first_name} ${prank.victim_last_name}.
 
-SCENARIO: ${prank.prank_theme}
+SCENARIO DELLO SCHERZO:
+${prank.prank_theme}
 
-Sei ${gender}. Parla SOLO in ${lang}. Inizia con "${greeting}".
-Personalità: ${tone}
+PERSONALITÀ E TONO:
+${tone}
 
-REGOLE IMPORTANTI:
-- Risposte brevi, max 1-2 frasi
-- Mai rivelare che è uno scherzo
-- Usa nomi realistici quando ti presenti (NO Mario Rossi)
-- Resta nel personaggio
-- Reagisci naturalmente a quello che dice l'interlocutore`;
+REGOLE FONDAMENTALI:
+1. Parla SOLO in italiano
+2. Risposte BREVI: massimo 1-2 frasi per turno
+3. NON rivelare MAI che è uno scherzo
+4. Quando ti presenti, usa nomi italiani realistici (es. Marco Bianchi, Giulia Ferri) - MAI "Mario Rossi"
+5. Resta SEMPRE nel personaggio, qualunque cosa dica l'interlocutore
+6. Se dicono "numero sbagliato", insisti che riconosci la voce
+7. Se si arrabbiano, mantieni la calma ma resta nel ruolo
+8. Reagisci naturalmente a quello che dice, non seguire uno script rigido
+9. Usa espressioni e modi di dire italiani autentici
+10. La priorità è mantenere la conversazione credibile e divertente
+
+IMPORTANTE: I primi 3 secondi sono cruciali. La prima impressione determina il successo dello scherzo.`;
+  } else {
+    return `You are ${genderDesc} making a prank phone call to ${prank.victim_first_name} ${prank.victim_last_name}.
+
+PRANK SCENARIO:
+${prank.prank_theme}
+
+PERSONALITY AND TONE:
+${tone}
+
+FUNDAMENTAL RULES:
+1. Speak ONLY in English
+2. Keep responses SHORT: maximum 1-2 sentences per turn
+3. NEVER reveal that this is a prank
+4. When introducing yourself, use realistic names (e.g., John Smith, Sarah Miller) - NEVER obviously fake names
+5. ALWAYS stay in character, no matter what the person says
+6. If they say "wrong number", insist you recognize their voice
+7. If they get angry, stay calm but remain in character
+8. React naturally to what they say, dont follow a rigid script
+9. Use authentic expressions and idioms
+10. Priority is keeping the conversation believable and entertaining
+
+IMPORTANT: The first 3 seconds are crucial. First impression determines the success of the prank.`;
+  }
 };
 
 serve(async (req) => {
@@ -77,15 +134,13 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    console.log('=== VAPI CALL INITIATION ===');
+    console.log('=== VAPI TRANSIENT ASSISTANT CALL ===');
 
-    // Fetch prank and VAPI settings
+    // Fetch prank and VAPI settings in parallel
     const [prankResult, settingsResult] = await Promise.all([
       supabase.from('pranks').select('*').eq('id', prankId).single(),
       supabase.from('app_settings').select('key, value').in('key', [
         'vapi_phone_number_id', 
-        'vapi_assistant_id',
-        'vapi_ai_provider',
         'vapi_ai_model',
         'vapi_temperature',
         'vapi_max_tokens',
@@ -94,8 +149,6 @@ serve(async (req) => {
         'vapi_custom_voice_id',
         'vapi_transcriber_provider',
         'vapi_transcriber_model',
-        'vapi_transcriber_language',
-        'vapi_first_message',
         'vapi_silence_timeout',
         'vapi_max_duration',
         'vapi_background_sound',
@@ -106,20 +159,19 @@ serve(async (req) => {
 
     const { data: prank, error: prankError } = prankResult;
     if (prankError || !prank) {
+      console.error('Prank fetch error:', prankError);
       throw new Error('Prank not found');
     }
 
-    // Parse settings with defaults
+    // Parse settings with defaults optimized for prank calls
     const settings: Record<string, string> = {
-      vapi_ai_model: 'gpt-4o-mini',
-      vapi_temperature: '0.7',
+      vapi_ai_model: 'gpt-4o',
+      vapi_temperature: '1.0', // High temperature for creative, unpredictable responses
       vapi_max_tokens: '150',
-      vapi_voice_provider: 'elevenlabs',
-      vapi_voice_id: '21m00Tcm4TlvDq8ikWAM',
+      vapi_voice_provider: '11labs', // VAPI uses "11labs" not "elevenlabs"
+      vapi_voice_id: 'onwK4e9ZLuTAKqWW03F9', // Default Italian male voice
       vapi_transcriber_provider: 'deepgram',
       vapi_transcriber_model: 'nova-2',
-      vapi_transcriber_language: 'it',
-      vapi_first_message: 'Pronto?',
       vapi_silence_timeout: '30',
       vapi_max_duration: '300',
       vapi_background_sound: 'off',
@@ -132,29 +184,27 @@ serve(async (req) => {
     });
 
     const vapiPhoneNumberId = settings['vapi_phone_number_id'];
-    const vapiAssistantId = settings['vapi_assistant_id'];
 
     if (!vapiPhoneNumberId) {
-      throw new Error('VAPI Phone Number ID not configured');
+      throw new Error('VAPI Phone Number ID not configured. Go to Admin > Voices to set it up.');
     }
 
-    console.log('Prank:', prank.id, 'Phone:', prank.victim_phone);
-    console.log('VAPI Phone ID:', vapiPhoneNumberId, 'Assistant ID:', vapiAssistantId || 'dynamic');
-    console.log('Settings:', JSON.stringify(settings, null, 2));
+    console.log('Prank ID:', prank.id);
+    console.log('Victim:', prank.victim_first_name, prank.victim_last_name);
+    console.log('Phone:', prank.victim_phone);
+    console.log('Theme:', prank.prank_theme);
+    console.log('Language:', prank.language);
+    console.log('Voice Gender:', prank.voice_gender);
+    console.log('Personality:', prank.personality_tone);
 
-    // Build the system prompt
-    const systemPrompt = buildVapiPrompt(prank);
+    // === BUILD DYNAMIC CONTENT ===
     const greeting = getTimeBasedGreeting(prank.language);
-    
-    // Determine transcriber language based on prank language (override admin setting if needed)
+    const systemPrompt = buildSystemPrompt(prank);
+    const firstMessage = buildFirstMessage(prank, greeting);
     const transcriberLanguage = prank.language === 'Italiano' ? 'it' : 'en';
-    
-    // Get first message - personalized with victim name
-    const firstMessage = settings['vapi_first_message'] === 'Pronto?' 
-      ? `${greeting}, parlo con ${prank.victim_first_name}?`
-      : settings['vapi_first_message'].replace('{name}', prank.victim_first_name);
+    const endCallMessage = prank.language === 'Italiano' ? 'Arrivederci!' : 'Goodbye!';
 
-    // Get voice ID - prioritize: prank voice > custom voice > configured voice
+    // Get voice ID - prioritize prank-specific voice, then admin settings
     let voiceId = settings['vapi_voice_id'];
     if (prank.elevenlabs_voice_id) {
       voiceId = prank.elevenlabs_voice_id;
@@ -162,85 +212,84 @@ serve(async (req) => {
       voiceId = settings['vapi_custom_voice_id'];
     }
 
-    console.log('First message:', firstMessage);
-    console.log('Voice ID:', voiceId);
-    console.log('Transcriber language:', transcriberLanguage);
+    // Map voice provider to VAPI format
+    let voiceProvider = settings['vapi_voice_provider'];
+    if (voiceProvider === 'elevenlabs') {
+      voiceProvider = '11labs'; // VAPI uses "11labs"
+    }
 
-    // Prepare VAPI call request
+    console.log('=== DYNAMIC CONTENT ===');
+    console.log('First Message:', firstMessage);
+    console.log('Voice Provider:', voiceProvider);
+    console.log('Voice ID:', voiceId);
+    console.log('Transcriber Language:', transcriberLanguage);
+    console.log('System Prompt Length:', systemPrompt.length, 'chars');
+
+    // === BUILD VAPI TRANSIENT ASSISTANT REQUEST ===
+    // We ALWAYS use transient assistant (no assistantId) for dynamic prank generation
     const vapiCallBody: any = {
       phoneNumberId: vapiPhoneNumberId,
       customer: {
         number: prank.victim_phone,
         name: `${prank.victim_first_name} ${prank.victim_last_name}`,
       },
-    };
-
-    // If we have a pre-configured assistant, use it with overrides
-    if (vapiAssistantId) {
-      console.log('Using pre-configured assistant:', vapiAssistantId);
-      vapiCallBody.assistantId = vapiAssistantId;
-      vapiCallBody.assistantOverrides = {
-        firstMessage,
-        model: {
-          messages: [{ role: 'system', content: systemPrompt }]
-        },
-        transcriber: {
-          language: transcriberLanguage,
-        },
-      };
-    } else {
-      console.log('Creating dynamic assistant configuration');
-      
-      // Create dynamic assistant configuration with all settings
-      const assistantConfig: any = {
-        name: `Prank-${prankId}`,
-        firstMessage,
+      // TRANSIENT ASSISTANT - configured entirely at runtime
+      assistant: {
+        // Dynamic first message - CRITICAL for prank success
+        firstMessage: firstMessage,
+        
+        // AI Model configuration
         model: {
           provider: 'openai',
           model: settings['vapi_ai_model'],
-          messages: [{ role: 'system', content: systemPrompt }],
+          systemPrompt: systemPrompt, // DIRECT systemPrompt, not messages array
           temperature: parseFloat(settings['vapi_temperature']),
           maxTokens: parseInt(settings['vapi_max_tokens']),
         },
+        
+        // Voice configuration - can vary per prank
         voice: {
-          provider: settings['vapi_voice_provider'],
-          voiceId,
+          provider: voiceProvider,
+          voiceId: voiceId,
+          stability: 0.4, // Lower stability = more expressive, better for pranks
+          similarityBoost: 0.75,
+          fillerInjectionEnabled: true, // Natural filler words like "uhm", "eh"
         },
+        
+        // Transcriber configuration
         transcriber: {
           provider: settings['vapi_transcriber_provider'],
           model: settings['vapi_transcriber_model'],
-          language: transcriberLanguage, // Use prank language, not admin setting
+          language: transcriberLanguage,
         },
-        endCallFunctionEnabled: true,
-        endCallMessage: settings['vapi_end_call_message'],
-        recordingEnabled: true,
+        
+        // Call behavior settings
         silenceTimeoutSeconds: parseInt(settings['vapi_silence_timeout']),
-        maxDurationSeconds: Math.min(parseInt(settings['vapi_max_duration']), prank.max_duration || 300),
-      };
+        maxDurationSeconds: Math.min(
+          parseInt(settings['vapi_max_duration']), 
+          prank.max_duration || 300
+        ),
+        endCallMessage: endCallMessage,
+        endCallFunctionEnabled: true,
+        recordingEnabled: true,
+      },
+    };
 
-      // Add ElevenLabs-specific settings if using ElevenLabs
-      if (settings['vapi_voice_provider'] === 'elevenlabs') {
-        assistantConfig.voice.stability = 0.5;
-        assistantConfig.voice.similarityBoost = 0.75;
-      }
-
-      // Add background sound if enabled
-      if (settings['vapi_background_sound'] && settings['vapi_background_sound'] !== 'off') {
-        assistantConfig.backgroundSound = settings['vapi_background_sound'];
-      }
-
-      // Add backchanneling if enabled
-      if (settings['vapi_backchanneling'] === 'true') {
-        assistantConfig.backchannelingEnabled = true;
-      }
-
-      vapiCallBody.assistant = assistantConfig;
+    // Add background sound if enabled (office, convention, etc.)
+    if (settings['vapi_background_sound'] && settings['vapi_background_sound'] !== 'off') {
+      vapiCallBody.assistant.backgroundSound = settings['vapi_background_sound'];
     }
 
-    console.log('VAPI Request Body:', JSON.stringify(vapiCallBody, null, 2));
+    // Add backchanneling if enabled (natural "mhm", "ok" responses)
+    if (settings['vapi_backchanneling'] === 'true') {
+      vapiCallBody.assistant.backchannelingEnabled = true;
+    }
 
-    // Initiate VAPI call
-    const vapiResponse = await fetch('https://api.vapi.ai/call/phone', {
+    console.log('=== VAPI REQUEST ===');
+    console.log('Request Body:', JSON.stringify(vapiCallBody, null, 2));
+
+    // === CALL VAPI API ===
+    const vapiResponse = await fetch('https://api.vapi.ai/call', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${VAPI_API_KEY}`,
@@ -252,33 +301,43 @@ serve(async (req) => {
     const vapiData = await vapiResponse.json();
 
     if (!vapiResponse.ok) {
-      console.error('VAPI error:', vapiData);
-      throw new Error(vapiData.message || vapiData.error || 'VAPI call failed');
+      console.error('VAPI API Error:', vapiData);
+      throw new Error(vapiData.message || vapiData.error || JSON.stringify(vapiData));
     }
 
-    console.log('VAPI call initiated:', vapiData.id);
+    console.log('=== VAPI CALL INITIATED ===');
+    console.log('Call ID:', vapiData.id);
+    console.log('Status:', vapiData.status);
 
     // Update prank with VAPI call ID
-    await supabase
+    const { error: updateError } = await supabase
       .from('pranks')
       .update({
         call_status: 'initiated',
-        twilio_call_sid: vapiData.id, // Using twilio_call_sid to store VAPI call ID for compatibility
+        twilio_call_sid: vapiData.id, // Store VAPI call ID for tracking
       })
       .eq('id', prankId);
+
+    if (updateError) {
+      console.error('Failed to update prank status:', updateError);
+    }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         callId: vapiData.id,
         provider: 'vapi',
+        firstMessage: firstMessage,
         message: 'VAPI call initiated successfully'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error: any) {
-    console.error('VAPI call error:', error);
+    console.error('=== VAPI CALL ERROR ===');
+    console.error('Error:', error.message);
+    console.error('Stack:', error.stack);
+    
     return new Response(
       JSON.stringify({ error: error.message || 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
