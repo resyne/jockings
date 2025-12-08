@@ -33,7 +33,7 @@ const LANGUAGES = ["Italiano", "English"];
 const GENDERS = ["male", "female"];
 
 const AI_MODELS = [
-  { value: "openai/gpt-4o-mini", label: "OpenAI GPT-4o Mini", description: "Veloce, economico (attuale)" },
+  { value: "openai/gpt-4o-mini", label: "OpenAI GPT-4o Mini", description: "Veloce, economico" },
   { value: "google/gemini-2.5-flash", label: "Google Gemini 2.5 Flash", description: "Molto veloce, Lovable AI" },
   { value: "google/gemini-2.5-flash-lite", label: "Google Gemini 2.5 Flash Lite", description: "Velocissimo, economico" },
   { value: "openai/gpt-5-mini", label: "OpenAI GPT-5 Mini", description: "Più potente, più lento" },
