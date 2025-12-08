@@ -53,3 +53,6 @@ verify_jwt = false
 
 [functions.generate-sound-effect]
 verify_jwt = true
+
+[functions.realtime-session]
+verify_jwt = true
