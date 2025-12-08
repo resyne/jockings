@@ -474,22 +474,34 @@ serve(async (req) => {
       
       console.log('Sending to AI with', messages.length, 'messages');
       
+      const requestBody: any = {
+        model: modelName,
+        messages,
+        max_tokens: 80,
+      };
+      
+      // Only add temperature for models that support it (not GPT-5 or newer)
+      if (!modelName.includes('gpt-5') && !modelName.includes('o3') && !modelName.includes('o4')) {
+        requestBody.temperature = 0.7;
+      }
+      
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          model: modelName,
-          messages,
-          max_tokens: 80,
-          temperature: 0.7,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const aiData = await response.json();
-      const aiResponse = aiData.choices[0]?.message?.content || 'Capisco, capisco...';
+      
+      // Log full response for debugging
+      if (!response.ok || !aiData.choices || !aiData.choices[0]) {
+        console.error('AI API error:', JSON.stringify(aiData));
+      }
+      
+      const aiResponse = aiData.choices?.[0]?.message?.content || 'Capisco, capisco...';
       
       console.log('AI response:', aiResponse);
 
