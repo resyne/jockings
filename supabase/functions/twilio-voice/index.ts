@@ -290,14 +290,12 @@ serve(async (req) => {
     if (action === 'start') {
       console.log('Starting prank call for:', prank.victim_first_name);
       
-      // Check for pre-generated audio URLs (from initiate-call)
+      // Check for pre-generated audio URL (from initiate-call)
       const pregeneratedGreetingUrl = (prank as any).pregenerated_greeting_url;
-      const pregeneratedBackgroundUrl = (prank as any).pregenerated_background_url;
       
       if (pregeneratedGreetingUrl) {
         console.log('Using pre-generated audio - FAST PATH');
         console.log('Greeting URL:', pregeneratedGreetingUrl);
-        console.log('Background URL:', pregeneratedBackgroundUrl);
         
         // Update status to in_progress
         await supabase
@@ -306,11 +304,8 @@ serve(async (req) => {
           .eq('id', prankId);
         
         // Build TwiML with pre-generated audio
-        const bgSound = pregeneratedBackgroundUrl ? `<Play>${pregeneratedBackgroundUrl}</Play>` : '';
-        
         const twiml = `<?xml version="1.0" encoding="UTF-8"?>
         <Response>
-          ${bgSound}
           <Play>${pregeneratedGreetingUrl}</Play>
           <Gather input="speech" language="${langCode}" timeout="4" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1">
           </Gather>
