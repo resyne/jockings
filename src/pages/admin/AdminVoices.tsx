@@ -214,6 +214,12 @@ const AdminVoices = () => {
         friendly_name: item.friendly_name,
         country_name: item.is_default ? "Principale" : ""
       })));
+      
+      // Auto-select default caller ID if none is set
+      const defaultCaller = data.find(item => item.is_default);
+      if (defaultCaller && !vapiSettings.phoneNumberId) {
+        setVapiSettings(prev => ({ ...prev, phoneNumberId: defaultCaller.phone_number }));
+      }
     }
   };
 
