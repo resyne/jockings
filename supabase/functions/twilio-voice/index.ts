@@ -505,25 +505,26 @@ serve(async (req) => {
       
       console.log('AI response:', aiResponse);
 
-      // Update conversation history in database
+      // Update conversation history and generate audio in parallel for speed
       const updatedHistory = [
         ...conversationHistory,
         { role: 'user', content: speechResult },
         { role: 'assistant', content: aiResponse }
       ];
       
-      await supabase
-        .from('pranks')
-        .update({ conversation_history: updatedHistory })
-        .eq('id', prankId);
-
-      // Only use ElevenLabs - no fallback
-      const audioUrl = await generateElevenLabsAudioUrl(aiResponse, elevenLabsVoiceId, elSettings);
-      console.log('Generated audio URL for response:', audioUrl);
+      // Generate both audio files in parallel to reduce latency
+      const stillThereText = prank.language === 'Italiano' ? 'Pronto?' : 'Hello?';
       
-      // Generate a "still there?" prompt using ElevenLabs
-      const stillThereText = prank.language === 'Italiano' ? 'Pronto? È ancora lì?' : 'Hello? Are you still there?';
-      const stillThereAudioUrl = await generateElevenLabsAudioUrl(stillThereText, elevenLabsVoiceId, elSettings);
+      const [_, audioUrl, stillThereAudioUrl] = await Promise.all([
+        supabase
+          .from('pranks')
+          .update({ conversation_history: updatedHistory })
+          .eq('id', prankId),
+        generateElevenLabsAudioUrl(aiResponse, elevenLabsVoiceId, elSettings),
+        generateElevenLabsAudioUrl(stillThereText, elevenLabsVoiceId, elSettings)
+      ]);
+      
+      console.log('Generated audio URLs in parallel');
       
       const twiml = `<?xml version="1.0" encoding="UTF-8"?>
       <Response>
