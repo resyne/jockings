@@ -151,84 +151,32 @@ const getTimeBasedGreeting = (language: string): { greeting: string; instruction
   }
 };
 
-// Build system prompt from prank data
+// Build system prompt from prank data - OPTIMIZED for speed
 const buildSystemPrompt = (prank: any): string => {
-  const languageMap: Record<string, string> = {
-    'Italiano': 'Italian',
-    'English': 'English',
+  const isItalian = prank.language === 'Italiano';
+  const isMale = prank.voice_gender === 'male';
+  const timeGreeting = getTimeBasedGreeting(prank.language);
+
+  // Compact personality instructions
+  const toneMap: Record<string, string> = {
+    'enthusiastic': 'Entusiasta! Usa esclamazioni come "fantastico!", "incredibile!". Ridi facilmente.',
+    'serious': 'Serio e formale. Usa "mi permetta", "la informo che". Parla come un funzionario.',
+    'angry': 'Irritato e impaziente. Usa "ma insomma!", "possibile che...". Alza il tono.',
+    'confused': 'Confuso, perdi il filo. Usa "aspetti... come dicevo?", "scusi, mi sono perso".',
+    'mysterious': 'Misterioso e criptico. Usa "non posso dire di più...", "ci sono segreti...".',
+    'friendly': 'Amichevole e caloroso. Usa "caro mio", "tesoro". Fai domande personali.',
   };
 
-  // Gender-specific instructions
-  const genderMap: Record<string, { identity: string; style: string }> = {
-    'male': {
-      identity: 'a MAN (male)',
-      style: 'Use masculine forms of words and adjectives. Speak with a male perspective and identity.'
-    },
-    'female': {
-      identity: 'a WOMAN (female)',
-      style: 'Use feminine forms of words and adjectives. Speak with a female perspective and identity.'
-    },
-  };
+  const tone = toneMap[prank.personality_tone] || toneMap['friendly'];
+  const lang = isItalian ? 'italiano' : 'English';
+  const gender = isMale ? 'uomo' : 'donna';
 
-  // Enhanced personality descriptions with specific behavior instructions
-  const toneMap: Record<string, { description: string; behavior: string }> = {
-    'enthusiastic': {
-      description: 'extremely enthusiastic, excited, and over-the-top happy',
-      behavior: 'Use exclamations! Speak fast with rising intonation. Show excessive excitement about everything. Use words like "fantastico!", "incredibile!", "meraviglioso!". Laugh easily. Be overly positive even about mundane things.'
-    },
-    'serious': {
-      description: 'very serious, formal, and professional',
-      behavior: 'Use formal language and titles. Speak in a measured, deliberate way. Avoid jokes or humor. Be direct and to the point. Use phrases like "mi permetta di", "è necessario che", "la informo che". Sound like a government official or lawyer.'
-    },
-    'angry': {
-      description: 'frustrated, irritated, and increasingly angry',
-      behavior: 'Start slightly annoyed and escalate your frustration. Use interruptions. Raise your tone. Express exasperation with sighs and "ma insomma!", "possibile che...", "ma lei non capisce!". Act like someone whos patience is running thin. Get defensive and accusatory.'
-    },
-    'confused': {
-      description: 'confused, uncertain, and easily distracted',
-      behavior: 'Frequently lose your train of thought. Say "aspetti... come dicevo?", "scusi, mi sono perso", "ma quindi...". Ask for clarification often. Mix up details. Sound genuinely befuddled. Pause mid-sentence. Contradict yourself occasionally.'
-    },
-    'mysterious': {
-      description: 'mysterious, cryptic, and dramatically secretive',
-      behavior: 'Speak in a low, conspiratorial tone. Use dramatic pauses. Say things like "non posso dire di più...", "ci sono cose che lei non sa...", "mi creda, è meglio così". Hint at secrets without revealing them. Be vague but intriguing.'
-    },
-    'friendly': {
-      description: 'warm, friendly, and chatty like an old friend',
-      behavior: 'Use informal language. Ask personal questions. Share unnecessary details about yourself. Use endearments like "caro mio", "tesoro". Laugh warmly. Show genuine interest in their life. Be nostalgic and reminiscent.'
-    },
-  };
+  return `Scherzo telefonico a ${prank.victim_first_name}. SCENARIO: ${prank.prank_theme}
 
-  const language = languageMap[prank.language] || 'Italian';
-  const personality = toneMap[prank.personality_tone] || toneMap['enthusiastic'];
-  const gender = genderMap[prank.voice_gender] || genderMap['male'];
-  const creativity = prank.creativity_level > 70 ? 'very creative, unpredictable, and willing to improvise wildly' : 
-                     prank.creativity_level > 30 ? 'moderately creative with occasional surprises' : 'straightforward and predictable';
-  const timeGreeting = getTimeBasedGreeting(language);
+Sei ${gender}. Parla SOLO in ${lang}. Saluto: "${timeGreeting.greeting}".
+Personalità: ${tone}
 
-  return `You are making a prank phone call. Your target is ${prank.victim_first_name} ${prank.victim_last_name}.
-
-SCENARIO: ${prank.prank_theme}
-
-YOUR GENDER: You are ${gender.identity}. ${gender.style}
-YOUR PERSONALITY: You are ${personality.description}.
-CRITICAL BEHAVIOR INSTRUCTIONS: ${personality.behavior}
-
-TIME-AWARE GREETING: ${timeGreeting.instruction}
-
-RULES:
-1. Speak ONLY in ${language}
-2. You are ${gender.identity} - ALWAYS use the correct grammatical gender for yourself!
-3. EMBODY your personality in EVERY response - this is the most important thing!
-4. Be ${creativity} with your responses
-5. NEVER reveal this is a prank call
-6. Stay in character at all times
-7. Keep responses concise (1-3 sentences max)
-8. React naturally but ALWAYS maintain your personality trait
-9. If they get suspicious, deflect using your personality (angry = get more defensive, confused = get more lost, etc.)
-10. Use the correct time-based greeting ("${timeGreeting.greeting}") when starting the call!
-11. When introducing yourself, use REALISTIC Italian names - NEVER use generic names like "Mario Rossi", "Marco Rossi", "Giuseppe Bianchi", "Nunzio", etc. Use more authentic names like: Luca Ferretti, Alessandro Conti, Simone Marchetti, Davide Galli, Matteo Ricci (male) or Giulia Moretti, Francesca Lombardi, Chiara Santini, Elena Barbieri, Valentina Costa (female).
-
-Respond with ONLY what you would say. Make your personality and gender OBVIOUS in how you speak.`;
+REGOLE: Max 1-2 frasi. Mai rivelare lo scherzo. Nomi realistici (NO Mario Rossi). Rispondi SOLO con quello che diresti.`;
 };
 
 serve(async (req) => {
@@ -477,12 +425,12 @@ serve(async (req) => {
       const requestBody: any = {
         model: modelName,
         messages,
-        max_tokens: 300,
+        max_tokens: 100, // Reduced for faster responses
       };
       
       // Only add temperature for models that support it (not GPT-5 or newer)
       if (!modelName.includes('gpt-5') && !modelName.includes('o3') && !modelName.includes('o4')) {
-        requestBody.temperature = 0.7;
+        requestBody.temperature = 0.8;
       }
       
       const response = await fetch(apiUrl, {
