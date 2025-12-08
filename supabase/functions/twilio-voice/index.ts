@@ -451,7 +451,13 @@ serve(async (req) => {
       // Lovable AI supports google/* and openai/gpt-5* models
       const isLovableAI = aiModel.startsWith('google/') || aiModel.startsWith('openai/gpt-5');
       
-      console.log('Using AI model:', aiModel, 'isLovableAI:', isLovableAI);
+      // For OpenAI direct API, strip the "openai/" prefix from model names
+      let modelName = aiModel;
+      if (!isLovableAI && aiModel.startsWith('openai/')) {
+        modelName = aiModel.replace('openai/', '');
+      }
+      
+      console.log('Using AI model:', modelName, 'isLovableAI:', isLovableAI);
       console.log('Conversation history length:', conversationHistory.length);
       
       // Generate AI response with full conversation context
@@ -463,7 +469,6 @@ serve(async (req) => {
       const apiKey = isLovableAI 
         ? Deno.env.get('LOVABLE_API_KEY') 
         : OPENAI_API_KEY;
-      const modelName = aiModel;
       
       // Build messages with full conversation history
       const messages = [
