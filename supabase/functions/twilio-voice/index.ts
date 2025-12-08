@@ -400,10 +400,10 @@ serve(async (req) => {
           model: 'gpt-4o-mini',
           messages: [
             { role: 'system', content: systemPrompt },
-            { role: 'user', content: `The person said: "${speechResult}". Respond naturally in character.` }
+            { role: 'user', content: `The person said: "${speechResult}". Rispondi BREVEMENTE (max 1-2 frasi).` }
           ],
-          max_tokens: 150,
-          temperature: 0.8,
+          max_tokens: 80,
+          temperature: 0.7,
         }),
       });
 
