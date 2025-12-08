@@ -140,7 +140,7 @@ serve(async (req) => {
     const [prankResult, settingsResult, presetsResult] = await Promise.all([
       supabase.from('pranks').select('*').eq('id', prankId).single(),
       supabase.from('app_settings').select('key, value').in('key', [
-        'vapi_phone_number_id', 
+        'vapi_phone_number_id',
         'vapi_ai_model',
         'vapi_temperature',
         'vapi_max_tokens',
@@ -197,6 +197,7 @@ serve(async (req) => {
     console.log('Language:', prank.language);
     console.log('Voice Gender:', prank.voice_gender);
     console.log('Personality:', prank.personality_tone);
+    console.log('VAPI Phone Number ID:', vapiPhoneNumberId);
 
     // === BUILD DYNAMIC CONTENT ===
     const greeting = getTimeBasedGreeting(prank.language);
@@ -253,6 +254,7 @@ serve(async (req) => {
       customer: {
         number: prank.victim_phone,
         name: `${prank.victim_first_name} ${prank.victim_last_name}`,
+        numberE164CheckEnabled: false,
       },
       // TRANSIENT ASSISTANT - configured entirely at runtime
       assistant: {
