@@ -545,6 +545,13 @@ const AdminVoices = () => {
         if (key === "vapi_backchanneling") newSettings.backchannelingEnabled = value === "true";
         if (key === "vapi_end_call_message") newSettings.endCallMessage = value;
       });
+      
+      // Auto-sync provider from model if provider is not explicitly set or mismatched
+      const selectedModel = VAPI_AI_MODELS.find(m => m.value === newSettings.aiModel);
+      if (selectedModel && selectedModel.provider !== newSettings.aiProvider) {
+        newSettings.aiProvider = selectedModel.provider;
+      }
+      
       setVapiSettings(newSettings);
     }
   };
@@ -942,7 +949,15 @@ const AdminVoices = () => {
                       <Label>Modello</Label>
                       <Select 
                         value={vapiSettings.aiModel} 
-                        onValueChange={(value) => setVapiSettings({ ...vapiSettings, aiModel: value })}
+                        onValueChange={(value) => {
+                          // Auto-sync provider based on selected model
+                          const selectedModel = VAPI_AI_MODELS.find(m => m.value === value);
+                          setVapiSettings({ 
+                            ...vapiSettings, 
+                            aiModel: value,
+                            aiProvider: selectedModel?.provider || 'openai'
+                          });
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -958,6 +973,9 @@ const AdminVoices = () => {
                           ))}
                         </SelectContent>
                       </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Provider: <span className="font-medium text-primary">{vapiSettings.aiProvider}</span>
+                      </p>
                     </div>
                     <div className="space-y-2">
                       <Label>Temperature: {vapiSettings.temperature.toFixed(1)}</Label>
