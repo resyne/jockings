@@ -36,39 +36,25 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
-    // Get prank details
-    const { data: prank, error: prankError } = await supabase
-      .from('pranks')
-      .select('*')
-      .eq('id', prankId)
-      .single();
+    // Run all queries in parallel for faster startup
+    const [prankResult, phoneNumbersResult, callerIdsResult] = await Promise.all([
+      supabase.from('pranks').select('*').eq('id', prankId).single(),
+      supabase.from('twilio_phone_numbers').select('*').eq('is_active', true),
+      supabase.from('verified_caller_ids').select('*').eq('is_active', true).order('is_default', { ascending: false })
+    ]);
+
+    const { data: prank, error: prankError } = prankResult;
+    const { data: phoneNumbers, error: phoneError } = phoneNumbersResult;
+    const { data: allVerifiedCallerIds, error: callerIdError } = callerIdsResult;
 
     if (prankError || !prank) {
       throw new Error('Prank not found');
     }
 
+    if (phoneError) console.error('Error fetching phone numbers:', phoneError);
+    if (callerIdError) console.error('Error fetching verified caller IDs:', callerIdError);
+
     console.log('Initiating call for prank:', prank.id, 'to:', prank.victim_phone, 'language:', prank.language);
-
-    // Get available phone numbers from database
-    const { data: phoneNumbers, error: phoneError } = await supabase
-      .from('twilio_phone_numbers')
-      .select('*')
-      .eq('is_active', true);
-
-    if (phoneError) {
-      console.error('Error fetching phone numbers:', phoneError);
-    }
-
-    // Get all active verified caller IDs, ordered by is_default (default first)
-    const { data: allVerifiedCallerIds, error: callerIdError } = await supabase
-      .from('verified_caller_ids')
-      .select('*')
-      .eq('is_active', true)
-      .order('is_default', { ascending: false });
-
-    if (callerIdError) {
-      console.error('Error fetching verified caller IDs:', callerIdError);
-    }
 
     // Select the best caller ID (default first, then any with capacity)
     let selectedCallerId: string | null = null;
