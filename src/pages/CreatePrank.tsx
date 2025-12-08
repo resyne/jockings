@@ -162,23 +162,13 @@ const CreatePrank = () => {
     setLoading(true);
 
     try {
-      // Fetch voice settings and call provider in parallel
-      const [voiceSettingsResult, callProviderResult] = await Promise.all([
-        supabase
-          .from("voice_settings")
-          .select("*")
-          .eq("language", language)
-          .eq("gender", voiceGender)
-          .single(),
-        supabase
-          .from("app_settings")
-          .select("value")
-          .eq("key", "call_provider")
-          .single()
-      ]);
-
-      const { data: voiceSettings } = voiceSettingsResult;
-      const callProvider = callProviderResult.data?.value || "twilio";
+      // Fetch voice settings for the selected language and gender
+      const { data: voiceSettings } = await supabase
+        .from("voice_settings")
+        .select("*")
+        .eq("language", language)
+        .eq("gender", voiceGender)
+        .single();
 
       const scheduledAt = scheduleCall ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : null;
       
@@ -191,7 +181,7 @@ const CreatePrank = () => {
           victim_phone: victimPhone.replace(/\s/g, ""),
           prank_theme: prankTheme.trim(),
           voice_gender: voiceGender,
-          voice_provider: callProvider === "vapi" ? "vapi" : (voiceSettings?.voice_provider || "elevenlabs"),
+          voice_provider: voiceSettings?.voice_provider || "elevenlabs",
           elevenlabs_stability: voiceSettings?.elevenlabs_stability || 0.5,
           elevenlabs_similarity: voiceSettings?.elevenlabs_similarity || 0.75,
           elevenlabs_style: voiceSettings?.elevenlabs_style || 0,
@@ -219,12 +209,11 @@ const CreatePrank = () => {
       } else {
         toast({
           title: "Scherzo creato! 🎭",
-          description: `Avvio della chiamata via ${callProvider.toUpperCase()}...`,
+          description: "Avvio della chiamata in corso...",
         });
 
-        // Trigger call via appropriate edge function based on provider
-        const functionName = callProvider === "vapi" ? "initiate-call-vapi" : "initiate-call";
-        const { error: callError } = await supabase.functions.invoke(functionName, {
+        // Trigger Twilio call via edge function
+        const { error: callError } = await supabase.functions.invoke('initiate-call', {
           body: { prankId: prank.id }
         });
 
@@ -238,7 +227,7 @@ const CreatePrank = () => {
         } else {
           toast({
             title: "Chiamata avviata! 📞",
-            description: `Stiamo chiamando ${victimFirstName} via ${callProvider.toUpperCase()}...`,
+            description: `Stiamo chiamando ${victimFirstName}...`,
           });
         }
         navigate("/dashboard");
