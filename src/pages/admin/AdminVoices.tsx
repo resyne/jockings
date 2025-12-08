@@ -78,7 +78,7 @@ const VAPI_TRANSCRIBER_PROVIDERS = [
   { value: "custom-transcriber", label: "Custom", description: "Transcriber personalizzato" },
 ];
 
-// VAPI AI Models (LLM) - Organized by provider - ONLY models supported by VAPI
+// VAPI AI Models (LLM) - Organized by provider - ONLY models actually supported by VAPI API
 const VAPI_AI_MODELS = [
   // OpenAI - Most recommended for VAPI
   { value: "gpt-4o-mini", label: "OpenAI GPT-4o Mini", description: "⚡ Veloce - Consigliato", recommended: true, provider: "openai" },
@@ -95,10 +95,14 @@ const VAPI_AI_MODELS = [
   { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash", description: "⚡ Ultra veloce", provider: "google" },
   { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash", description: "Veloce", provider: "google" },
   { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro", description: "Potente", provider: "google" },
-  // Groq - Ultra fast inference
-  { value: "llama-3.1-70b-versatile", label: "Llama 3.1 70B", description: "Groq - Ultra veloce", provider: "groq" },
-  { value: "llama-3.1-8b-instant", label: "Llama 3.1 8B", description: "Groq - Istantaneo", provider: "groq" },
-  { value: "mixtral-8x7b-32768", label: "Mixtral 8x7B", description: "Groq - Open source", provider: "groq" },
+  // Groq - Ultra fast inference - ONLY these models are valid for VAPI
+  { value: "llama-3.3-70b-versatile", label: "Llama 3.3 70B Versatile", description: "⚡ Groq - Ultra veloce", recommended: true, provider: "groq" },
+  { value: "llama-3.1-8b-instant", label: "Llama 3.1 8B Instant", description: "Groq - Istantaneo", provider: "groq" },
+  { value: "llama3-70b-8192", label: "Llama 3 70B", description: "Groq - Potente", provider: "groq" },
+  { value: "llama3-8b-8192", label: "Llama 3 8B", description: "Groq - Veloce", provider: "groq" },
+  { value: "gemma2-9b-it", label: "Gemma 2 9B IT", description: "Groq - Google", provider: "groq" },
+  { value: "deepseek-r1-distill-llama-70b", label: "DeepSeek R1 Distill", description: "Groq - Reasoning", provider: "groq" },
+  { value: "mistral-saba-24b", label: "Mistral Saba 24B", description: "Groq - Mistral", provider: "groq" },
 ];
 
 // ElevenLabs Voices
