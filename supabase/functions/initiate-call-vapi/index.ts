@@ -276,9 +276,12 @@ serve(async (req) => {
         firstMessage: firstMessage,
         
         // AI Model configuration - use provider from settings
+        // VAPI requires model name WITHOUT provider prefix (e.g., "gpt-4o-mini" not "openai/gpt-4o-mini")
         model: {
           provider: settings['vapi_ai_provider'],
-          model: settings['vapi_ai_model'],
+          model: settings['vapi_ai_model'].includes('/') 
+            ? settings['vapi_ai_model'].split('/').pop() 
+            : settings['vapi_ai_model'],
           systemPrompt: systemPrompt,
           temperature: parseFloat(settings['vapi_temperature']),
           maxTokens: parseInt(settings['vapi_max_tokens']),
