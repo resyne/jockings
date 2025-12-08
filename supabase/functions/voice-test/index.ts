@@ -44,15 +44,21 @@ serve(async (req) => {
       .eq('key', 'ai_model')
       .single();
     
-    const aiModel = aiModelSetting?.value || 'gpt-4o-mini';
+    const aiModel = aiModelSetting?.value || 'google/gemini-2.5-flash-lite';
     console.log('Using AI model:', aiModel);
 
     // Determine API endpoint and key based on model
-    const isLovableAI = aiModel.startsWith('google/') || aiModel.startsWith('openai/gpt-5');
+    // Lovable AI handles: google/* models and openai/gpt-5*
+    // OpenAI API handles: openai/gpt-4o* and other OpenAI models
+    const isLovableAI = aiModel.startsWith('google/') || aiModel.includes('gpt-5');
     const apiEndpoint = isLovableAI 
       ? 'https://ai.gateway.lovable.dev/v1/chat/completions'
       : 'https://api.openai.com/v1/chat/completions';
     const apiKey = isLovableAI ? LOVABLE_API_KEY : OPENAI_API_KEY;
+
+    // Strip prefix for OpenAI API (e.g., "openai/gpt-4o-mini" -> "gpt-4o-mini")
+    const modelName = isLovableAI ? aiModel : aiModel.replace('openai/', '');
+    console.log('API endpoint:', apiEndpoint, 'Model name:', modelName);
 
     if (!apiKey) {
       throw new Error(isLovableAI ? 'LOVABLE_API_KEY is not set' : 'OPENAI_API_KEY is not set');
@@ -95,7 +101,7 @@ Usa le forme grammaticali appropriate per il genere ${gender === 'male' ? 'masch
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: aiModel,
+        model: modelName,
         messages,
         max_tokens: 150,
         temperature: 0.8,
