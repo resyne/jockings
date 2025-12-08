@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Trash2, Star, Phone } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Star, Phone, RotateCcw } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -142,6 +142,21 @@ const AdminCallerIds = () => {
     }
   };
 
+  const handleResetCounter = async (id: string) => {
+    const { error } = await supabase
+      .from("verified_caller_ids")
+      .update({ current_calls: 0 })
+      .eq("id", id);
+
+    if (error) {
+      toast.error("Errore nel reset del contatore");
+      console.error(error);
+    } else {
+      toast.success("Contatore resettato");
+      fetchCallerIds();
+    }
+  };
+
   if (adminLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -233,9 +248,22 @@ const AdminCallerIds = () => {
                         {callerId.friendly_name || "-"}
                       </TableCell>
                       <TableCell>
-                        <span className={callerId.current_calls > 0 ? "text-orange-500 font-medium" : ""}>
-                          {callerId.current_calls}/{callerId.max_concurrent_calls}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className={callerId.current_calls > 0 ? "text-orange-500 font-medium" : ""}>
+                            {callerId.current_calls}/{callerId.max_concurrent_calls}
+                          </span>
+                          {callerId.current_calls > 0 && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => handleResetCounter(callerId.id)}
+                              title="Reset contatore"
+                            >
+                              <RotateCcw className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         {callerId.is_default ? (
