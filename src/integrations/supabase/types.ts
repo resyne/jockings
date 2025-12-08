@@ -287,28 +287,34 @@ export type Database = {
       verified_caller_ids: {
         Row: {
           created_at: string
+          current_calls: number | null
           friendly_name: string | null
           id: string
           is_active: boolean | null
           is_default: boolean | null
+          max_concurrent_calls: number | null
           phone_number: string
           updated_at: string
         }
         Insert: {
           created_at?: string
+          current_calls?: number | null
           friendly_name?: string | null
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
+          max_concurrent_calls?: number | null
           phone_number: string
           updated_at?: string
         }
         Update: {
           created_at?: string
+          current_calls?: number | null
           friendly_name?: string | null
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
+          max_concurrent_calls?: number | null
           phone_number?: string
           updated_at?: string
         }

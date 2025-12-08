@@ -31,6 +31,8 @@ interface VerifiedCallerId {
   friendly_name: string | null;
   is_default: boolean;
   is_active: boolean;
+  current_calls: number;
+  max_concurrent_calls: number;
   created_at: string;
 }
 
@@ -215,6 +217,7 @@ const AdminCallerIds = () => {
                   <TableRow>
                     <TableHead>Numero</TableHead>
                     <TableHead>Nome</TableHead>
+                    <TableHead>Chiamate</TableHead>
                     <TableHead>Predefinito</TableHead>
                     <TableHead>Attivo</TableHead>
                     <TableHead className="text-right">Azioni</TableHead>
@@ -228,6 +231,11 @@ const AdminCallerIds = () => {
                       </TableCell>
                       <TableCell>
                         {callerId.friendly_name || "-"}
+                      </TableCell>
+                      <TableCell>
+                        <span className={callerId.current_calls > 0 ? "text-orange-500 font-medium" : ""}>
+                          {callerId.current_calls}/{callerId.max_concurrent_calls}
+                        </span>
                       </TableCell>
                       <TableCell>
                         {callerId.is_default ? (

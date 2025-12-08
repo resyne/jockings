@@ -12,9 +12,10 @@ serve(async (req) => {
   }
 
   try {
-    // Get phoneNumberId from URL params
+    // Get phoneNumberId and callerIdId from URL params
     const url = new URL(req.url);
     const phoneNumberId = url.searchParams.get('phoneNumberId');
+    const callerIdId = url.searchParams.get('callerIdId');
 
     const formData = await req.formData();
     
@@ -32,7 +33,8 @@ serve(async (req) => {
       recordingSid,
       recordingStatus,
       callDuration,
-      phoneNumberId
+      phoneNumberId,
+      callerIdId
     });
 
     if (!callSid) {
@@ -68,6 +70,30 @@ serve(async (req) => {
           console.error('Error decrementing current_calls:', updateError);
         } else {
           console.log('Decremented current_calls for phone:', phoneNumberId);
+        }
+      }
+    }
+
+    // Decrement current_calls for the caller ID when call ends
+    if (isCallEnding && callerIdId) {
+      console.log('Call ending, decrementing current_calls for caller ID:', callerIdId);
+      
+      const { data: callerIdData, error: callerIdError } = await supabase
+        .from('verified_caller_ids')
+        .select('current_calls')
+        .eq('id', callerIdId)
+        .single();
+
+      if (!callerIdError && callerIdData) {
+        const { error: updateError } = await supabase
+          .from('verified_caller_ids')
+          .update({ current_calls: Math.max(0, callerIdData.current_calls - 1) })
+          .eq('id', callerIdId);
+
+        if (updateError) {
+          console.error('Error decrementing caller ID current_calls:', updateError);
+        } else {
+          console.log('Decremented current_calls for caller ID:', callerIdId);
         }
       }
     }
