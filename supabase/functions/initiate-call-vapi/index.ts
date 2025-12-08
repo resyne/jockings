@@ -146,18 +146,25 @@ serve(async (req) => {
     const systemPrompt = buildVapiPrompt(prank);
     const greeting = getTimeBasedGreeting(prank.language);
     
+    // Determine transcriber language based on prank language (override admin setting if needed)
+    const transcriberLanguage = prank.language === 'Italiano' ? 'it' : 'en';
+    
     // Get first message - personalized with victim name
     const firstMessage = settings['vapi_first_message'] === 'Pronto?' 
       ? `${greeting}, parlo con ${prank.victim_first_name}?`
       : settings['vapi_first_message'].replace('{name}', prank.victim_first_name);
 
-    // Get voice ID - use custom if set, otherwise configured, otherwise from prank
+    // Get voice ID - prioritize: prank voice > custom voice > configured voice
     let voiceId = settings['vapi_voice_id'];
-    if (settings['vapi_voice_id'] === 'custom' && settings['vapi_custom_voice_id']) {
-      voiceId = settings['vapi_custom_voice_id'];
-    } else if (prank.elevenlabs_voice_id) {
+    if (prank.elevenlabs_voice_id) {
       voiceId = prank.elevenlabs_voice_id;
+    } else if (settings['vapi_voice_id'] === 'custom' && settings['vapi_custom_voice_id']) {
+      voiceId = settings['vapi_custom_voice_id'];
     }
+
+    console.log('First message:', firstMessage);
+    console.log('Voice ID:', voiceId);
+    console.log('Transcriber language:', transcriberLanguage);
 
     // Prepare VAPI call request
     const vapiCallBody: any = {
@@ -170,14 +177,20 @@ serve(async (req) => {
 
     // If we have a pre-configured assistant, use it with overrides
     if (vapiAssistantId) {
+      console.log('Using pre-configured assistant:', vapiAssistantId);
       vapiCallBody.assistantId = vapiAssistantId;
       vapiCallBody.assistantOverrides = {
         firstMessage,
         model: {
           messages: [{ role: 'system', content: systemPrompt }]
-        }
+        },
+        transcriber: {
+          language: transcriberLanguage,
+        },
       };
     } else {
+      console.log('Creating dynamic assistant configuration');
+      
       // Create dynamic assistant configuration with all settings
       const assistantConfig: any = {
         name: `Prank-${prankId}`,
@@ -196,9 +209,7 @@ serve(async (req) => {
         transcriber: {
           provider: settings['vapi_transcriber_provider'],
           model: settings['vapi_transcriber_model'],
-          language: settings['vapi_transcriber_language'] === 'multi' 
-            ? undefined 
-            : settings['vapi_transcriber_language'],
+          language: transcriberLanguage, // Use prank language, not admin setting
         },
         endCallFunctionEnabled: true,
         endCallMessage: settings['vapi_end_call_message'],
@@ -226,7 +237,7 @@ serve(async (req) => {
       vapiCallBody.assistant = assistantConfig;
     }
 
-    console.log('Calling VAPI API...');
+    console.log('VAPI Request Body:', JSON.stringify(vapiCallBody, null, 2));
 
     // Initiate VAPI call
     const vapiResponse = await fetch('https://api.vapi.ai/call/phone', {
