@@ -33,6 +33,12 @@ enable_confirmations = false
 [functions.initiate-call]
 verify_jwt = true
 
+[functions.initiate-call-vapi]
+verify_jwt = true
+
+[functions.vapi-webhook]
+verify_jwt = false
+
 [functions.twilio-voice]
 verify_jwt = false
 
