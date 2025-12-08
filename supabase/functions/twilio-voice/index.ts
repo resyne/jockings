@@ -526,16 +526,18 @@ serve(async (req) => {
       const audioUrl = await generateElevenLabsAudioUrl(aiResponse, elevenLabsVoiceId, elSettings);
       console.log('Generated audio URL for response:', audioUrl);
       
+      // Generate a "still there?" prompt using ElevenLabs
+      const stillThereText = prank.language === 'Italiano' ? 'Pronto? È ancora lì?' : 'Hello? Are you still there?';
+      const stillThereAudioUrl = await generateElevenLabsAudioUrl(stillThereText, elevenLabsVoiceId, elSettings);
+      
       const twiml = `<?xml version="1.0" encoding="UTF-8"?>
       <Response>
         <Play>${audioUrl}</Play>
         <Gather input="speech" language="${langCode}" timeout="8" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=${turn + 1}">
         </Gather>
-        <Pause length="3"/>
-        <Gather input="speech" language="${langCode}" timeout="5" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=${turn + 1}">
-        </Gather>
-        <Say voice="${pollyVoice.voice}" language="${langCode}">Pronto? È ancora lì?</Say>
-        <Gather input="speech" language="${langCode}" timeout="5" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=${turn + 1}">
+        <Pause length="2"/>
+        <Play>${stillThereAudioUrl}</Play>
+        <Gather input="speech" language="${langCode}" timeout="6" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=${turn + 1}">
         </Gather>
         <Hangup/>
       </Response>`;
