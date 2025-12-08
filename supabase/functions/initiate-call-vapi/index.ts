@@ -112,6 +112,41 @@ IMPORTANT: The first 3 seconds are crucial. First impression determines the succ
   }
 };
 
+// Map model names to valid VAPI OpenAI models
+const getValidVapiModel = (modelName: string): string => {
+  // Valid VAPI OpenAI models
+  const validModels = [
+    'gpt-5', 'gpt-5-mini', 'gpt-5-nano',
+    'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4',
+    'gpt-3.5-turbo'
+  ];
+  
+  // Check if already valid
+  if (validModels.includes(modelName)) {
+    return modelName;
+  }
+  
+  // Map common variations
+  const modelMap: Record<string, string> = {
+    'openai/gpt-4o-mini': 'gpt-4o-mini',
+    'openai/gpt-4o': 'gpt-4o',
+    'openai/gpt-5': 'gpt-5',
+    'openai/gpt-5-mini': 'gpt-5-mini',
+    'google/gemini-2.5-flash': 'gpt-4o-mini', // Fallback for non-OpenAI models
+    'google/gemini-2.5-flash-lite': 'gpt-4o-mini',
+    'llama-3.3-70b-versatile': 'gpt-4o-mini', // Fallback for Groq models
+  };
+  
+  if (modelMap[modelName]) {
+    console.log(`Mapping model ${modelName} to ${modelMap[modelName]} for VAPI compatibility`);
+    return modelMap[modelName];
+  }
+  
+  // Default fallback
+  console.log(`Unknown model ${modelName}, defaulting to gpt-4o-mini`);
+  return 'gpt-4o-mini';
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -136,8 +171,8 @@ serve(async (req) => {
 
     console.log('=== VAPI TRANSIENT ASSISTANT CALL ===');
 
-    // Fetch prank, VAPI settings, and voice presets in parallel
-    const [prankResult, settingsResult, presetsResult] = await Promise.all([
+    // Fetch prank, VAPI settings, voice presets, and default VAPI phone number in parallel
+    const [prankResult, settingsResult, presetsResult, vapiPhoneResult] = await Promise.all([
       supabase.from('pranks').select('*').eq('id', prankId).single(),
       supabase.from('app_settings').select('key, value').in('key', [
         'vapi_phone_number_id',
@@ -155,7 +190,8 @@ serve(async (req) => {
         'vapi_backchanneling',
         'vapi_end_call_message',
       ]),
-      supabase.from('app_settings').select('value').eq('key', 'vapi_voice_presets').single()
+      supabase.from('app_settings').select('value').eq('key', 'vapi_voice_presets').single(),
+      supabase.from('vapi_phone_numbers').select('*').eq('is_default', true).eq('is_active', true).single()
     ]);
 
     const { data: prank, error: prankError } = prankResult;
@@ -166,13 +202,13 @@ serve(async (req) => {
 
     // Parse settings with defaults optimized for prank calls
     const settings: Record<string, string> = {
-      vapi_ai_model: 'gpt-4o',
+      vapi_ai_model: 'gpt-4o-mini', // Default to a valid VAPI model
       vapi_temperature: '1.0', // High temperature for creative, unpredictable responses
       vapi_max_tokens: '150',
       vapi_voice_provider: '11labs', // VAPI uses "11labs" not "elevenlabs"
       vapi_voice_id: 'onwK4e9ZLuTAKqWW03F9', // Default Italian male voice
       vapi_transcriber_provider: 'deepgram',
-      vapi_transcriber_model: 'nova-2',
+      vapi_transcriber_model: 'nova-2', // Use nova-2 for multilingual support (not nova-2-phonecall which only supports en)
       vapi_silence_timeout: '30',
       vapi_max_duration: '300',
       vapi_background_sound: 'off',
@@ -184,7 +220,14 @@ serve(async (req) => {
       if (s.value) settings[s.key] = s.value;
     });
 
-    const vapiPhoneNumberId = settings['vapi_phone_number_id'];
+    // Get VAPI Phone Number ID from the vapi_phone_numbers table (UUID format)
+    // The phoneNumberId for VAPI API must be the UUID from our table, not the VAPI "PN..." ID
+    let vapiPhoneNumberId = vapiPhoneResult.data?.phone_number_id;
+    
+    // If no default phone found in table, fall back to app_settings (legacy)
+    if (!vapiPhoneNumberId) {
+      vapiPhoneNumberId = settings['vapi_phone_number_id'];
+    }
 
     if (!vapiPhoneNumberId) {
       throw new Error('VAPI Phone Number ID not configured. Go to Admin > Voices to set it up.');
@@ -198,6 +241,7 @@ serve(async (req) => {
     console.log('Voice Gender:', prank.voice_gender);
     console.log('Personality:', prank.personality_tone);
     console.log('VAPI Phone Number ID:', vapiPhoneNumberId);
+    console.log('Phone from table:', vapiPhoneResult.data?.phone_number);
 
     // === BUILD DYNAMIC CONTENT ===
     const greeting = getTimeBasedGreeting(prank.language);
@@ -261,10 +305,10 @@ serve(async (req) => {
         // Dynamic first message - CRITICAL for prank success
         firstMessage: firstMessage,
         
-        // AI Model configuration
+        // AI Model configuration - ensure valid OpenAI model for VAPI
         model: {
           provider: 'openai',
-          model: settings['vapi_ai_model'],
+          model: getValidVapiModel(settings['vapi_ai_model']),
           systemPrompt: systemPrompt, // DIRECT systemPrompt, not messages array
           temperature: parseFloat(settings['vapi_temperature']),
           maxTokens: parseInt(settings['vapi_max_tokens']),
@@ -279,10 +323,10 @@ serve(async (req) => {
           fillerInjectionEnabled: true, // Natural filler words like "uhm", "eh"
         },
         
-        // Transcriber configuration
+        // Transcriber configuration - use nova-2 for multilingual support
         transcriber: {
           provider: settings['vapi_transcriber_provider'],
-          model: settings['vapi_transcriber_model'],
+          model: 'nova-2', // Always use nova-2 for multilingual (nova-2-phonecall only supports en)
           language: transcriberLanguage,
         },
         
