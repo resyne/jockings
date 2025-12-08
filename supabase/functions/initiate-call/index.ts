@@ -1,3 +1,4 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -8,8 +9,303 @@ const corsHeaders = {
 
 // Map language to preferred country codes
 const LANGUAGE_TO_COUNTRY_PRIORITY: Record<string, string[]> = {
-  'Italiano': ['IT', 'CH', 'AT'], // Italian prefers Italian numbers, then Swiss, Austrian
-  'English': ['US', 'GB', 'CA'],  // English prefers US, then UK, Canadian
+  'Italiano': ['IT', 'CH', 'AT'],
+  'English': ['US', 'GB', 'CA'],
+};
+
+// Language code mapping
+const getLanguageCode = (language: string): string => {
+  const langMap: Record<string, string> = {
+    'Italiano': 'it-IT',
+    'English': 'en-US',
+  };
+  return langMap[language] || 'it-IT';
+};
+
+// Get appropriate greeting based on time of day (Italy timezone)
+const getTimeBasedGreeting = (language: string): { greeting: string; instruction: string } => {
+  const now = new Date();
+  const italyTime = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Rome' }));
+  const hour = italyTime.getHours();
+  
+  if (language === 'Italian' || language === 'Italiano') {
+    if (hour >= 6 && hour < 18) {
+      return { greeting: 'buongiorno', instruction: 'Use "buongiorno" as greeting (it is daytime).' };
+    } else {
+      return { greeting: 'buonasera', instruction: 'Use "buonasera" as greeting (it is evening/night).' };
+    }
+  } else {
+    if (hour >= 6 && hour < 12) {
+      return { greeting: 'good morning', instruction: 'Use "good morning" as greeting.' };
+    } else if (hour >= 12 && hour < 18) {
+      return { greeting: 'good afternoon', instruction: 'Use "good afternoon" as greeting.' };
+    } else {
+      return { greeting: 'good evening', instruction: 'Use "good evening" as greeting.' };
+    }
+  }
+};
+
+// Build system prompt from prank data
+const buildSystemPrompt = (prank: any): string => {
+  const languageMap: Record<string, string> = {
+    'Italiano': 'Italian',
+    'English': 'English',
+  };
+
+  const genderMap: Record<string, { identity: string; style: string }> = {
+    'male': {
+      identity: 'a MAN (male)',
+      style: 'Use masculine forms of words and adjectives. Speak with a male perspective and identity.'
+    },
+    'female': {
+      identity: 'a WOMAN (female)',
+      style: 'Use feminine forms of words and adjectives. Speak with a female perspective and identity.'
+    },
+  };
+
+  const toneMap: Record<string, { description: string; behavior: string }> = {
+    'enthusiastic': {
+      description: 'extremely enthusiastic, excited, and over-the-top happy',
+      behavior: 'Use exclamations! Speak fast with rising intonation. Show excessive excitement about everything.'
+    },
+    'serious': {
+      description: 'very serious, formal, and professional',
+      behavior: 'Use formal language and titles. Speak in a measured, deliberate way. Be direct and to the point.'
+    },
+    'angry': {
+      description: 'frustrated, irritated, and increasingly angry',
+      behavior: 'Start slightly annoyed and escalate your frustration. Use interruptions. Raise your tone.'
+    },
+    'confused': {
+      description: 'confused, uncertain, and easily distracted',
+      behavior: 'Frequently lose your train of thought. Ask for clarification often. Mix up details.'
+    },
+    'mysterious': {
+      description: 'mysterious, cryptic, and dramatically secretive',
+      behavior: 'Speak in a low, conspiratorial tone. Use dramatic pauses. Hint at secrets without revealing them.'
+    },
+    'friendly': {
+      description: 'warm, friendly, and chatty like an old friend',
+      behavior: 'Use informal language. Ask personal questions. Share unnecessary details about yourself.'
+    },
+  };
+
+  const language = languageMap[prank.language] || 'Italian';
+  const personality = toneMap[prank.personality_tone] || toneMap['enthusiastic'];
+  const gender = genderMap[prank.voice_gender] || genderMap['male'];
+  const creativity = prank.creativity_level > 70 ? 'very creative, unpredictable, and willing to improvise wildly' : 
+                     prank.creativity_level > 30 ? 'moderately creative with occasional surprises' : 'straightforward and predictable';
+  const timeGreeting = getTimeBasedGreeting(language);
+
+  return `You are making a prank phone call. Your target is ${prank.victim_first_name} ${prank.victim_last_name}.
+
+SCENARIO: ${prank.prank_theme}
+
+YOUR GENDER: You are ${gender.identity}. ${gender.style}
+YOUR PERSONALITY: You are ${personality.description}.
+CRITICAL BEHAVIOR INSTRUCTIONS: ${personality.behavior}
+
+TIME-AWARE GREETING: ${timeGreeting.instruction}
+
+RULES:
+1. Speak ONLY in ${language}
+2. You are ${gender.identity} - ALWAYS use the correct grammatical gender for yourself!
+3. EMBODY your personality in EVERY response - this is the most important thing!
+4. Be ${creativity} with your responses
+5. NEVER reveal this is a prank call
+6. Stay in character at all times
+7. Keep responses concise (1-3 sentences max)
+8. Use the correct time-based greeting ("${timeGreeting.greeting}") when starting the call!
+9. When introducing yourself, use REALISTIC names - NEVER use generic names like "Mario Rossi".
+
+Respond with ONLY what you would say. Make your personality and gender OBVIOUS in how you speak.`;
+};
+
+// ElevenLabs voice settings interface
+interface ElevenLabsSettings {
+  stability: number;
+  similarity_boost: number;
+  style: number;
+  speed: number;
+}
+
+// Get default ElevenLabs voice based on gender/language
+const getElevenLabsDefaultVoice = (gender: string, language: string): string => {
+  const langCode = getLanguageCode(language);
+  const voiceMap: Record<string, Record<string, string>> = {
+    'it-IT': { male: 'onwK4e9ZLuTAKqWW03F9', female: 'EXAVITQu4vr4xnSDxMaL' },
+    'en-US': { male: 'TX3LPaxmHKxFdv7VOQHJ', female: 'EXAVITQu4vr4xnSDxMaL' },
+  };
+  return voiceMap[langCode]?.[gender] || voiceMap['it-IT']?.['male'] || 'onwK4e9ZLuTAKqWW03F9';
+};
+
+// Generate audio using ElevenLabs API and store it, return the URL
+const generateElevenLabsAudioUrl = async (
+  text: string, 
+  voiceId: string, 
+  settings: ElevenLabsSettings,
+  supabaseUrl: string
+): Promise<string> => {
+  const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY');
+  
+  if (!ELEVENLABS_API_KEY) {
+    throw new Error('ELEVENLABS_API_KEY not configured');
+  }
+
+  console.log('Generating ElevenLabs audio for text:', text.substring(0, 50) + '...');
+
+  const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+    method: 'POST',
+    headers: {
+      'xi-api-key': ELEVENLABS_API_KEY,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      text,
+      model_id: 'eleven_turbo_v2_5',
+      voice_settings: {
+        stability: settings.stability,
+        similarity_boost: settings.similarity_boost,
+        style: settings.style,
+        use_speaker_boost: false,
+      },
+      output_format: 'mp3_22050_32',
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('ElevenLabs API error:', errorText);
+    throw new Error('ElevenLabs TTS failed');
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  const uint8Array = new Uint8Array(arrayBuffer);
+  
+  let base64 = '';
+  const chunkSize = 8192;
+  for (let i = 0; i < uint8Array.length; i += chunkSize) {
+    const chunk = uint8Array.slice(i, i + chunkSize);
+    base64 += String.fromCharCode.apply(null, Array.from(chunk));
+  }
+  const audioBase64 = btoa(base64);
+  
+  const audioId = crypto.randomUUID();
+  
+  const storeResponse = await fetch(`${supabaseUrl}/functions/v1/serve-audio`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: audioId, audio: audioBase64 }),
+  });
+
+  if (!storeResponse.ok) {
+    console.error('Failed to store audio:', await storeResponse.text());
+    throw new Error('Failed to store audio');
+  }
+
+  return `${supabaseUrl}/functions/v1/serve-audio?id=${audioId}`;
+};
+
+// Generate background sound prompt using AI
+const generateBackgroundSoundPrompt = async (prankTheme: string): Promise<string | null> => {
+  try {
+    console.log('Generating background sound prompt for theme:', prankTheme);
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash-lite',
+        messages: [
+          { 
+            role: 'system', 
+            content: `You generate SHORT (max 10 words) English prompts for ambient sound effects.
+Given a prank scenario, describe background sounds that make it believable.
+Examples:
+- "Gas company technician" → "office phone ringing, keyboard typing, air conditioning"
+- "Lottery winner notification" → "champagne pop, party cheers, confetti"
+- "Bank security alert" → "office ambience, phone beeps, typing sounds"
+ONLY output the sound prompt, nothing else.` 
+          },
+          { role: 'user', content: prankTheme }
+        ],
+        max_tokens: 30,
+        temperature: 0.7,
+      }),
+    });
+    
+    if (!response.ok) {
+      console.error('Failed to generate background sound prompt');
+      return null;
+    }
+    
+    const data = await response.json();
+    const soundPrompt = data.choices[0]?.message?.content?.trim();
+    console.log('Generated sound prompt:', soundPrompt);
+    return soundPrompt;
+  } catch (e) {
+    console.error('Error generating background sound prompt:', e);
+    return null;
+  }
+};
+
+// Generate background sound using ElevenLabs Sound Effects API
+const generateBackgroundSound = async (prompt: string, supabaseUrl: string): Promise<string | null> => {
+  try {
+    console.log('Generating sound effect with prompt:', prompt);
+    const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY');
+    
+    const soundResponse = await fetch('https://api.elevenlabs.io/v1/sound-generation', {
+      method: 'POST',
+      headers: {
+        'xi-api-key': ELEVENLABS_API_KEY!,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        text: prompt,
+        duration_seconds: 3,
+        prompt_influence: 0.7,
+      }),
+    });
+    
+    if (!soundResponse.ok) {
+      console.error('ElevenLabs sound generation failed:', await soundResponse.text());
+      return null;
+    }
+    
+    const audioBuffer = await soundResponse.arrayBuffer();
+    const uint8Array = new Uint8Array(audioBuffer);
+    let binary = '';
+    const chunkSize = 8192;
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+      const chunk = uint8Array.subarray(i, i + chunkSize);
+      binary += String.fromCharCode(...chunk);
+    }
+    const audioBase64 = btoa(binary);
+    
+    const audioId = crypto.randomUUID();
+    const storeResponse = await fetch(`${supabaseUrl}/functions/v1/serve-audio`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: audioId, audio: audioBase64 }),
+    });
+    
+    if (!storeResponse.ok) {
+      console.error('Failed to store background sound');
+      return null;
+    }
+    
+    const bgSoundUrl = `${supabaseUrl}/functions/v1/serve-audio?id=${audioId}`;
+    console.log('Background sound URL:', bgSoundUrl);
+    return bgSoundUrl;
+  } catch (e) {
+    console.error('Error generating background sound:', e);
+    return null;
+  }
 };
 
 serve(async (req) => {
@@ -26,21 +322,25 @@ serve(async (req) => {
 
     const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
     const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
-    const TWILIO_PHONE_NUMBER_FALLBACK = Deno.env.get('TWILIO_PHONE_NUMBER'); // Fallback
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const TWILIO_PHONE_NUMBER_FALLBACK = Deno.env.get('TWILIO_PHONE_NUMBER');
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 
     if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
       throw new Error('Twilio credentials not configured');
     }
 
-    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Run all queries in parallel for faster startup
-    const [prankResult, phoneNumbersResult, callerIdsResult] = await Promise.all([
+    console.log('=== PRE-GENERATING AUDIO BEFORE CALL ===');
+
+    // Run all initial queries in parallel
+    const [prankResult, phoneNumbersResult, callerIdsResult, aiModelResult] = await Promise.all([
       supabase.from('pranks').select('*').eq('id', prankId).single(),
       supabase.from('twilio_phone_numbers').select('*').eq('is_active', true),
-      supabase.from('verified_caller_ids').select('*').eq('is_active', true).order('is_default', { ascending: false })
+      supabase.from('verified_caller_ids').select('*').eq('is_active', true).order('is_default', { ascending: false }),
+      supabase.from('app_settings').select('value').eq('key', 'ai_model').single()
     ]);
 
     const { data: prank, error: prankError } = prankResult;
@@ -54,10 +354,78 @@ serve(async (req) => {
     if (phoneError) console.error('Error fetching phone numbers:', phoneError);
     if (callerIdError) console.error('Error fetching verified caller IDs:', callerIdError);
 
-    console.log('Initiating call for prank:', prank.id, 'to:', prank.victim_phone, 'language:', prank.language);
+    console.log('Prank:', prank.id, 'Theme:', prank.prank_theme);
 
-    // Auto-reset stale caller IDs (not updated in last 10 minutes but have current_calls > 0)
-    const STALE_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes
+    // Get AI model and voice settings
+    const aiModel = aiModelResult.data?.value || 'google/gemini-2.5-flash-lite';
+    const useOpenAI = aiModel.startsWith('openai/') && !aiModel.includes('gpt-5');
+    const apiUrl = useOpenAI ? 'https://api.openai.com/v1/chat/completions' : 'https://ai.gateway.lovable.dev/v1/chat/completions';
+    const apiKey = useOpenAI ? OPENAI_API_KEY : Deno.env.get('LOVABLE_API_KEY');
+    const modelName = useOpenAI ? 'gpt-4o-mini' : aiModel;
+
+    const customVoiceId = prank.elevenlabs_voice_id;
+    const elevenLabsVoiceId = customVoiceId || getElevenLabsDefaultVoice(prank.voice_gender, prank.language);
+    
+    const elSettings: ElevenLabsSettings = {
+      stability: prank.elevenlabs_stability ?? 0.5,
+      similarity_boost: prank.elevenlabs_similarity ?? 0.75,
+      style: prank.elevenlabs_style ?? 0,
+      speed: prank.elevenlabs_speed ?? 1.0,
+    };
+
+    // === STEP 1: Generate greeting text and background sound prompt IN PARALLEL ===
+    console.log('Step 1: Generating AI greeting and background sound prompt...');
+    const systemPrompt = buildSystemPrompt(prank);
+    
+    const [aiResponse, soundPromptResult] = await Promise.all([
+      fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: modelName,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: 'Inizia con un saluto breve (max 2 frasi). Presentati secondo lo scenario.' }
+          ],
+          max_tokens: 80,
+          temperature: 0.7,
+        }),
+      }),
+      generateBackgroundSoundPrompt(prank.prank_theme)
+    ]);
+
+    const aiData = await aiResponse.json();
+    const greeting = aiData.choices[0]?.message?.content || 'Pronto, buongiorno!';
+    console.log('AI greeting:', greeting);
+
+    // === STEP 2: Generate greeting audio and background sound audio IN PARALLEL ===
+    console.log('Step 2: Generating audio files...');
+    const [greetingUrl, backgroundUrl] = await Promise.all([
+      generateElevenLabsAudioUrl(greeting, elevenLabsVoiceId, elSettings, SUPABASE_URL),
+      soundPromptResult ? generateBackgroundSound(soundPromptResult, SUPABASE_URL) : Promise.resolve(null)
+    ]);
+
+    console.log('Greeting URL:', greetingUrl);
+    console.log('Background URL:', backgroundUrl);
+
+    // === STEP 3: Save pre-generated URLs to database ===
+    await supabase
+      .from('pranks')
+      .update({
+        pregenerated_greeting_url: greetingUrl,
+        pregenerated_background_url: backgroundUrl,
+        conversation_history: [{ role: 'assistant', content: greeting }],
+        call_status: 'initiating'
+      })
+      .eq('id', prankId);
+
+    console.log('=== AUDIO PRE-GENERATED, NOW INITIATING CALL ===');
+
+    // === STEP 4: Handle caller ID and phone number selection (same as before) ===
+    const STALE_THRESHOLD_MS = 10 * 60 * 1000;
     const now = new Date();
     
     if (allVerifiedCallerIds && allVerifiedCallerIds.length > 0) {
@@ -74,119 +442,71 @@ serve(async (req) => {
             .from('verified_caller_ids')
             .update({ current_calls: 0 })
             .eq('id', stale.id);
-          // Update local copy
           stale.current_calls = 0;
         }
       }
     }
 
-    // Select the best caller ID (default first, then any with capacity)
     let selectedCallerId: string | null = null;
     let selectedCallerIdRecord: { id: string; phone_number: string; current_calls: number } | null = null;
 
     if (allVerifiedCallerIds && allVerifiedCallerIds.length > 0) {
-      console.log('Available verified caller IDs:', allVerifiedCallerIds.length);
-      
-      // Find caller ID with capacity (current_calls < max_concurrent_calls)
-      const availableCallerId = allVerifiedCallerIds.find(
-        c => c.current_calls < c.max_concurrent_calls
-      );
-
+      const availableCallerId = allVerifiedCallerIds.find(c => c.current_calls < c.max_concurrent_calls);
       if (availableCallerId) {
         selectedCallerId = availableCallerId.phone_number;
         selectedCallerIdRecord = availableCallerId;
-        console.log('Selected caller ID:', selectedCallerId, 'is_default:', availableCallerId.is_default, 'current_calls:', availableCallerId.current_calls);
-
-        // Increment current_calls for the selected caller ID
-        const { error: updateCallerIdError } = await supabase
+        await supabase
           .from('verified_caller_ids')
           .update({ current_calls: availableCallerId.current_calls + 1 })
           .eq('id', availableCallerId.id);
-
-        if (updateCallerIdError) {
-          console.error('Error updating caller ID current_calls:', updateCallerIdError);
-        }
-      } else {
-        console.log('No caller IDs with available capacity');
       }
-    } else {
-      console.log('No verified caller IDs configured');
     }
 
-    // Select the best phone number based on language
     let selectedPhoneNumber = TWILIO_PHONE_NUMBER_FALLBACK;
     let selectedPhoneId: string | null = null;
 
     if (phoneNumbers && phoneNumbers.length > 0) {
       const preferredCountries = LANGUAGE_TO_COUNTRY_PRIORITY[prank.language] || ['US', 'GB'];
-      
-      console.log('Available phone numbers:', phoneNumbers.length);
-      console.log('Preferred countries for language', prank.language, ':', preferredCountries);
-
-      // Find a number that matches preferred countries and has capacity
       let bestMatch = null;
       
       for (const countryCode of preferredCountries) {
         const matchingNumbers = phoneNumbers.filter(
           p => p.country_code === countryCode && p.current_calls < p.max_concurrent_calls
         );
-        
         if (matchingNumbers.length > 0) {
-          // Pick the one with the least current calls
-          bestMatch = matchingNumbers.reduce((a, b) => 
-            a.current_calls < b.current_calls ? a : b
-          );
+          bestMatch = matchingNumbers.reduce((a, b) => a.current_calls < b.current_calls ? a : b);
           break;
         }
       }
 
-      // If no preferred match, pick any available number with capacity
       if (!bestMatch) {
-        const availableNumbers = phoneNumbers.filter(
-          p => p.current_calls < p.max_concurrent_calls
-        );
+        const availableNumbers = phoneNumbers.filter(p => p.current_calls < p.max_concurrent_calls);
         if (availableNumbers.length > 0) {
-          bestMatch = availableNumbers.reduce((a, b) => 
-            a.current_calls < b.current_calls ? a : b
-          );
+          bestMatch = availableNumbers.reduce((a, b) => a.current_calls < b.current_calls ? a : b);
         }
       }
 
       if (bestMatch) {
         selectedPhoneNumber = bestMatch.phone_number;
         selectedPhoneId = bestMatch.id;
-        console.log('Selected phone number:', selectedPhoneNumber, 'from country:', bestMatch.country_name);
-
-        // Increment current_calls for the selected number
-        const { error: updatePhoneError } = await supabase
+        await supabase
           .from('twilio_phone_numbers')
           .update({ current_calls: bestMatch.current_calls + 1 })
           .eq('id', bestMatch.id);
-
-        if (updatePhoneError) {
-          console.error('Error updating phone number current_calls:', updatePhoneError);
-        }
-      } else {
-        console.log('No available numbers with capacity, using fallback:', TWILIO_PHONE_NUMBER_FALLBACK);
       }
-    } else {
-      console.log('No phone numbers in database, using fallback:', TWILIO_PHONE_NUMBER_FALLBACK);
     }
 
     if (!selectedPhoneNumber) {
       throw new Error('No phone number available for calls');
     }
 
-    // Use verified caller ID if available, otherwise use the phone number
     const callerIdToUse = selectedCallerId || selectedPhoneNumber;
-    console.log('Using caller ID:', callerIdToUse);
 
-    // Build webhook URL with prank data
+    // === STEP 5: Initiate Twilio call ===
     const webhookUrl = `${SUPABASE_URL}/functions/v1/twilio-voice?prankId=${prankId}`;
     const callerIdParam = selectedCallerIdRecord ? `&callerIdId=${selectedCallerIdRecord.id}` : '';
     const statusCallbackUrl = `${SUPABASE_URL}/functions/v1/twilio-status?phoneNumberId=${selectedPhoneId || ''}${callerIdParam}`;
 
-    // Build call parameters
     const callParams: Record<string, string> = {
       To: prank.victim_phone,
       From: callerIdToUse,
@@ -201,7 +521,6 @@ serve(async (req) => {
       Timeout: '30',
     };
 
-    // Initiate Twilio call
     const twilioResponse = await fetch(
       `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Calls.json`,
       {
@@ -219,7 +538,6 @@ serve(async (req) => {
     if (!twilioResponse.ok) {
       console.error('Twilio error:', twilioData);
       
-      // If call failed and we incremented the counter, decrement it back
       if (selectedPhoneId) {
         const { data: phoneData } = await supabase
           .from('twilio_phone_numbers')
@@ -238,22 +556,15 @@ serve(async (req) => {
       throw new Error(twilioData.message || 'Failed to initiate call');
     }
 
-    console.log('Twilio call initiated:', twilioData.sid, 'from:', selectedPhoneNumber);
+    console.log('Twilio call initiated:', twilioData.sid);
 
-    // Update prank with call SID
-    const { error: updateError } = await supabase
+    await supabase
       .from('pranks')
       .update({
         twilio_call_sid: twilioData.sid,
         call_status: 'initiated',
       })
       .eq('id', prankId);
-
-    if (updateError) {
-      console.error('Error updating prank with call SID:', updateError);
-    } else {
-      console.log('Prank updated with call SID:', twilioData.sid);
-    }
 
     return new Response(
       JSON.stringify({ success: true, callSid: twilioData.sid, fromNumber: selectedPhoneNumber }),

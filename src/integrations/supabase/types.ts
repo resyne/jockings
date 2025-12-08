@@ -153,6 +153,8 @@ export type Database = {
           max_duration: number
           personality_tone: string
           prank_theme: string
+          pregenerated_background_url: string | null
+          pregenerated_greeting_url: string | null
           recording_url: string | null
           scheduled_at: string | null
           send_recording: boolean
@@ -180,6 +182,8 @@ export type Database = {
           max_duration?: number
           personality_tone?: string
           prank_theme: string
+          pregenerated_background_url?: string | null
+          pregenerated_greeting_url?: string | null
           recording_url?: string | null
           scheduled_at?: string | null
           send_recording?: boolean
@@ -207,6 +211,8 @@ export type Database = {
           max_duration?: number
           personality_tone?: string
           prank_theme?: string
+          pregenerated_background_url?: string | null
+          pregenerated_greeting_url?: string | null
           recording_url?: string | null
           scheduled_at?: string | null
           send_recording?: boolean

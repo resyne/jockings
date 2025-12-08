@@ -290,6 +290,42 @@ serve(async (req) => {
     if (action === 'start') {
       console.log('Starting prank call for:', prank.victim_first_name);
       
+      // Check for pre-generated audio URLs (from initiate-call)
+      const pregeneratedGreetingUrl = (prank as any).pregenerated_greeting_url;
+      const pregeneratedBackgroundUrl = (prank as any).pregenerated_background_url;
+      
+      if (pregeneratedGreetingUrl) {
+        console.log('Using pre-generated audio - FAST PATH');
+        console.log('Greeting URL:', pregeneratedGreetingUrl);
+        console.log('Background URL:', pregeneratedBackgroundUrl);
+        
+        // Update status to in_progress
+        await supabase
+          .from('pranks')
+          .update({ call_status: 'in_progress' })
+          .eq('id', prankId);
+        
+        // Build TwiML with pre-generated audio
+        const bgSound = pregeneratedBackgroundUrl ? `<Play>${pregeneratedBackgroundUrl}</Play>` : '';
+        
+        const twiml = `<?xml version="1.0" encoding="UTF-8"?>
+        <Response>
+          ${bgSound}
+          <Play>${pregeneratedGreetingUrl}</Play>
+          <Gather input="speech" language="${langCode}" timeout="4" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1">
+          </Gather>
+          <Pause length="2"/>
+          <Gather input="speech" language="${langCode}" timeout="4" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1">
+          </Gather>
+          <Hangup/>
+        </Response>`;
+        
+        return new Response(twiml, { headers: { 'Content-Type': 'text/xml' } });
+      }
+      
+      // FALLBACK: Generate audio on-the-fly (should rarely happen now)
+      console.log('No pre-generated audio found - SLOW PATH (fallback)');
+      
       // Fetch AI model setting from database
       const { data: aiModelSetting } = await supabase
         .from('app_settings')
@@ -300,132 +336,21 @@ serve(async (req) => {
       const aiModel = aiModelSetting?.value || 'google/gemini-2.5-flash-lite';
       const useOpenAI = aiModel.startsWith('openai/') && !aiModel.includes('gpt-5');
       
-      console.log('Using AI model:', aiModel, 'useOpenAI:', useOpenAI);
-      
-      // Run all operations in parallel for faster response
       const systemPrompt = buildSystemPrompt(prank);
       
-      // Determine API endpoint and key based on model
       const apiUrl = useOpenAI 
         ? 'https://api.openai.com/v1/chat/completions'
         : 'https://ai.gateway.lovable.dev/v1/chat/completions';
       const apiKey = useOpenAI 
         ? OPENAI_API_KEY 
         : Deno.env.get('LOVABLE_API_KEY');
-      
-      // Map model names for OpenAI (gpt-4o-mini doesn't need prefix)
       const modelName = useOpenAI ? 'gpt-4o-mini' : aiModel;
       
-      // Generate background sound prompt using AI based on prank theme
-      const generateBackgroundSoundPrompt = async (): Promise<string | null> => {
-        try {
-          console.log('Generating dynamic background sound for theme:', prank.prank_theme);
-          const bgPromptResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              model: 'google/gemini-2.5-flash-lite',
-              messages: [
-                { 
-                  role: 'system', 
-                  content: `You are an expert at creating sound effect prompts for ElevenLabs Sound Effects API. 
-Given a prank call scenario, generate a SHORT (max 10 words) English prompt describing ambient background sounds that would make the prank more believable.
-Examples:
-- "Gas company technician" → "office phone ringing, keyboard typing, air conditioning hum"
-- "Lottery winner notification" → "champagne pop, party cheers, confetti"
-- "Bank security alert" → "office ambience, phone beeps, typing sounds"
-- "Pizza delivery" → "kitchen sounds, sizzling, Italian music"
-ONLY output the sound prompt, nothing else.` 
-                },
-                { role: 'user', content: prank.prank_theme }
-              ],
-              max_tokens: 30,
-              temperature: 0.7,
-            }),
-          });
-          
-          if (!bgPromptResponse.ok) {
-            console.error('Failed to generate background sound prompt');
-            return null;
-          }
-          
-          const bgData = await bgPromptResponse.json();
-          const soundPrompt = bgData.choices[0]?.message?.content?.trim();
-          console.log('Generated sound prompt:', soundPrompt);
-          return soundPrompt;
-        } catch (e) {
-          console.error('Error generating background sound prompt:', e);
-          return null;
-        }
-      };
-      
-      // Generate background sound effect using ElevenLabs
-      const generateBackgroundSound = async (prompt: string): Promise<string | null> => {
-        try {
-          console.log('Generating sound effect with prompt:', prompt);
-          const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY');
-          
-          const soundResponse = await fetch('https://api.elevenlabs.io/v1/sound-generation', {
-            method: 'POST',
-            headers: {
-              'xi-api-key': ELEVENLABS_API_KEY!,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              text: prompt,
-              duration_seconds: 3, // Short background sound
-              prompt_influence: 0.7,
-            }),
-          });
-          
-          if (!soundResponse.ok) {
-            console.error('ElevenLabs sound generation failed:', await soundResponse.text());
-            return null;
-          }
-          
-          const audioBuffer = await soundResponse.arrayBuffer();
-          const uint8Array = new Uint8Array(audioBuffer);
-          let binary = '';
-          const chunkSize = 8192;
-          for (let i = 0; i < uint8Array.length; i += chunkSize) {
-            const chunk = uint8Array.subarray(i, i + chunkSize);
-            binary += String.fromCharCode(...chunk);
-          }
-          const audioBase64 = btoa(binary);
-          
-          // Store in serve-audio and get URL
-          const audioId = crypto.randomUUID();
-          const storeResponse = await fetch(`${SUPABASE_URL}/functions/v1/serve-audio`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: audioId, audio: audioBase64 }),
-          });
-          
-          if (!storeResponse.ok) {
-            console.error('Failed to store background sound');
-            return null;
-          }
-          
-          const bgSoundUrl = `${SUPABASE_URL}/functions/v1/serve-audio?id=${audioId}`;
-          console.log('Background sound URL:', bgSoundUrl);
-          return bgSoundUrl;
-        } catch (e) {
-          console.error('Error generating background sound:', e);
-          return null;
-        }
-      };
-      
-      // Run greeting generation, status update, and background sound generation in parallel
-      const [_, aiResponse, soundPromptResult] = await Promise.all([
-        // Update status (don't wait for result)
+      const [_, aiResponse] = await Promise.all([
         supabase
           .from('pranks')
           .update({ call_status: 'in_progress', conversation_history: [] })
           .eq('id', prankId),
-        // Generate greeting with AI
         fetch(apiUrl, {
           method: 'POST',
           headers: {
@@ -441,24 +366,14 @@ ONLY output the sound prompt, nothing else.`
             max_tokens: 80,
             temperature: 0.7,
           }),
-        }),
-        // Generate background sound prompt using AI
-        generateBackgroundSoundPrompt()
+        })
       ]);
 
       const aiData = await aiResponse.json();
       const greeting = aiData.choices[0]?.message?.content || 'Pronto, buongiorno!';
       
-      // Generate background sound from AI-generated prompt (if available)
-      let backgroundSoundUrl: string | null = null;
-      if (soundPromptResult) {
-        backgroundSoundUrl = await generateBackgroundSound(soundPromptResult);
-      }
-      
-      console.log('AI greeting:', greeting);
-      if (backgroundSoundUrl) console.log('Dynamic background sound:', backgroundSoundUrl);
+      console.log('AI greeting (fallback):', greeting);
 
-      // Save greeting to conversation history
       await supabase
         .from('pranks')
         .update({ 
@@ -466,16 +381,10 @@ ONLY output the sound prompt, nothing else.`
         })
         .eq('id', prankId);
 
-      // Generate TwiML based on voice provider
-      let twiml: string;
-      const bgSound = backgroundSoundUrl ? `<Play>${backgroundSoundUrl}</Play>` : '';
-      
-      // Only use ElevenLabs - no fallback to other voices
       const audioUrl = await generateElevenLabsAudioUrl(greeting, elevenLabsVoiceId, elSettings);
       
-      twiml = `<?xml version="1.0" encoding="UTF-8"?>
+      const twiml = `<?xml version="1.0" encoding="UTF-8"?>
       <Response>
-        ${bgSound}
         <Play>${audioUrl}</Play>
         <Gather input="speech" language="${langCode}" timeout="4" speechTimeout="auto" action="${webhookBase}?prankId=${prankId}&amp;action=respond&amp;turn=1">
         </Gather>
