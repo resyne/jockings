@@ -49,9 +49,12 @@ serve(async (req) => {
     // Check if call is ending (completed, busy, no-answer, canceled, failed)
     const endStatuses = ['completed', 'busy', 'no-answer', 'canceled', 'failed'];
     const isCallEnding = callStatus && endStatuses.includes(callStatus);
+    
+    // Also consider recording completed as call ending (backup mechanism)
+    const isRecordingComplete = recordingStatus === 'completed';
 
     // Decrement current_calls for the phone number when call ends
-    if (isCallEnding && phoneNumberId) {
+    if ((isCallEnding || isRecordingComplete) && phoneNumberId) {
       console.log('Call ending, decrementing current_calls for phone:', phoneNumberId);
       
       const { data: phoneData, error: phoneError } = await supabase
@@ -60,7 +63,7 @@ serve(async (req) => {
         .eq('id', phoneNumberId)
         .single();
 
-      if (!phoneError && phoneData) {
+      if (!phoneError && phoneData && phoneData.current_calls > 0) {
         const { error: updateError } = await supabase
           .from('twilio_phone_numbers')
           .update({ current_calls: Math.max(0, phoneData.current_calls - 1) })
@@ -75,7 +78,7 @@ serve(async (req) => {
     }
 
     // Decrement current_calls for the caller ID when call ends
-    if (isCallEnding && callerIdId) {
+    if ((isCallEnding || isRecordingComplete) && callerIdId) {
       console.log('Call ending, decrementing current_calls for caller ID:', callerIdId);
       
       const { data: callerIdData, error: callerIdError } = await supabase
@@ -84,7 +87,7 @@ serve(async (req) => {
         .eq('id', callerIdId)
         .single();
 
-      if (!callerIdError && callerIdData) {
+      if (!callerIdError && callerIdData && callerIdData.current_calls > 0) {
         const { error: updateError } = await supabase
           .from('verified_caller_ids')
           .update({ current_calls: Math.max(0, callerIdData.current_calls - 1) })
