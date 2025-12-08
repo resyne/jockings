@@ -627,6 +627,12 @@ const AdminVoices = () => {
           gender={selectedSetting.gender}
           voiceId={selectedSetting.elevenlabs_voice_id}
           personality="friendly"
+          elevenlabsSettings={{
+            stability: selectedSetting.elevenlabs_stability * 100,
+            similarity: selectedSetting.elevenlabs_similarity * 100,
+            style: selectedSetting.elevenlabs_style * 100,
+            speed: selectedSetting.elevenlabs_speed
+          }}
         />
       )}
     </div>

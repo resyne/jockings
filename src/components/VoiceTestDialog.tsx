@@ -12,6 +12,17 @@ interface VoiceTestDialogProps {
   gender: string;
   voiceId: string | null;
   personality?: string;
+  elevenlabsSettings?: {
+    stability: number;
+    similarity: number;
+    style: number;
+    speed: number;
+  };
+}
+
+interface ConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
 }
 
 export const VoiceTestDialog = ({
@@ -20,19 +31,24 @@ export const VoiceTestDialog = ({
   language,
   gender,
   voiceId,
-  personality = "friendly"
+  personality = "friendly",
+  elevenlabsSettings
 }: VoiceTestDialogProps) => {
   const { toast } = useToast();
-  const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isAiSpeaking, setIsAiSpeaking] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [transcript, setTranscript] = useState<string[]>([]);
+  const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>([]);
+  const [currentModel, setCurrentModel] = useState<string>("");
   
-  const pcRef = useRef<RTCPeerConnection | null>(null);
-  const dcRef = useRef<RTCDataChannel | null>(null);
-  const audioElRef = useRef<HTMLAudioElement | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const recognitionRef = useRef<any>(null);
+  const currentTranscriptRef = useRef<string>("");
 
   useEffect(() => {
     if (!open) {
@@ -40,39 +56,9 @@ export const VoiceTestDialog = ({
     }
   }, [open]);
 
-  const startCall = async () => {
-    setIsConnecting(true);
-    setTranscript([]);
-    
+  const startSession = async () => {
     try {
-      // Get ephemeral token
-      const { data, error } = await supabase.functions.invoke("realtime-session", {
-        body: { language, gender, voiceId, personality }
-      });
-
-      if (error) throw error;
-      
-      if (!data?.client_secret?.value) {
-        throw new Error("Failed to get ephemeral token");
-      }
-
-      const EPHEMERAL_KEY = data.client_secret.value;
-
-      // Create audio element
-      audioElRef.current = document.createElement("audio");
-      audioElRef.current.autoplay = true;
-
-      // Create peer connection
-      pcRef.current = new RTCPeerConnection();
-
-      // Set up remote audio
-      pcRef.current.ontrack = (e) => {
-        if (audioElRef.current) {
-          audioElRef.current.srcObject = e.streams[0];
-        }
-      };
-
-      // Add local audio track
+      // Request microphone permission
       streamRef.current = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
@@ -80,100 +66,188 @@ export const VoiceTestDialog = ({
           autoGainControl: true
         } 
       });
-      pcRef.current.addTrack(streamRef.current.getTracks()[0]);
 
-      // Set up data channel
-      dcRef.current = pcRef.current.createDataChannel("oai-events");
-      
-      dcRef.current.addEventListener("message", (e) => {
-        const event = JSON.parse(e.data);
-        console.log("Received event:", event.type);
+      // Setup speech recognition
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = true;
+        recognitionRef.current.interimResults = true;
+        recognitionRef.current.lang = language === 'Italiano' ? 'it-IT' : 'en-US';
         
-        if (event.type === 'response.audio.delta') {
-          setIsAiSpeaking(true);
-        } else if (event.type === 'response.audio.done') {
-          setIsAiSpeaking(false);
-        } else if (event.type === 'conversation.item.input_audio_transcription.completed') {
-          setTranscript(prev => [...prev, `Tu: ${event.transcript}`]);
-        } else if (event.type === 'response.audio_transcript.done') {
-          setTranscript(prev => [...prev, `AI: ${event.transcript}`]);
-        } else if (event.type === 'input_audio_buffer.speech_started') {
-          setIsSpeaking(true);
-        } else if (event.type === 'input_audio_buffer.speech_stopped') {
-          setIsSpeaking(false);
-        }
-      });
+        recognitionRef.current.onresult = (event: any) => {
+          let interimTranscript = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            if (event.results[i].isFinal) {
+              currentTranscriptRef.current += event.results[i][0].transcript + ' ';
+            } else {
+              interimTranscript += event.results[i][0].transcript;
+            }
+          }
+        };
 
-      dcRef.current.addEventListener("open", () => {
-        console.log("Data channel opened");
-      });
-
-      // Create and set local description
-      const offer = await pcRef.current.createOffer();
-      await pcRef.current.setLocalDescription(offer);
-
-      // Connect to OpenAI's Realtime API
-      const baseUrl = "https://api.openai.com/v1/realtime";
-      const model = "gpt-4o-realtime-preview-2024-12-17";
-      const sdpResponse = await fetch(`${baseUrl}?model=${model}`, {
-        method: "POST",
-        body: offer.sdp,
-        headers: {
-          Authorization: `Bearer ${EPHEMERAL_KEY}`,
-          "Content-Type": "application/sdp"
-        },
-      });
-
-      if (!sdpResponse.ok) {
-        throw new Error("Failed to connect to OpenAI Realtime");
+        recognitionRef.current.onerror = (event: any) => {
+          console.error('Speech recognition error:', event.error);
+        };
       }
 
-      const answer = {
-        type: "answer" as RTCSdpType,
-        sdp: await sdpResponse.text(),
-      };
-      
-      await pcRef.current.setRemoteDescription(answer);
-      
       setIsConnected(true);
+      setTranscript([]);
+      setConversationHistory([]);
+      
       toast({
         title: "Connesso!",
-        description: "Inizia a parlare per testare la voce"
+        description: "Tieni premuto il microfono per parlare"
       });
-
     } catch (error: any) {
-      console.error("Error starting call:", error);
+      console.error("Error starting session:", error);
       toast({
         title: "Errore",
-        description: error.message || "Impossibile avviare la chiamata di test",
+        description: error.message || "Impossibile accedere al microfono",
         variant: "destructive"
       });
-      disconnect();
-    } finally {
-      setIsConnecting(false);
     }
   };
 
+  const startRecording = () => {
+    if (!streamRef.current || isProcessing || isPlaying) return;
+    
+    currentTranscriptRef.current = "";
+    setIsRecording(true);
+    
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.start();
+      } catch (e) {
+        console.log('Recognition already started');
+      }
+    }
+  };
+
+  const stopRecording = async () => {
+    setIsRecording(false);
+    
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+
+    // Wait a moment for final transcript
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const userMessage = currentTranscriptRef.current.trim();
+    
+    if (!userMessage) {
+      toast({
+        title: "Nessun audio rilevato",
+        description: "Prova a parlare più chiaramente",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setTranscript(prev => [...prev, `Tu: ${userMessage}`]);
+    await processMessage(userMessage);
+  };
+
+  const processMessage = async (userMessage: string) => {
+    if (!voiceId) {
+      toast({
+        title: "Errore",
+        description: "Nessuna voce selezionata",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("voice-test", {
+        body: { 
+          userMessage,
+          conversationHistory,
+          language, 
+          gender, 
+          voiceId, 
+          personality,
+          elevenlabsSettings
+        }
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      const aiResponse = data.text;
+      setCurrentModel(data.model || "");
+      
+      // Update conversation history
+      setConversationHistory(prev => [
+        ...prev,
+        { role: 'user' as const, content: userMessage },
+        { role: 'assistant' as const, content: aiResponse }
+      ]);
+      
+      setTranscript(prev => [...prev, `AI: ${aiResponse}`]);
+
+      // Play audio
+      if (data.audio) {
+        setIsPlaying(true);
+        const audioBlob = base64ToBlob(data.audio, 'audio/mpeg');
+        const audioUrl = URL.createObjectURL(audioBlob);
+        
+        audioRef.current = new Audio(audioUrl);
+        audioRef.current.onended = () => {
+          setIsPlaying(false);
+          URL.revokeObjectURL(audioUrl);
+        };
+        audioRef.current.onerror = () => {
+          setIsPlaying(false);
+          URL.revokeObjectURL(audioUrl);
+        };
+        await audioRef.current.play();
+      }
+
+    } catch (error: any) {
+      console.error("Error processing message:", error);
+      toast({
+        title: "Errore",
+        description: error.message || "Errore durante l'elaborazione",
+        variant: "destructive"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const base64ToBlob = (base64: string, mimeType: string): Blob => {
+    const binaryString = atob(base64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return new Blob([bytes], { type: mimeType });
+  };
+
   const disconnect = () => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {}
+      recognitionRef.current = null;
+    }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
-    if (dcRef.current) {
-      dcRef.current.close();
-      dcRef.current = null;
-    }
-    if (pcRef.current) {
-      pcRef.current.close();
-      pcRef.current = null;
-    }
-    if (audioElRef.current) {
-      audioElRef.current.srcObject = null;
-      audioElRef.current = null;
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
     }
     setIsConnected(false);
-    setIsSpeaking(false);
-    setIsAiSpeaking(false);
+    setIsRecording(false);
+    setIsProcessing(false);
+    setIsPlaying(false);
+    setConversationHistory([]);
   };
 
   const handleClose = () => {
@@ -187,7 +261,7 @@ export const VoiceTestDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Phone className="w-5 h-5 text-green-500" />
-            Test Chiamata Vocale
+            Test Voce Completo
           </DialogTitle>
         </DialogHeader>
         
@@ -198,7 +272,12 @@ export const VoiceTestDialog = ({
             </p>
             {voiceId && (
               <p className="text-xs font-mono text-muted-foreground">
-                Voice ID: {voiceId.slice(0, 12)}...
+                ElevenLabs: {voiceId.slice(0, 12)}...
+              </p>
+            )}
+            {currentModel && (
+              <p className="text-xs text-muted-foreground">
+                Modello AI: {currentModel}
               </p>
             )}
           </div>
@@ -206,15 +285,20 @@ export const VoiceTestDialog = ({
           {/* Status indicators */}
           <div className="flex justify-center gap-4">
             <div className={`flex items-center gap-2 px-3 py-2 rounded-full transition-colors ${
-              isSpeaking ? "bg-green-500/20 text-green-500" : "bg-muted text-muted-foreground"
+              isRecording ? "bg-green-500/20 text-green-500" : "bg-muted text-muted-foreground"
             }`}>
-              {isSpeaking ? <Mic className="w-4 h-4 animate-pulse" /> : <MicOff className="w-4 h-4" />}
+              {isRecording ? <Mic className="w-4 h-4 animate-pulse" /> : <MicOff className="w-4 h-4" />}
               <span className="text-xs">Tu</span>
             </div>
             <div className={`flex items-center gap-2 px-3 py-2 rounded-full transition-colors ${
-              isAiSpeaking ? "bg-purple-500/20 text-purple-500" : "bg-muted text-muted-foreground"
+              isPlaying ? "bg-purple-500/20 text-purple-500" : 
+              isProcessing ? "bg-yellow-500/20 text-yellow-500" : "bg-muted text-muted-foreground"
             }`}>
-              <Volume2 className={`w-4 h-4 ${isAiSpeaking ? "animate-pulse" : ""}`} />
+              {isProcessing ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Volume2 className={`w-4 h-4 ${isPlaying ? "animate-pulse" : ""}`} />
+              )}
               <span className="text-xs">AI</span>
             </div>
           </div>
@@ -232,35 +316,59 @@ export const VoiceTestDialog = ({
             </div>
           )}
 
-          {/* Call button */}
+          {/* Controls */}
           <div className="flex justify-center">
             {!isConnected ? (
               <Button
-                onClick={startCall}
-                disabled={isConnecting}
+                onClick={startSession}
                 className="bg-green-500 hover:bg-green-600 text-white rounded-full w-16 h-16"
               >
-                {isConnecting ? (
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                ) : (
-                  <Phone className="w-6 h-6" />
-                )}
+                <Phone className="w-6 h-6" />
               </Button>
             ) : (
-              <Button
-                onClick={handleClose}
-                variant="destructive"
-                className="rounded-full w-16 h-16"
-              >
-                <PhoneOff className="w-6 h-6" />
-              </Button>
+              <div className="flex flex-col items-center gap-3">
+                <Button
+                  onMouseDown={startRecording}
+                  onMouseUp={stopRecording}
+                  onMouseLeave={() => isRecording && stopRecording()}
+                  onTouchStart={startRecording}
+                  onTouchEnd={stopRecording}
+                  disabled={isProcessing || isPlaying}
+                  className={`rounded-full w-20 h-20 transition-all ${
+                    isRecording 
+                      ? "bg-red-500 hover:bg-red-600 scale-110" 
+                      : "bg-green-500 hover:bg-green-600"
+                  }`}
+                >
+                  {isProcessing ? (
+                    <Loader2 className="w-8 h-8 animate-spin" />
+                  ) : (
+                    <Mic className={`w-8 h-8 ${isRecording ? "animate-pulse" : ""}`} />
+                  )}
+                </Button>
+                <Button
+                  onClick={handleClose}
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground"
+                >
+                  <PhoneOff className="w-4 h-4 mr-2" />
+                  Termina
+                </Button>
+              </div>
             )}
           </div>
 
           <p className="text-xs text-center text-muted-foreground">
-            {isConnected 
-              ? "Parla per testare. La voce OpenAI simula la chiamata." 
-              : "Premi il bottone verde per iniziare il test"
+            {!isConnected 
+              ? "Premi il bottone verde per iniziare" 
+              : isRecording 
+                ? "Parla ora... rilascia per inviare"
+                : isProcessing
+                  ? "Elaborazione in corso..."
+                  : isPlaying
+                    ? "Risposta AI..."
+                    : "Tieni premuto il microfono per parlare"
             }
           </p>
         </div>
