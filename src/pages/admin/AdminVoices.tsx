@@ -907,23 +907,15 @@ const AdminVoices = () => {
                   </h4>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label>Primo Messaggio</Label>
-                      <Input
-                        value={vapiSettings.firstMessage}
-                        onChange={(e) => setVapiSettings({ ...vapiSettings, firstMessage: e.target.value })}
-                        placeholder="Messaggio iniziale della chiamata"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Il messaggio che l'AI dirà all'inizio della chiamata
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Messaggio Fine Chiamata</Label>
+                      <Label>Messaggio Fine Chiamata (Timeout)</Label>
                       <Input
                         value={vapiSettings.endCallMessage}
                         onChange={(e) => setVapiSettings({ ...vapiSettings, endCallMessage: e.target.value })}
-                        placeholder="Messaggio finale"
+                        placeholder="Messaggio quando scade il tempo"
                       />
+                      <p className="text-xs text-muted-foreground">
+                        Messaggio che l'AI dirà quando termina la durata massima
+                      </p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
