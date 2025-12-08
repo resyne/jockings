@@ -223,13 +223,14 @@ const generateBackgroundSoundPrompt = async (prankTheme: string): Promise<string
         messages: [
           { 
             role: 'system', 
-            content: `You generate SHORT (max 10 words) English prompts for ambient sound effects.
-Given a prank scenario, describe background sounds that make it believable.
+            content: `You generate SHORT (max 10 words) English prompts for SOFT, QUIET ambient sound effects.
+Given a prank scenario, describe SUBTLE background sounds that make it believable.
+The sounds should be LOW VOLUME and suitable for playing BEHIND a phone conversation.
 Examples:
-- "Gas company technician" → "office phone ringing, keyboard typing, air conditioning"
-- "Lottery winner notification" → "champagne pop, party cheers, confetti"
-- "Bank security alert" → "office ambience, phone beeps, typing sounds"
-ONLY output the sound prompt, nothing else.` 
+- "Gas company technician" → "soft office ambience, distant phone, quiet air conditioning"
+- "Lottery winner notification" → "soft party ambience, distant cheers, subtle music"
+- "Bank security alert" → "quiet office background, soft keyboard clicks, muted phone"
+ONLY output the sound prompt, nothing else. Always include words like "soft", "quiet", "distant", "subtle".`
           },
           { role: 'user', content: prankTheme }
         ],
@@ -266,9 +267,9 @@ const generateBackgroundSound = async (prompt: string, supabaseUrl: string): Pro
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        text: prompt,
-        duration_seconds: 3,
-        prompt_influence: 0.7,
+        text: `${prompt}, very soft and quiet volume, ambient background`,
+        duration_seconds: 10,
+        prompt_influence: 0.5,
       }),
     });
     
