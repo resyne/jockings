@@ -312,7 +312,7 @@ serve(async (req) => {
         ),
         endCallMessage: endCallMessage,
         endCallFunctionEnabled: true,
-        recordingEnabled: true,
+        recordingEnabled: prank.send_recording ?? true,
       },
     };
 
