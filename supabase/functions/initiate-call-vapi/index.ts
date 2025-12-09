@@ -315,9 +315,15 @@ serve(async (req) => {
       },
     };
 
-    // Add background sound if enabled (office, convention, etc.)
-    if (settings['vapi_background_sound'] && settings['vapi_background_sound'] !== 'off') {
-      vapiCallBody.assistant.backgroundSound = settings['vapi_background_sound'];
+    // Add background sound if enabled - VAPI only supports 'off' or 'office' as preset values
+    // Any other value must be a valid URL
+    const bgSound = settings['vapi_background_sound'];
+    if (bgSound && bgSound !== 'off') {
+      // Only use if it's 'office' or a valid URL (starts with http)
+      if (bgSound === 'office' || bgSound.startsWith('http')) {
+        vapiCallBody.assistant.backgroundSound = bgSound;
+      }
+      // Otherwise, skip background sound entirely (don't send invalid values like 'convention')
     }
 
     // Add backchanneling if enabled (natural "mhm", "ok" responses)
