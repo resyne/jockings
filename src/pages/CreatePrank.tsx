@@ -53,7 +53,7 @@ const CreatePrank = () => {
   const [personalityTone, setPersonalityTone] = useState("enthusiastic");
   const [maxDuration] = useState(120); // Default 120 seconds, managed from admin
   const [creativityLevel] = useState([50]); // Default 50%, managed from admin
-  const [sendRecording, setSendRecording] = useState(true); // Recording enabled by default
+  const sendRecording = true; // Recording always enabled
   const [scheduleCall, setScheduleCall] = useState(false);
   const [scheduledDate, setScheduledDate] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
@@ -120,7 +120,7 @@ const CreatePrank = () => {
       // maxDuration and creativityLevel are now managed from admin
       // setMaxDuration(data.max_duration);
       // setCreativityLevel([data.creativity_level]);
-      setSendRecording(data.send_recording);
+      // setSendRecording(data.send_recording); // Recording always enabled
     }
   };
 
@@ -424,15 +424,9 @@ const CreatePrank = () => {
           {/* Options */}
           <Card className="animate-slide-up" style={{ animationDelay: "0.2s" }}>
             <CardContent className="pt-6 space-y-4">
-              <div className="flex items-center justify-between py-2">
-                <div>
-                  <Label>Invia Registrazione</Label>
-                  <p className="text-xs text-muted-foreground">Ricevi l'audio dopo la chiamata</p>
-                </div>
-                <Switch
-                  checked={sendRecording}
-                  onCheckedChange={setSendRecording}
-                />
+              <div className="flex items-center gap-2 py-2 text-muted-foreground">
+                <Mic className="w-4 h-4" />
+                <p className="text-sm">A termine della chiamata sarà disponibile la registrazione</p>
               </div>
 
               <div className="flex items-center justify-between py-2 border-t pt-4">
