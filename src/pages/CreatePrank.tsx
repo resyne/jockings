@@ -7,10 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Phone, User, Mic, Globe, Clock, Sparkles, Send, CalendarClock } from "lucide-react";
+import { ArrowLeft, Phone, User, Mic, Globe, Send, CalendarClock } from "lucide-react";
 import { z } from "zod";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -52,8 +51,8 @@ const CreatePrank = () => {
   const [voiceGender, setVoiceGender] = useState("male");
   const [language, setLanguage] = useState("Italiano");
   const [personalityTone, setPersonalityTone] = useState("enthusiastic");
-  const [maxDuration, setMaxDuration] = useState(60);
-  const [creativityLevel, setCreativityLevel] = useState([50]);
+  const [maxDuration] = useState(120); // Default 120 seconds, managed from admin
+  const [creativityLevel] = useState([50]); // Default 50%, managed from admin
   const [sendRecording, setSendRecording] = useState(false);
   const [scheduleCall, setScheduleCall] = useState(false);
   const [scheduledDate, setScheduledDate] = useState("");
@@ -118,8 +117,9 @@ const CreatePrank = () => {
       setVoiceGender(data.voice_gender);
       setLanguage(data.language);
       setPersonalityTone(data.personality_tone);
-      setMaxDuration(data.max_duration);
-      setCreativityLevel([data.creativity_level]);
+      // maxDuration and creativityLevel are now managed from admin
+      // setMaxDuration(data.max_duration);
+      // setCreativityLevel([data.creativity_level]);
       setSendRecording(data.send_recording);
     }
   };
@@ -421,53 +421,9 @@ const CreatePrank = () => {
             </CardContent>
           </Card>
 
-          {/* Advanced Options */}
+          {/* Options */}
           <Card className="animate-slide-up" style={{ animationDelay: "0.2s" }}>
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-purple-500/10">
-                  <Sparkles className="w-5 h-5 text-purple-500" />
-                </div>
-                <div>
-                  <CardTitle className="text-lg">Opzioni Avanzate</CardTitle>
-                  <CardDescription>Configura durata e creatività</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Durata Massima: {maxDuration} secondi</Label>
-                <div className="flex gap-2">
-                  {[30, 60, 120].map((duration) => (
-                    <Button
-                      key={duration}
-                      type="button"
-                      variant={maxDuration === duration ? "default" : "outline"}
-                      size="sm"
-                      className={maxDuration === duration ? "gradient-primary" : ""}
-                      onClick={() => setMaxDuration(duration)}
-                    >
-                      <Clock className="w-4 h-4 mr-1" />
-                      {duration}s
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Creatività AI: {creativityLevel[0]}%</Label>
-                <Slider
-                  value={creativityLevel}
-                  onValueChange={setCreativityLevel}
-                  max={100}
-                  step={10}
-                  className="py-2"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Alta creatività = risposte più imprevedibili
-                </p>
-              </div>
-
+            <CardContent className="pt-6 space-y-4">
               <div className="flex items-center justify-between py-2">
                 <div>
                   <Label>Invia Registrazione</Label>
