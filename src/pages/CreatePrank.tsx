@@ -162,32 +162,13 @@ const CreatePrank = () => {
     setLoading(true);
 
     try {
-      // Fetch voice settings and call provider in parallel
-      const [voiceSettingsResult, callProviderResult] = await Promise.all([
-        supabase
-          .from("voice_settings")
-          .select("*")
-          .eq("language", language)
-          .eq("gender", voiceGender)
-          .single(),
-        supabase
-          .from("app_settings")
-          .select("value")
-          .eq("key", "call_provider")
-          .maybeSingle()
-      ]);
-
-      const voiceSettings = voiceSettingsResult.data;
-      
-      // Ensure we get the call provider correctly - NEVER default to twilio if we can't fetch
-      if (callProviderResult.error) {
-        console.error("Error fetching call provider:", callProviderResult.error);
-        throw new Error("Impossibile determinare il provider. Riprova.");
-      }
-      
-      // Use the value from DB, or explicitly default to vapi if not set
-      const callProvider = callProviderResult.data?.value || "vapi";
-      console.log("Call provider from DB:", callProviderResult.data?.value, "Final:", callProvider);
+      // Fetch voice settings only - always use VAPI
+      const { data: voiceSettings } = await supabase
+        .from("voice_settings")
+        .select("*")
+        .eq("language", language)
+        .eq("gender", voiceGender)
+        .single();
 
       const scheduledAt = scheduleCall ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : null;
       
@@ -231,11 +212,8 @@ const CreatePrank = () => {
           description: "Avvio della chiamata in corso...",
         });
 
-        // Use the correct edge function based on call provider
-        const edgeFunction = callProvider === "vapi" ? "initiate-call-vapi" : "initiate-call";
-        console.log("Using call provider:", callProvider, "Edge function:", edgeFunction);
-
-        const { error: callError } = await supabase.functions.invoke(edgeFunction, {
+        // Always use VAPI
+        const { error: callError } = await supabase.functions.invoke("initiate-call-vapi", {
           body: { prankId: prank.id }
         });
 
