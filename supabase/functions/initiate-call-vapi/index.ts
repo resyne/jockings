@@ -315,6 +315,10 @@ serve(async (req) => {
       },
     };
 
+    // Add server URL for webhooks to receive status updates
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    vapiCallBody.serverUrl = `${supabaseUrl}/functions/v1/vapi-webhook`;
+
     // Add background sound if enabled - VAPI only supports 'off' or 'office' as preset values
     // Any other value must be a valid URL
     const bgSound = settings['vapi_background_sound'];
