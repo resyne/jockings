@@ -28,12 +28,23 @@ serve(async (req) => {
 
     console.log(`Found ${pranks?.length || 0} scheduled pranks to process`);
 
+    // Get call provider setting
+    const { data: providerSetting } = await supabase
+      .from('app_settings')
+      .select('value')
+      .eq('key', 'call_provider')
+      .maybeSingle();
+    
+    const callProvider = providerSetting?.value || 'twilio';
+    const edgeFunction = callProvider === 'vapi' ? 'initiate-call-vapi' : 'initiate-call';
+    console.log(`Using call provider: ${callProvider}, edge function: ${edgeFunction}`);
+
     // Process each prank
     for (const prank of pranks || []) {
-      console.log(`Processing scheduled prank: ${prank.id}`);
+      console.log(`Processing scheduled prank: ${prank.id} with ${edgeFunction}`);
       
-      // Call initiate-call function
-      const { error: callError } = await supabase.functions.invoke('initiate-call', {
+      // Call the correct edge function based on provider
+      const { error: callError } = await supabase.functions.invoke(edgeFunction, {
         body: { prankId: prank.id }
       });
 
@@ -42,7 +53,7 @@ serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ processed: pranks?.length || 0 }), {
+    return new Response(JSON.stringify({ processed: pranks?.length || 0, provider: callProvider }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error: unknown) {

@@ -179,12 +179,15 @@ const CreatePrank = () => {
 
       const voiceSettings = voiceSettingsResult.data;
       
-      // Ensure we get the call provider correctly - log any errors
+      // Ensure we get the call provider correctly - NEVER default to twilio if we can't fetch
       if (callProviderResult.error) {
         console.error("Error fetching call provider:", callProviderResult.error);
+        throw new Error("Impossibile determinare il provider. Riprova.");
       }
-      const callProvider = callProviderResult.data?.value || "twilio";
-      console.log("Call provider from DB:", callProviderResult.data, "Using:", callProvider);
+      
+      // Use the value from DB, or explicitly default to vapi if not set
+      const callProvider = callProviderResult.data?.value || "vapi";
+      console.log("Call provider from DB:", callProviderResult.data?.value, "Final:", callProvider);
 
       const scheduledAt = scheduleCall ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : null;
       
