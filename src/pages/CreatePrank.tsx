@@ -14,9 +14,24 @@ import { z } from "zod";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 
-const phoneSchema = z.string().regex(/^\+?[1-9]\d{6,14}$/, "Numero di telefono non valido");
+const phoneSchema = z.string().regex(/^\d{6,14}$/, "Numero di telefono non valido");
 
 const LANGUAGES = ["Italiano", "English"];
+
+const COUNTRY_CODES = [
+  { code: "+39", country: "IT", flag: "🇮🇹", name: "Italia" },
+  { code: "+49", country: "DE", flag: "🇩🇪", name: "Germania" },
+  { code: "+33", country: "FR", flag: "🇫🇷", name: "Francia" },
+  { code: "+34", country: "ES", flag: "🇪🇸", name: "Spagna" },
+  { code: "+44", country: "GB", flag: "🇬🇧", name: "Regno Unito" },
+  { code: "+41", country: "CH", flag: "🇨🇭", name: "Svizzera" },
+  { code: "+43", country: "AT", flag: "🇦🇹", name: "Austria" },
+  { code: "+31", country: "NL", flag: "🇳🇱", name: "Paesi Bassi" },
+  { code: "+32", country: "BE", flag: "🇧🇪", name: "Belgio" },
+  { code: "+351", country: "PT", flag: "🇵🇹", name: "Portogallo" },
+  { code: "+48", country: "PL", flag: "🇵🇱", name: "Polonia" },
+  { code: "+30", country: "GR", flag: "🇬🇷", name: "Grecia" },
+];
 
 const TONES = [
   { value: "enthusiastic", label: "Entusiasta 🎉" },
@@ -45,6 +60,7 @@ const CreatePrank = () => {
   // Form state
   const [victimFirstName, setVictimFirstName] = useState("");
   const [victimLastName, setVictimLastName] = useState("");
+  const [phoneCountryCode, setPhoneCountryCode] = useState("+39");
   const [victimPhone, setVictimPhone] = useState("");
   const [selectedPreset, setSelectedPreset] = useState("custom");
   const [prankTheme, setPrankTheme] = useState("");
@@ -112,7 +128,15 @@ const CreatePrank = () => {
     if (data && !error) {
       setVictimFirstName(data.victim_first_name);
       setVictimLastName(data.victim_last_name);
-      setVictimPhone(data.victim_phone);
+      // Parse phone number to extract country code and number
+      const phone = data.victim_phone;
+      const matchedCountry = COUNTRY_CODES.find(c => phone.startsWith(c.code));
+      if (matchedCountry) {
+        setPhoneCountryCode(matchedCountry.code);
+        setVictimPhone(phone.replace(matchedCountry.code, "").trim());
+      } else {
+        setVictimPhone(phone);
+      }
       setPrankTheme(data.prank_theme);
       setVoiceGender(data.voice_gender);
       setLanguage(data.language);
@@ -178,7 +202,7 @@ const CreatePrank = () => {
           user_id: user.id,
           victim_first_name: victimFirstName.trim(),
           victim_last_name: victimLastName.trim(),
-          victim_phone: victimPhone.replace(/\s/g, ""),
+          victim_phone: `${phoneCountryCode}${victimPhone.replace(/\s/g, "")}`,
           prank_theme: prankTheme.trim(),
           voice_gender: voiceGender,
           voice_provider: voiceSettings?.voice_provider || "elevenlabs",
@@ -294,16 +318,30 @@ const CreatePrank = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Numero di Telefono</Label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="+39 333 1234567"
-                    value={victimPhone}
-                    onChange={(e) => setVictimPhone(e.target.value)}
-                    className="pl-10 h-12"
-                  />
+                <div className="flex gap-2">
+                  <Select value={phoneCountryCode} onValueChange={setPhoneCountryCode}>
+                    <SelectTrigger className="w-[130px] h-12">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COUNTRY_CODES.map((country) => (
+                        <SelectItem key={country.code} value={country.code}>
+                          {country.flag} {country.code}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="relative flex-1">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="333 1234567"
+                      value={victimPhone}
+                      onChange={(e) => setVictimPhone(e.target.value)}
+                      className="pl-10 h-12"
+                    />
+                  </div>
                 </div>
               </div>
             </CardContent>
