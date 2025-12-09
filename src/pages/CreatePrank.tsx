@@ -53,7 +53,7 @@ const CreatePrank = () => {
   const [personalityTone, setPersonalityTone] = useState("enthusiastic");
   const [maxDuration] = useState(120); // Default 120 seconds, managed from admin
   const [creativityLevel] = useState([50]); // Default 50%, managed from admin
-  const [sendRecording, setSendRecording] = useState(false);
+  const [sendRecording, setSendRecording] = useState(true); // Recording enabled by default
   const [scheduleCall, setScheduleCall] = useState(false);
   const [scheduledDate, setScheduledDate] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
