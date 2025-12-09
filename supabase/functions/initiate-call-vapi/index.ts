@@ -291,8 +291,9 @@ serve(async (req) => {
         voice: {
           provider: voiceProvider,
           voiceId: voiceId,
-          stability: 0.4, // Lower stability = more expressive, better for pranks
-          similarityBoost: 0.75,
+          stability: prank.elevenlabs_stability || 0.4, // Use prank settings if available
+          similarityBoost: prank.elevenlabs_similarity || 0.75,
+          style: prank.elevenlabs_style || 0,
           fillerInjectionEnabled: true, // Natural filler words like "uhm", "eh"
         },
         
