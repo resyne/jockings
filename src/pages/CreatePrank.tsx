@@ -174,11 +174,17 @@ const CreatePrank = () => {
           .from("app_settings")
           .select("value")
           .eq("key", "call_provider")
-          .single()
+          .maybeSingle()
       ]);
 
       const voiceSettings = voiceSettingsResult.data;
+      
+      // Ensure we get the call provider correctly - log any errors
+      if (callProviderResult.error) {
+        console.error("Error fetching call provider:", callProviderResult.error);
+      }
       const callProvider = callProviderResult.data?.value || "twilio";
+      console.log("Call provider from DB:", callProviderResult.data, "Using:", callProvider);
 
       const scheduledAt = scheduleCall ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : null;
       
