@@ -323,6 +323,7 @@ serve(async (req) => {
         voice: {
           provider: voiceProvider,
           voiceId: voiceId,
+          model: 'eleven_multilingual_v2', // Required for ElevenLabs custom/cloned voices
           stability: voiceSettings?.elevenlabs_stability ?? 0.4,
           similarityBoost: voiceSettings?.elevenlabs_similarity ?? 0.75,
           style: voiceSettings?.elevenlabs_style ?? 0,
