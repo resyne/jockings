@@ -258,6 +258,9 @@ const AdminVoices = () => {
     gender: string;
     voiceId: string;
     voiceProvider: string;
+    voice_name: string;
+    description: string;
+    notes: string;
   }
   const [vapiVoicePresets, setVapiVoicePresets] = useState<VapiVoicePreset[]>([]);
   const [isAddVapiPresetOpen, setIsAddVapiPresetOpen] = useState(false);
@@ -265,7 +268,10 @@ const AdminVoices = () => {
     language: "Italiano",
     gender: "male",
     voiceId: "",
-    voiceProvider: "11labs"
+    voiceProvider: "11labs",
+    voice_name: "",
+    description: "",
+    notes: ""
   });
 
   useEffect(() => {
@@ -411,7 +417,7 @@ const AdminVoices = () => {
     } else {
       setVapiVoicePresets(updatedPresets);
       setIsAddVapiPresetOpen(false);
-      setNewVapiPreset({ language: "Italiano", gender: "male", voiceId: "", voiceProvider: "11labs" });
+      setNewVapiPreset({ language: "Italiano", gender: "male", voiceId: "", voiceProvider: "11labs", voice_name: "", description: "", notes: "" });
       toast({ title: "Salvato!", description: "Preset voce VAPI aggiunto" });
     }
   };
@@ -1169,6 +1175,22 @@ const AdminVoices = () => {
                           </Select>
                         </div>
                         <div className="space-y-2">
+                          <Label>Titolo Voce *</Label>
+                          <Input
+                            value={newVapiPreset.voice_name}
+                            onChange={(e) => setNewVapiPreset({ ...newVapiPreset, voice_name: e.target.value })}
+                            placeholder="es. Maschio Italiano - Professionale"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Descrizione</Label>
+                          <Input
+                            value={newVapiPreset.description}
+                            onChange={(e) => setNewVapiPreset({ ...newVapiPreset, description: e.target.value })}
+                            placeholder="Breve descrizione della voce"
+                          />
+                        </div>
+                        <div className="space-y-2">
                           <Label>Voice ID</Label>
                           {newVapiPreset.voiceProvider === "11labs" ? (
                             <Select 
@@ -1205,6 +1227,15 @@ const AdminVoices = () => {
                               className="font-mono text-sm mt-2"
                             />
                           )}
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Note Interne</Label>
+                          <Textarea
+                            value={newVapiPreset.notes}
+                            onChange={(e) => setNewVapiPreset({ ...newVapiPreset, notes: e.target.value })}
+                            placeholder="Note interne visibili solo agli admin..."
+                            rows={3}
+                          />
                         </div>
                         <Button onClick={handleSaveVapiPreset} className="w-full">
                           <Save className="w-4 h-4 mr-2" />
