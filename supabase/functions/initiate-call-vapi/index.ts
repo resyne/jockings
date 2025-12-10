@@ -186,6 +186,7 @@ serve(async (req) => {
         'vapi_background_sound',
         'vapi_backchanneling',
         'vapi_end_call_message',
+        'elevenlabs_model', // ElevenLabs TTS model selection
       ]),
       voiceSettingsQuery,
       supabase.from('vapi_phone_numbers').select('*').eq('is_default', true).eq('is_active', true).single()
@@ -206,6 +207,7 @@ serve(async (req) => {
       vapi_background_sound: 'off',
       vapi_backchanneling: 'false',
       vapi_end_call_message: 'Arrivederci!',
+      elevenlabs_model: 'eleven_turbo_v2_5', // Default ElevenLabs TTS model
     };
     
     settingsResult.data?.forEach((s: { key: string; value: string }) => {
@@ -323,7 +325,7 @@ serve(async (req) => {
         voice: {
           provider: voiceProvider,
           voiceId: voiceId,
-          model: 'eleven_multilingual_v2', // Required for ElevenLabs custom/cloned voices
+          model: settings['elevenlabs_model'], // Use admin-configured ElevenLabs model
           stability: voiceSettings?.elevenlabs_stability ?? 0.4,
           similarityBoost: voiceSettings?.elevenlabs_similarity ?? 0.75,
           style: voiceSettings?.elevenlabs_style ?? 0,
