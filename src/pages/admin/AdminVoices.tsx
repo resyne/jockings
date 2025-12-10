@@ -523,8 +523,6 @@ const AdminVoices = () => {
         "vapi_temperature",
         "vapi_max_tokens",
         "vapi_voice_provider",
-        "vapi_voice_id",
-        "vapi_custom_voice_id",
         "vapi_transcriber_provider",
         "vapi_transcriber_model",
         "vapi_transcriber_language",
@@ -534,6 +532,7 @@ const AdminVoices = () => {
         "vapi_background_sound",
         "vapi_backchanneling",
         "vapi_end_call_message",
+        "elevenlabs_model",
       ]);
     
     if (data) {
@@ -548,8 +547,6 @@ const AdminVoices = () => {
         if (key === "vapi_temperature") newSettings.temperature = parseFloat(value);
         if (key === "vapi_max_tokens") newSettings.maxTokens = parseInt(value);
         if (key === "vapi_voice_provider") newSettings.voiceProvider = value;
-        if (key === "vapi_voice_id") newSettings.voiceId = value;
-        if (key === "vapi_custom_voice_id") newSettings.customVoiceId = value;
         if (key === "vapi_transcriber_provider") newSettings.transcriberProvider = value;
         if (key === "vapi_transcriber_model") newSettings.transcriberModel = value;
         if (key === "vapi_transcriber_language") newSettings.transcriberLanguage = value;
@@ -559,6 +556,7 @@ const AdminVoices = () => {
         if (key === "vapi_background_sound") newSettings.backgroundSound = value;
         if (key === "vapi_backchanneling") newSettings.backchannelingEnabled = value === "true";
         if (key === "vapi_end_call_message") newSettings.endCallMessage = value;
+        if (key === "elevenlabs_model") setElevenlabsModel(value);
       });
       
       // Auto-sync provider from model if provider is not explicitly set or mismatched
@@ -584,8 +582,6 @@ const AdminVoices = () => {
         { key: "vapi_temperature", value: vapiSettings.temperature.toString() },
         { key: "vapi_max_tokens", value: vapiSettings.maxTokens.toString() },
         { key: "vapi_voice_provider", value: vapiSettings.voiceProvider },
-        { key: "vapi_voice_id", value: vapiSettings.voiceId },
-        { key: "vapi_custom_voice_id", value: vapiSettings.customVoiceId },
         { key: "vapi_transcriber_provider", value: vapiSettings.transcriberProvider },
         { key: "vapi_transcriber_model", value: vapiSettings.transcriberModel },
         { key: "vapi_transcriber_language", value: vapiSettings.transcriberLanguage },
@@ -595,6 +591,7 @@ const AdminVoices = () => {
         { key: "vapi_background_sound", value: vapiSettings.backgroundSound },
         { key: "vapi_backchanneling", value: vapiSettings.backchannelingEnabled.toString() },
         { key: "vapi_end_call_message", value: vapiSettings.endCallMessage },
+        { key: "elevenlabs_model", value: elevenlabsModel },
       ];
 
       for (const setting of settingsToSave) {
@@ -1280,47 +1277,30 @@ const AdminVoices = () => {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label>Voice ID Default</Label>
-                        {vapiSettings.voiceProvider === "11labs" ? (
-                          <Select 
-                            value={vapiSettings.voiceId} 
-                            onValueChange={(value) => setVapiSettings({ ...vapiSettings, voiceId: value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {VAPI_ELEVENLABS_VOICES.map((voice) => (
-                                <SelectItem key={voice.value} value={voice.value}>
-                                  <div className="flex flex-col">
-                                    <span>{voice.label}</span>
-                                    <span className="text-xs text-muted-foreground">{voice.description}</span>
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <Input
-                            value={vapiSettings.voiceId}
-                            onChange={(e) => setVapiSettings({ ...vapiSettings, voiceId: e.target.value })}
-                            placeholder="Voice ID del provider selezionato"
-                            className="font-mono text-sm"
-                          />
-                        )}
+                        <Label>Modello ElevenLabs</Label>
+                        <Select 
+                          value={elevenlabsModel} 
+                          onValueChange={(value) => setElevenlabsModel(value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ELEVENLABS_MODELS.map((model) => (
+                              <SelectItem key={model.value} value={model.value}>
+                                <div className="flex flex-col">
+                                  <span className={model.recommended ? "font-medium" : ""}>{model.label}</span>
+                                  <span className="text-xs text-muted-foreground">{model.description}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          Turbo v2.5 è il più veloce. Le voci sono gestite nei Preset Voce sopra.
+                        </p>
                       </div>
                     </div>
-                    {vapiSettings.voiceId === "custom" && (
-                      <div className="space-y-2 mt-4">
-                        <Label>Voice ID Personalizzato</Label>
-                        <Input
-                          value={vapiSettings.customVoiceId}
-                          onChange={(e) => setVapiSettings({ ...vapiSettings, customVoiceId: e.target.value })}
-                          placeholder="Inserisci il Voice ID personalizzato"
-                          className="font-mono text-sm"
-                        />
-                      </div>
-                    )}
                   </div>
                 </div>
 
