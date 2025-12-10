@@ -62,3 +62,6 @@ verify_jwt = true
 
 [functions.initiate-call-vapi]
 verify_jwt = true
+
+[functions.vapi-webhook]
+verify_jwt = false

@@ -32,7 +32,11 @@ serve(async (req) => {
     if (messageType === "end-of-call-report") {
       console.log("=== END OF CALL REPORT ===");
       const reportCallId = body.message?.call?.id;
-      const recordingUrl = body.message?.recordingUrl || body.message?.artifact?.recordingUrl;
+      // Recording URL can be in multiple locations depending on VAPI version
+      const recordingUrl = body.message?.recordingUrl 
+        || body.message?.artifact?.recordingUrl
+        || body.message?.artifact?.recording?.url
+        || body.message?.call?.recordingUrl;
       const endedReason = body.message?.endedReason || body.message?.call?.endedReason;
       
       console.log("Report Call ID:", reportCallId);
