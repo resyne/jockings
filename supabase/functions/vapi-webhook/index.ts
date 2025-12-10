@@ -28,6 +28,54 @@ serve(async (req) => {
     const messageType = body.message?.type;
     const callId = body.message?.call?.id;
 
+    // Handle end-of-call-report which contains recording URL
+    if (messageType === "end-of-call-report") {
+      console.log("=== END OF CALL REPORT ===");
+      const reportCallId = body.message?.call?.id;
+      const recordingUrl = body.message?.recordingUrl || body.message?.artifact?.recordingUrl;
+      const endedReason = body.message?.endedReason || body.message?.call?.endedReason;
+      
+      console.log("Report Call ID:", reportCallId);
+      console.log("Recording URL:", recordingUrl);
+      console.log("Ended Reason:", endedReason);
+      
+      if (reportCallId) {
+        let newStatus = "completed";
+        if (recordingUrl) {
+          newStatus = "recording_available";
+        } else if (endedReason === "customer-did-not-answer" || endedReason === "no-answer") {
+          newStatus = "no_answer";
+        } else if (endedReason === "customer-busy" || endedReason === "busy") {
+          newStatus = "busy";
+        } else if (endedReason?.includes("error") || endedReason?.includes("failed")) {
+          newStatus = "failed";
+        }
+        
+        const updateData: { call_status: string; recording_url?: string } = {
+          call_status: newStatus,
+        };
+        
+        if (recordingUrl) {
+          updateData.recording_url = recordingUrl;
+        }
+        
+        const { error } = await supabase
+          .from("pranks")
+          .update(updateData)
+          .eq("twilio_call_sid", reportCallId);
+
+        if (error) {
+          console.error("Error updating prank from end-of-call-report:", error);
+        } else {
+          console.log("Prank updated from end-of-call-report:", newStatus);
+        }
+      }
+      
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (!callId) {
       console.log("No call ID in webhook, skipping");
       return new Response(JSON.stringify({ success: true }), {
@@ -40,6 +88,18 @@ serve(async (req) => {
     let recordingUrl: string | null = null;
 
     switch (messageType) {
+      case "status-update":
+        const status = body.message?.status;
+        console.log("Status update:", status);
+        if (status === "ringing") {
+          newStatus = "ringing";
+        } else if (status === "in-progress") {
+          newStatus = "in_progress";
+        } else if (status === "ended") {
+          newStatus = "completed";
+        }
+        break;
+        
       case "call-started":
         newStatus = "in_progress";
         break;
@@ -66,25 +126,19 @@ serve(async (req) => {
           newStatus = "completed";
         }
 
-        // Check for recording URL
+        // Check for recording URL in call-ended event
         recordingUrl = body.message?.call?.recordingUrl || body.message?.call?.artifact?.recordingUrl;
         if (recordingUrl) {
-          console.log("Recording URL found:", recordingUrl);
+          console.log("Recording URL found in call-ended:", recordingUrl);
           newStatus = "recording_available";
-        }
-        break;
-      
-      case "recording-completed":
-        recordingUrl = body.message?.recording?.url || body.message?.recordingUrl;
-        if (recordingUrl) {
-          newStatus = "recording_available";
-          console.log("Recording completed:", recordingUrl);
         }
         break;
 
       case "transcript":
       case "speech-update":
       case "function-call":
+      case "conversation-update":
+      case "tool-calls":
         // These are informational, don't update status
         console.log("Informational event, no status update");
         break;
