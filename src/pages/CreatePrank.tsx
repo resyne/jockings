@@ -176,10 +176,20 @@ const CreatePrank = () => {
       setVoiceGender(data.voice_gender);
       setLanguage(data.language);
       setPersonalityTone(data.personality_tone);
-      // maxDuration and creativityLevel are now managed from admin
-      // setMaxDuration(data.max_duration);
-      // setCreativityLevel([data.creativity_level]);
-      // setSendRecording(data.send_recording); // Recording always enabled
+      
+      // Find and set the voice based on elevenlabs_voice_id
+      if (data.elevenlabs_voice_id) {
+        const { data: voiceData } = await supabase
+          .from("voice_settings")
+          .select("id")
+          .eq("elevenlabs_voice_id", data.elevenlabs_voice_id)
+          .eq("is_active", true)
+          .maybeSingle();
+        
+        if (voiceData) {
+          setSelectedVoiceId(voiceData.id);
+        }
+      }
     }
   };
 
