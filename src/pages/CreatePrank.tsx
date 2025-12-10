@@ -52,7 +52,7 @@ interface PrankPreset {
 interface VoiceOption {
   id: string;
   voice_name: string | null;
-  notes: string | null;
+  description: string | null;
   elevenlabs_voice_id: string | null;
   gender: string;
   language: string;
@@ -125,7 +125,7 @@ const CreatePrank = () => {
   const fetchVoices = async () => {
     const { data } = await supabase
       .from("voice_settings")
-      .select("id, voice_name, notes, elevenlabs_voice_id, gender, language")
+      .select("id, voice_name, description, elevenlabs_voice_id, gender, language")
       .eq("language", language)
       .eq("gender", voiceGender)
       .eq("is_active", true);
@@ -500,8 +500,8 @@ const CreatePrank = () => {
                         <SelectItem key={voice.id} value={voice.id}>
                           <div className="flex flex-col">
                             <span className="font-medium">{voice.voice_name || "Voce senza nome"}</span>
-                            {voice.notes && (
-                              <span className="text-xs text-muted-foreground">{voice.notes}</span>
+                            {voice.description && (
+                              <span className="text-xs text-muted-foreground">{voice.description}</span>
                             )}
                           </div>
                         </SelectItem>

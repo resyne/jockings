@@ -415,6 +415,7 @@ const AdminVoices = () => {
         voice_provider: newVapiPreset.voiceProvider,
         elevenlabs_voice_id: newVapiPreset.voiceId,
         voice_name: newVapiPreset.voice_name,
+        description: newVapiPreset.description || null,
         notes: newVapiPreset.notes || null,
         is_active: true
       });

@@ -392,6 +392,7 @@ export type Database = {
       voice_settings: {
         Row: {
           created_at: string
+          description: string | null
           elevenlabs_similarity: number | null
           elevenlabs_speed: number | null
           elevenlabs_stability: number | null
@@ -409,6 +410,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          description?: string | null
           elevenlabs_similarity?: number | null
           elevenlabs_speed?: number | null
           elevenlabs_stability?: number | null
@@ -426,6 +428,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          description?: string | null
           elevenlabs_similarity?: number | null
           elevenlabs_speed?: number | null
           elevenlabs_stability?: number | null
