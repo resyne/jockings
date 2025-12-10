@@ -401,24 +401,31 @@ const AdminVoices = () => {
       return;
     }
     
-    const newPreset = {
-      id: crypto.randomUUID(),
-      ...newVapiPreset
-    };
+    if (!newVapiPreset.voice_name) {
+      toast({ title: "Errore", description: "Inserisci un titolo per la voce", variant: "destructive" });
+      return;
+    }
     
-    const updatedPresets = [...vapiVoicePresets, newPreset];
-    
+    // Save directly to voice_settings table
     const { error } = await supabase
-      .from("app_settings")
-      .upsert({ key: "vapi_voice_presets", value: JSON.stringify(updatedPresets) }, { onConflict: "key" });
+      .from("voice_settings")
+      .insert({
+        language: newVapiPreset.language,
+        gender: newVapiPreset.gender,
+        voice_provider: newVapiPreset.voiceProvider,
+        elevenlabs_voice_id: newVapiPreset.voiceId,
+        voice_name: newVapiPreset.voice_name,
+        notes: newVapiPreset.notes || null,
+        is_active: true
+      });
     
     if (error) {
       toast({ title: "Errore", description: error.message, variant: "destructive" });
     } else {
-      setVapiVoicePresets(updatedPresets);
       setIsAddVapiPresetOpen(false);
       setNewVapiPreset({ language: "Italiano", gender: "male", voiceId: "", voiceProvider: "11labs", voice_name: "", description: "", notes: "" });
-      toast({ title: "Salvato!", description: "Preset voce VAPI aggiunto" });
+      toast({ title: "Salvato!", description: "Voce aggiunta con successo" });
+      fetchVoiceSettings(); // Refresh the list
     }
   };
 
