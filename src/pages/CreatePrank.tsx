@@ -49,6 +49,15 @@ interface PrankPreset {
   icon: string;
 }
 
+interface VoiceOption {
+  id: string;
+  voice_name: string | null;
+  notes: string | null;
+  elevenlabs_voice_id: string | null;
+  gender: string;
+  language: string;
+}
+
 const CreatePrank = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -56,6 +65,8 @@ const CreatePrank = () => {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [presets, setPresets] = useState<PrankPreset[]>([]);
+  const [availableVoices, setAvailableVoices] = useState<VoiceOption[]>([]);
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>("");
 
   // Form state
   const [victimFirstName, setVictimFirstName] = useState("");
@@ -89,6 +100,10 @@ const CreatePrank = () => {
   }, []);
 
   useEffect(() => {
+    fetchVoices();
+  }, [language, voiceGender]);
+
+  useEffect(() => {
     const repeatId = searchParams.get("repeat");
     if (repeatId && user) {
       loadPrankData(repeatId);
@@ -104,6 +119,26 @@ const CreatePrank = () => {
 
     if (data) {
       setPresets(data);
+    }
+  };
+
+  const fetchVoices = async () => {
+    const { data } = await supabase
+      .from("voice_settings")
+      .select("id, voice_name, notes, elevenlabs_voice_id, gender, language")
+      .eq("language", language)
+      .eq("gender", voiceGender)
+      .eq("is_active", true);
+
+    if (data && data.length > 0) {
+      setAvailableVoices(data);
+      // Auto-select first voice if none selected
+      if (!selectedVoiceId || !data.find(v => v.id === selectedVoiceId)) {
+        setSelectedVoiceId(data[0].id);
+      }
+    } else {
+      setAvailableVoices([]);
+      setSelectedVoiceId("");
     }
   };
 
@@ -186,13 +221,22 @@ const CreatePrank = () => {
     setLoading(true);
 
     try {
-      // Fetch voice settings only - always use VAPI
-      const { data: voiceSettings } = await supabase
-        .from("voice_settings")
-        .select("*")
-        .eq("language", language)
-        .eq("gender", voiceGender)
-        .single();
+      // Get selected voice settings
+      const selectedVoice = availableVoices.find(v => v.id === selectedVoiceId);
+      
+      // Fetch full voice settings for the selected voice
+      const { data: voiceSettings } = selectedVoiceId 
+        ? await supabase
+            .from("voice_settings")
+            .select("*")
+            .eq("id", selectedVoiceId)
+            .single()
+        : await supabase
+            .from("voice_settings")
+            .select("*")
+            .eq("language", language)
+            .eq("gender", voiceGender)
+            .maybeSingle();
 
       const scheduledAt = scheduleCall ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : null;
       
@@ -440,8 +484,38 @@ const CreatePrank = () => {
                       <SelectItem value="female">Femminile 👩</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
+               </div>
               </div>
+
+              {/* Voice Selection */}
+              {availableVoices.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Voce</Label>
+                  <Select value={selectedVoiceId} onValueChange={setSelectedVoiceId}>
+                    <SelectTrigger className="h-12">
+                      <SelectValue placeholder="Seleziona una voce" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableVoices.map((voice) => (
+                        <SelectItem key={voice.id} value={voice.id}>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{voice.voice_name || "Voce senza nome"}</span>
+                            {voice.notes && (
+                              <span className="text-xs text-muted-foreground">{voice.notes}</span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {availableVoices.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-2">
+                  Nessuna voce configurata per {language} {voiceGender === "male" ? "maschile" : "femminile"}
+                </p>
+              )}
 
               <div className="space-y-2">
                 <Label>Tono Personalità</Label>
