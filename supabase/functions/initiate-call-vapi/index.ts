@@ -275,7 +275,10 @@ serve(async (req) => {
 
     // === BUILD VAPI TRANSIENT ASSISTANT REQUEST ===
     // We ALWAYS use transient assistant (no assistantId) for dynamic prank generation
-    // NOTE: serverUrl for webhooks is configured in VAPI Dashboard, not per-call
+    
+    // Build webhook URL for status updates - set at assistant.server.url level
+    const webhookUrl = `${SUPABASE_URL}/functions/v1/vapi-webhook`;
+    console.log('Webhook URL:', webhookUrl);
     
     const vapiCallBody: any = {
       phoneNumberId: vapiPhoneNumberId,
@@ -286,6 +289,10 @@ serve(async (req) => {
       },
       // TRANSIENT ASSISTANT - configured entirely at runtime
       assistant: {
+        // Server URL for webhook callbacks - set at assistant level
+        server: {
+          url: webhookUrl,
+        },
         // Dynamic first message - CRITICAL for prank success
         firstMessage: firstMessage,
         
