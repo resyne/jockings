@@ -280,6 +280,8 @@ serve(async (req) => {
     const webhookUrl = `${SUPABASE_URL}/functions/v1/vapi-webhook`;
     console.log('Webhook URL:', webhookUrl);
     
+    // NOTE: Webhooks must be configured in VAPI Dashboard, not in API call
+    // Set webhook URL to: https://vtsankkghplkfhrlxefs.supabase.co/functions/v1/vapi-webhook
     const vapiCallBody: any = {
       phoneNumberId: vapiPhoneNumberId,
       customer: {
@@ -287,8 +289,6 @@ serve(async (req) => {
         name: `${prank.victim_first_name} ${prank.victim_last_name}`,
         numberE164CheckEnabled: false,
       },
-      // Server URL for webhook callbacks - MUST be at root level, not inside assistant
-      serverUrl: webhookUrl,
       // TRANSIENT ASSISTANT - configured entirely at runtime
       assistant: {
         // Dynamic first message - CRITICAL for prank success
