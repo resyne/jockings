@@ -401,8 +401,10 @@ export type Database = {
           id: string
           is_active: boolean | null
           language: string
+          notes: string | null
           polly_voice_id: string | null
           updated_at: string
+          voice_name: string | null
           voice_provider: string
         }
         Insert: {
@@ -416,8 +418,10 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           language: string
+          notes?: string | null
           polly_voice_id?: string | null
           updated_at?: string
+          voice_name?: string | null
           voice_provider?: string
         }
         Update: {
@@ -431,8 +435,10 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           language?: string
+          notes?: string | null
           polly_voice_id?: string | null
           updated_at?: string
+          voice_name?: string | null
           voice_provider?: string
         }
         Relationships: []
