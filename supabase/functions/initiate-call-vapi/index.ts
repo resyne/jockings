@@ -287,12 +287,10 @@ serve(async (req) => {
         name: `${prank.victim_first_name} ${prank.victim_last_name}`,
         numberE164CheckEnabled: false,
       },
+      // Server URL for webhook callbacks - MUST be at root level, not inside assistant
+      serverUrl: webhookUrl,
       // TRANSIENT ASSISTANT - configured entirely at runtime
       assistant: {
-        // Server URL for webhook callbacks - set at assistant level
-        server: {
-          url: webhookUrl,
-        },
         // Dynamic first message - CRITICAL for prank success
         firstMessage: firstMessage,
         
