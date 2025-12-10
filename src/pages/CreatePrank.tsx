@@ -499,27 +499,45 @@ const CreatePrank = () => {
                </div>
               </div>
 
-              {/* Voice Selection */}
+              {/* Voice Selection Cards */}
               {availableVoices.length > 0 && (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <Label>Voce</Label>
-                  <Select value={selectedVoiceId} onValueChange={setSelectedVoiceId}>
-                    <SelectTrigger className="h-12">
-                      <SelectValue placeholder="Seleziona una voce" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableVoices.map((voice) => (
-                        <SelectItem key={voice.id} value={voice.id}>
-                          <div className="flex flex-col">
-                            <span className="font-medium">{voice.voice_name || "Voce senza nome"}</span>
+                  <div className="grid gap-3">
+                    {availableVoices.map((voice) => (
+                      <div
+                        key={voice.id}
+                        onClick={() => setSelectedVoiceId(voice.id)}
+                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                          selectedVoiceId === voice.id
+                            ? "border-primary bg-primary/10 shadow-md"
+                            : "border-border bg-card hover:border-primary/50 hover:bg-accent/50"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-foreground">
+                              {voice.voice_name || "Voce senza nome"}
+                            </h4>
                             {voice.description && (
-                              <span className="text-xs text-muted-foreground">{voice.description}</span>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {voice.description}
+                              </p>
                             )}
                           </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                            selectedVoiceId === voice.id
+                              ? "border-primary bg-primary"
+                              : "border-muted-foreground"
+                          }`}>
+                            {selectedVoiceId === voice.id && (
+                              <div className="w-2 h-2 rounded-full bg-primary-foreground" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
