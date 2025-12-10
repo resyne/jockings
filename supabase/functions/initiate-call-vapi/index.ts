@@ -148,9 +148,26 @@ serve(async (req) => {
       throw new Error('Prank not found');
     }
 
-    // Now fetch settings, voice_settings (based on prank language/gender), and VAPI phone in parallel
+    // Now fetch settings, voice_settings (based on prank's elevenlabs_voice_id), and VAPI phone in parallel
     const prankLanguage = prank.language === 'Italiano' ? 'Italiano' : 'English';
     const prankGender = prank.voice_gender;
+
+    // Build voice settings query - use prank's voice_id if available, otherwise fallback to language/gender
+    const voiceSettingsQuery = prank.elevenlabs_voice_id
+      ? supabase
+          .from('voice_settings')
+          .select('*')
+          .eq('elevenlabs_voice_id', prank.elevenlabs_voice_id)
+          .eq('is_active', true)
+          .maybeSingle()
+      : supabase
+          .from('voice_settings')
+          .select('*')
+          .eq('language', prankLanguage)
+          .eq('gender', prankGender)
+          .eq('is_active', true)
+          .limit(1)
+          .maybeSingle();
 
     const [settingsResult, voiceSettingsResult, vapiPhoneResult] = await Promise.all([
       supabase.from('app_settings').select('key, value').in('key', [
@@ -170,14 +187,7 @@ serve(async (req) => {
         'vapi_backchanneling',
         'vapi_end_call_message',
       ]),
-      // Get voice settings directly from voice_settings table based on language and gender
-      supabase
-        .from('voice_settings')
-        .select('*')
-        .eq('language', prankLanguage)
-        .eq('gender', prankGender)
-        .eq('is_active', true)
-        .single(),
+      voiceSettingsQuery,
       supabase.from('vapi_phone_numbers').select('*').eq('is_default', true).eq('is_active', true).single()
     ]);
 
@@ -234,15 +244,27 @@ serve(async (req) => {
     const transcriberLanguage = prank.language === 'Italiano' ? 'it' : 'en';
     const endCallMessage = prank.language === 'Italiano' ? 'Arrivederci!' : 'Goodbye!';
 
-    // Get voice settings from voice_settings table (based on language/gender)
-    let voiceId = settings['vapi_voice_id'];
-    let voiceProvider = settings['vapi_voice_provider'];
+    // Get voice settings - PRIORITY: prank.elevenlabs_voice_id > voice_settings table > defaults
+    let voiceId = prank.elevenlabs_voice_id || settings['vapi_voice_id'];
+    let voiceProvider = '11labs'; // Always use 11labs for ElevenLabs voices
     
-    // Use voice_settings table directly - no more presets!
+    // Use voice_settings for additional parameters (stability, similarity, etc.)
     const voiceSettings = voiceSettingsResult.data;
     
-    if (voiceSettings && voiceSettings.elevenlabs_voice_id) {
-      // Use the voice from voice_settings table
+    if (prank.elevenlabs_voice_id) {
+      // Use the voice_id directly from the prank record
+      voiceId = prank.elevenlabs_voice_id;
+      console.log('=== USING PRANK VOICE ID ===');
+      console.log('Voice ID from prank:', voiceId);
+      if (voiceSettings) {
+        console.log('Voice settings found for parameters');
+        console.log('Stability:', voiceSettings.elevenlabs_stability);
+        console.log('Similarity:', voiceSettings.elevenlabs_similarity);
+        console.log('Style:', voiceSettings.elevenlabs_style);
+        console.log('Speed:', voiceSettings.elevenlabs_speed);
+      }
+    } else if (voiceSettings && voiceSettings.elevenlabs_voice_id) {
+      // Fallback to voice_settings table
       voiceId = voiceSettings.elevenlabs_voice_id;
       voiceProvider = voiceSettings.voice_provider === 'elevenlabs' ? '11labs' : voiceSettings.voice_provider;
       console.log('=== USING VOICE_SETTINGS TABLE ===');
@@ -250,20 +272,11 @@ serve(async (req) => {
       console.log('Gender:', voiceSettings.gender);
       console.log('Voice ID:', voiceId);
       console.log('Provider:', voiceProvider);
-      console.log('Stability:', voiceSettings.elevenlabs_stability);
-      console.log('Similarity:', voiceSettings.elevenlabs_similarity);
-      console.log('Style:', voiceSettings.elevenlabs_style);
-      console.log('Speed:', voiceSettings.elevenlabs_speed);
     } else {
       console.log('=== NO VOICE SETTINGS FOUND ===');
       console.log('Falling back to defaults');
       console.log('Voice ID:', voiceId);
       console.log('Provider:', voiceProvider);
-    }
-
-    // Map voice provider to VAPI format
-    if (voiceProvider === 'elevenlabs') {
-      voiceProvider = '11labs'; // VAPI uses "11labs"
     }
 
     console.log('=== DYNAMIC CONTENT ===');
