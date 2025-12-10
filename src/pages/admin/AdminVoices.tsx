@@ -26,6 +26,8 @@ interface VoiceSetting {
   elevenlabs_speed: number;
   polly_voice_id: string | null;
   is_active: boolean;
+  voice_name: string | null;
+  notes: string | null;
 }
 
 interface GlobalVoiceSettings {
@@ -625,12 +627,14 @@ const AdminVoices = () => {
   };
 
   const handleSave = async (setting: VoiceSetting) => {
-    // Only save voice ID - other settings are global now
+    // Save voice ID, name, and notes
     const { error } = await supabase
       .from("voice_settings")
       .update({
         elevenlabs_voice_id: setting.elevenlabs_voice_id,
         is_active: setting.is_active,
+        voice_name: setting.voice_name,
+        notes: setting.notes,
       })
       .eq("id", setting.id);
 
@@ -980,36 +984,125 @@ const AdminVoices = () => {
                     Voce TTS
                   </h4>
                   
-                  {/* Voice Presets List */}
-                  {vapiVoicePresets.length > 0 && (
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Preset Voce Salvati</Label>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {vapiVoicePresets.map((preset) => (
-                          <div 
-                            key={preset.id} 
-                            className="flex items-center justify-between p-2 rounded-lg bg-background border"
-                          >
+                  {/* Voice Settings from Database - Shows language/gender combos with Voice IDs */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Voci Configurate per Lingua/Genere</Label>
+                    <div className="grid grid-cols-1 gap-3">
+                      {voiceSettings.map((setting) => (
+                        <div 
+                          key={setting.id} 
+                          className={`p-3 rounded-lg border ${selectedSetting?.id === setting.id ? 'border-orange-500 bg-orange-500/5' : 'bg-background'}`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium">
-                                {preset.gender === "male" ? "👨" : "👩"} {preset.language}
+                              <span className="text-lg">
+                                {setting.gender === "male" ? "👨" : "👩"}
                               </span>
-                              <span className="text-xs text-muted-foreground font-mono">
-                                {preset.voiceId.substring(0, 12)}...
-                              </span>
+                              <span className="font-medium">{setting.language}</span>
+                              {setting.voice_name && (
+                                <span className="text-sm text-primary font-medium">- {setting.voice_name}</span>
+                              )}
                             </div>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleDeleteVapiPreset(preset.id)}
-                            >
-                              <Trash2 className="w-3 h-3 text-destructive" />
-                            </Button>
+                            <div className="flex items-center gap-1">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => setSelectedSetting(selectedSetting?.id === setting.id ? null : setting)}
+                              >
+                                {selectedSetting?.id === setting.id ? "Chiudi" : "Modifica"}
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleDelete(setting.id)}
+                              >
+                                <Trash2 className="w-3 h-3 text-destructive" />
+                              </Button>
+                            </div>
                           </div>
-                        ))}
-                      </div>
+                          
+                          {/* Show Voice ID and notes preview when not editing */}
+                          {selectedSetting?.id !== setting.id && (
+                            <div className="text-xs text-muted-foreground space-y-1">
+                              <div className="font-mono">
+                                Voice ID: {setting.elevenlabs_voice_id || "Non configurato"}
+                              </div>
+                              {setting.notes && (
+                                <div className="italic">📝 {setting.notes}</div>
+                              )}
+                            </div>
+                          )}
+                          
+                          {/* Edit form when selected */}
+                          {selectedSetting?.id === setting.id && (
+                            <div className="space-y-3 mt-3 pt-3 border-t">
+                              <div className="space-y-2">
+                                <Label className="text-xs">Nome Voce (opzionale)</Label>
+                                <Input
+                                  value={selectedSetting.voice_name || ""}
+                                  onChange={(e) => setSelectedSetting({ ...selectedSetting, voice_name: e.target.value })}
+                                  placeholder="es. Marco Italiano, Giulia Milano..."
+                                  className="h-8 text-sm"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-xs">Voice ID ElevenLabs *</Label>
+                                <Input
+                                  value={selectedSetting.elevenlabs_voice_id || ""}
+                                  onChange={(e) => setSelectedSetting({ ...selectedSetting, elevenlabs_voice_id: e.target.value })}
+                                  placeholder="Incolla qui il Voice ID da ElevenLabs"
+                                  className="h-8 text-sm font-mono"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                  Trova il Voice ID nella{" "}
+                                  <a href="https://elevenlabs.io/app/voice-lab" target="_blank" rel="noopener" className="text-primary underline">
+                                    ElevenLabs Voice Library
+                                  </a>
+                                </p>
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-xs">Note (opzionale)</Label>
+                                <Textarea
+                                  value={selectedSetting.notes || ""}
+                                  onChange={(e) => setSelectedSetting({ ...selectedSetting, notes: e.target.value })}
+                                  placeholder="Annotazioni sulla voce, es. 'Ottima per tono serio', 'Accento napoletano'..."
+                                  className="text-sm min-h-[60px]"
+                                />
+                              </div>
+                              <div className="flex gap-2">
+                                <Button 
+                                  size="sm" 
+                                  onClick={() => handleSave(selectedSetting)}
+                                  className="flex-1"
+                                >
+                                  <Save className="w-3 h-3 mr-1" />
+                                  Salva
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedSetting(null);
+                                    setVoiceTestOpen(true);
+                                  }}
+                                  disabled={!selectedSetting.elevenlabs_voice_id}
+                                >
+                                  <Play className="w-3 h-3 mr-1" />
+                                  Test
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  )}
+                    
+                    {voiceSettings.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        Nessuna voce configurata. Aggiungi una combinazione lingua/genere.
+                      </p>
+                    )}
+                  </div>
                   
                   {/* Add New Preset */}
                   <Dialog open={isAddVapiPresetOpen} onOpenChange={setIsAddVapiPresetOpen}>
