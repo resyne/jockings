@@ -136,9 +136,23 @@ serve(async (req) => {
 
     console.log('=== VAPI TRANSIENT ASSISTANT CALL ===');
 
-    // Fetch prank, VAPI settings, voice presets, and default VAPI phone number in parallel
-    const [prankResult, settingsResult, presetsResult, vapiPhoneResult] = await Promise.all([
-      supabase.from('pranks').select('*').eq('id', prankId).single(),
+    // Fetch prank details first
+    const { data: prank, error: prankError } = await supabase
+      .from('pranks')
+      .select('*')
+      .eq('id', prankId)
+      .single();
+
+    if (prankError || !prank) {
+      console.error('Prank fetch error:', prankError);
+      throw new Error('Prank not found');
+    }
+
+    // Now fetch settings, voice_settings (based on prank language/gender), and VAPI phone in parallel
+    const prankLanguage = prank.language === 'Italiano' ? 'Italiano' : 'English';
+    const prankGender = prank.voice_gender;
+
+    const [settingsResult, voiceSettingsResult, vapiPhoneResult] = await Promise.all([
       supabase.from('app_settings').select('key, value').in('key', [
         'vapi_phone_number_id',
         'vapi_ai_provider',
@@ -156,15 +170,16 @@ serve(async (req) => {
         'vapi_backchanneling',
         'vapi_end_call_message',
       ]),
-      supabase.from('app_settings').select('value').eq('key', 'vapi_voice_presets').single(),
+      // Get voice settings directly from voice_settings table based on language and gender
+      supabase
+        .from('voice_settings')
+        .select('*')
+        .eq('language', prankLanguage)
+        .eq('gender', prankGender)
+        .eq('is_active', true)
+        .single(),
       supabase.from('vapi_phone_numbers').select('*').eq('is_default', true).eq('is_active', true).single()
     ]);
-
-    const { data: prank, error: prankError } = prankResult;
-    if (prankError || !prank) {
-      console.error('Prank fetch error:', prankError);
-      throw new Error('Prank not found');
-    }
 
     // Parse settings with defaults optimized for prank calls
     const settings: Record<string, string> = {
@@ -207,11 +222,10 @@ serve(async (req) => {
     console.log('Victim:', prank.victim_first_name, prank.victim_last_name);
     console.log('Phone:', prank.victim_phone);
     console.log('Theme:', prank.prank_theme);
-    console.log('Language:', prank.language);
-    console.log('Voice Gender:', prank.voice_gender);
+    console.log('Language:', prankLanguage);
+    console.log('Voice Gender:', prankGender);
     console.log('Personality:', prank.personality_tone);
     console.log('VAPI Phone Number ID:', vapiPhoneNumberId);
-    console.log('Phone from table:', vapiPhoneResult.data?.phone_number);
 
     // === BUILD DYNAMIC CONTENT ===
     const greeting = getTimeBasedGreeting(prank.language);
@@ -220,33 +234,31 @@ serve(async (req) => {
     const transcriberLanguage = prank.language === 'Italiano' ? 'it' : 'en';
     const endCallMessage = prank.language === 'Italiano' ? 'Arrivederci!' : 'Goodbye!';
 
-    // Get voice settings - prioritize saved presets by language/gender
+    // Get voice settings from voice_settings table (based on language/gender)
     let voiceId = settings['vapi_voice_id'];
     let voiceProvider = settings['vapi_voice_provider'];
     
-    // Check for matching voice preset based on prank language and gender
-    const voicePresets = presetsResult.data?.value ? JSON.parse(presetsResult.data.value) : [];
-    const prankLanguage = prank.language === 'Italiano' ? 'Italiano' : 'English';
-    const prankGender = prank.voice_gender;
+    // Use voice_settings table directly - no more presets!
+    const voiceSettings = voiceSettingsResult.data;
     
-    const matchingPreset = voicePresets.find((preset: any) => 
-      preset.language === prankLanguage && preset.gender === prankGender
-    );
-    
-    if (matchingPreset) {
-      // Use the preset voice settings
-      voiceId = matchingPreset.voiceId;
-      voiceProvider = matchingPreset.voiceProvider;
-      console.log('=== USING VOICE PRESET ===');
-      console.log('Preset Label:', matchingPreset.label);
-      console.log('Preset Voice ID:', voiceId);
-      console.log('Preset Provider:', voiceProvider);
-    } else if (prank.elevenlabs_voice_id) {
-      // Fallback to prank-specific voice
-      voiceId = prank.elevenlabs_voice_id;
-    } else if (settings['vapi_voice_id'] === 'custom' && settings['vapi_custom_voice_id']) {
-      // Fallback to custom voice from admin settings
-      voiceId = settings['vapi_custom_voice_id'];
+    if (voiceSettings && voiceSettings.elevenlabs_voice_id) {
+      // Use the voice from voice_settings table
+      voiceId = voiceSettings.elevenlabs_voice_id;
+      voiceProvider = voiceSettings.voice_provider === 'elevenlabs' ? '11labs' : voiceSettings.voice_provider;
+      console.log('=== USING VOICE_SETTINGS TABLE ===');
+      console.log('Language:', voiceSettings.language);
+      console.log('Gender:', voiceSettings.gender);
+      console.log('Voice ID:', voiceId);
+      console.log('Provider:', voiceProvider);
+      console.log('Stability:', voiceSettings.elevenlabs_stability);
+      console.log('Similarity:', voiceSettings.elevenlabs_similarity);
+      console.log('Style:', voiceSettings.elevenlabs_style);
+      console.log('Speed:', voiceSettings.elevenlabs_speed);
+    } else {
+      console.log('=== NO VOICE SETTINGS FOUND ===');
+      console.log('Falling back to defaults');
+      console.log('Voice ID:', voiceId);
+      console.log('Provider:', voiceProvider);
     }
 
     // Map voice provider to VAPI format
@@ -294,13 +306,13 @@ serve(async (req) => {
           maxTokens: parseInt(settings['vapi_max_tokens']),
         },
         
-        // Voice configuration - can vary per prank
+        // Voice configuration - use voice_settings table parameters
         voice: {
           provider: voiceProvider,
           voiceId: voiceId,
-          stability: prank.elevenlabs_stability || 0.4, // Use prank settings if available
-          similarityBoost: prank.elevenlabs_similarity || 0.75,
-          style: prank.elevenlabs_style || 0,
+          stability: voiceSettings?.elevenlabs_stability ?? 0.4,
+          similarityBoost: voiceSettings?.elevenlabs_similarity ?? 0.75,
+          style: voiceSettings?.elevenlabs_style ?? 0,
           fillerInjectionEnabled: true, // Natural filler words like "uhm", "eh"
         },
         
