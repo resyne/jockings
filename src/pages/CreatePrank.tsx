@@ -225,7 +225,7 @@ const CreatePrank = () => {
       const selectedVoice = availableVoices.find(v => v.id === selectedVoiceId);
       
       // Fetch full voice settings for the selected voice
-      const { data: voiceSettings } = selectedVoiceId 
+      const { data: voiceSettings } = selectedVoiceId && selectedVoiceId.length > 0
         ? await supabase
             .from("voice_settings")
             .select("*")
@@ -236,6 +236,8 @@ const CreatePrank = () => {
             .select("*")
             .eq("language", language)
             .eq("gender", voiceGender)
+            .eq("is_active", true)
+            .limit(1)
             .maybeSingle();
 
       const scheduledAt = scheduleCall ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : null;
