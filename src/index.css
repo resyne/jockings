@@ -173,15 +173,21 @@
 
   /* Solid color backgrounds - no gradients */
   .bg-primary-solid {
-    @apply bg-primary;
+    @apply bg-primary text-primary-foreground;
   }
   
   .bg-secondary-solid {
-    @apply bg-secondary;
+    @apply bg-secondary text-secondary-foreground;
   }
   
   .bg-accent-solid {
-    @apply bg-accent;
+    @apply bg-accent text-accent-foreground;
+  }
+
+  /* Glass effect for headers/navs */
+  .glass {
+    background: hsl(var(--card) / 0.95);
+    backdrop-filter: blur(8px);
   }
   
   .shadow-glow {
