@@ -212,6 +212,7 @@ const Dashboard = () => {
         {/* Welcome Card */}
         <Card className="bg-primary text-primary-foreground shadow-card animate-slide-up overflow-hidden relative">
           <CardHeader className="pb-2">
+            <img src={saranoWordmark} alt="sarano.ai" className="h-4 object-contain brightness-0 invert opacity-80 mb-2" />
             <CardTitle className="text-xl text-primary-foreground">Ciao, {profile?.username || "amico"}! 🎭</CardTitle>
             <CardDescription className="text-primary-foreground/80">
               Pronto a fare qualche scherzo?
