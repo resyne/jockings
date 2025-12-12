@@ -139,20 +139,17 @@
     color: hsl(0, 0%, 37%); /* #5F5F5F */
   }
 
-  .gradient-primary {
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
+  /* Solid color backgrounds - no gradients */
+  .bg-primary-solid {
+    @apply bg-primary;
   }
   
-  .gradient-text {
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  .bg-secondary-solid {
+    @apply bg-secondary;
   }
   
-  .glass {
-    background: hsl(var(--card) / 0.9);
-    backdrop-filter: blur(12px);
+  .bg-accent-solid {
+    @apply bg-accent;
   }
   
   .shadow-glow {
