@@ -4,17 +4,17 @@
 
 @layer base {
   :root {
-    /* VIRAL POP — Dark-first Design System */
+    /* VIRAL POP — Warm Light Design System */
     
     /* Background System */
-    --background: 0 0% 6%;           /* #0F0F0F - Main App Background */
-    --foreground: 0 0% 100%;         /* #FFFFFF - Primary Text */
+    --background: 43 100% 99%;       /* #FFFDF8 - Warm Light Base */
+    --foreground: 0 0% 10%;          /* #1A1A1A - Primary Text */
     
-    --card: 0 0% 9%;                 /* #161616 - Cards / Sections */
-    --card-foreground: 0 0% 100%;    /* #FFFFFF */
+    --card: 0 0% 100%;               /* #FFFFFF - Cards / Sections */
+    --card-foreground: 0 0% 10%;     /* #1A1A1A */
     
-    --popover: 0 0% 9%;              /* #161616 */
-    --popover-foreground: 0 0% 100%; /* #FFFFFF */
+    --popover: 0 0% 100%;            /* #FFFFFF */
+    --popover-foreground: 0 0% 10%;  /* #1A1A1A */
     
     /* Accent System */
     --primary: 350 100% 62%;         /* #FF3B5C - Punch Red (CTA Core) */
@@ -23,58 +23,59 @@
     --secondary: 205 100% 63%;       /* #42ACFF - Sky Pop Blue */
     --secondary-foreground: 0 0% 100%;
     
-    --muted: 0 0% 12%;               /* #1E1E1E - Hover / Active */
-    --muted-foreground: 0 0% 48%;    /* #7A7A7A - Disabled / Muted */
+    --muted: 40 23% 94%;             /* #F3F1EC - Warm Hover Grey */
+    --muted-foreground: 0 0% 37%;    /* #5F5F5F - Secondary Text */
     
     --accent: 50 100% 59%;           /* #FFE12D - Viral Yellow */
-    --accent-foreground: 0 0% 6%;    /* Dark text on yellow */
+    --accent-foreground: 0 0% 10%;   /* Dark text on yellow */
     
     --destructive: 350 100% 62%;     /* #FF3B5C - Error (same as primary) */
     --destructive-foreground: 0 0% 100%;
     
-    --border: 0 0% 15%;              /* Subtle border */
-    --input: 0 0% 12%;               /* Input background */
+    --border: 40 10% 90%;            /* Subtle warm border */
+    --input: 0 0% 100%;              /* White input background */
     --ring: 350 100% 62%;            /* Focus ring - Punch Red */
     
     --radius: 0.75rem;
     
     /* Status Colors */
-    --success: 144 100% 65%;         /* #4DFF88 */
-    --warning: 50 100% 59%;          /* #FFE12D */
-    --info: 205 100% 63%;            /* #42ACFF */
+    --success: 144 100% 40%;         /* Adjusted for light bg */
+    --warning: 50 100% 45%;          /* Adjusted for light bg */
+    --info: 205 100% 50%;            /* Adjusted for light bg */
     
     /* Sidebar */
-    --sidebar-background: 0 0% 6%;
-    --sidebar-foreground: 0 0% 82%;
+    --sidebar-background: 43 100% 99%;
+    --sidebar-foreground: 0 0% 37%;
     --sidebar-primary: 350 100% 62%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 12%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 15%;
+    --sidebar-accent: 40 23% 94%;
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 40 10% 90%;
     --sidebar-ring: 350 100% 62%;
+    
+    /* Disabled / Hint */
+    --disabled: 0 0% 63%;            /* #A0A0A0 */
   }
 
-  /* Light mode kept for compatibility but app is dark-first */
-  .light {
-    --background: 0 0% 98%;
-    --foreground: 0 0% 6%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 6%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 6%;
-    --primary: 350 100% 62%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 205 100% 63%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 95%;
+  /* Dark mode override if needed */
+  .dark {
+    --background: 0 0% 6%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 9%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 9%;
+    --popover-foreground: 0 0% 100%;
+    --muted: 0 0% 12%;
     --muted-foreground: 0 0% 48%;
     --accent: 50 100% 59%;
     --accent-foreground: 0 0% 6%;
-    --destructive: 350 100% 62%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 90%;
-    --input: 0 0% 95%;
-    --ring: 350 100% 62%;
+    --border: 0 0% 15%;
+    --input: 0 0% 12%;
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 82%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 15%;
   }
 }
 
@@ -102,7 +103,7 @@
   }
 
   p {
-    @apply text-[16px] font-normal leading-[150%] text-[hsl(0,0%,82%)];
+    @apply text-[16px] font-normal leading-[150%] text-muted-foreground;
   }
 
   small, .text-small {
@@ -111,6 +112,12 @@
 }
 
 @layer components {
+  /* Card with shadow for depth */
+  .card-elevated {
+    @apply bg-card hover:bg-muted transition-colors duration-200;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  }
+
   /* Button Typography */
   .btn-text {
     @apply text-[15px] font-semibold uppercase tracking-wider;
@@ -118,7 +125,7 @@
 
   /* Form Typography */
   .form-label {
-    @apply text-[14px] font-medium text-[hsl(0,0%,82%)];
+    @apply text-[14px] font-medium text-muted-foreground;
   }
 
   .form-input {
@@ -129,7 +136,7 @@
 @layer utilities {
   /* Secondary text color */
   .text-secondary-custom {
-    color: hsl(0, 0%, 82%); /* #D2D2D2 */
+    color: hsl(0, 0%, 37%); /* #5F5F5F */
   }
 
   .gradient-primary {
@@ -153,7 +160,11 @@
   }
 
   .shadow-glow-blue {
-    box-shadow: 0 0 30px hsl(var(--secondary) / 0.3);
+    box-shadow: 0 0 30px hsl(var(--secondary) / 0.2);
+  }
+  
+  .shadow-card {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   }
   
   .shadow-soft {
@@ -180,10 +191,6 @@
     animation: fade-in 0.3s ease-out;
   }
 
-  /* Card elevation */
-  .card-elevated {
-    @apply bg-card hover:bg-muted transition-colors duration-200;
-  }
 }
 
 @keyframes float {
