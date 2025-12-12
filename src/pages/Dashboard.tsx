@@ -195,7 +195,7 @@ const Dashboard = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 glass border-b border-border px-4 py-3">
         <div className="flex items-center justify-between max-w-lg mx-auto">
-          <img src={saranoWordmark} alt="sarano.ai" className="h-5 object-contain" />
+          <img src={saranoIcon} alt="sarano.ai" className="w-8 h-8 object-contain" />
           <Button variant="ghost" size="icon" onClick={handleLogout}>
             <LogOut className="w-5 h-5" />
           </Button>
@@ -205,19 +205,13 @@ const Dashboard = () => {
       <main className="px-4 py-6 max-w-lg mx-auto space-y-6">
         {/* Welcome Card */}
         <Card className="bg-primary text-primary-foreground shadow-card animate-slide-up overflow-hidden relative">
-          {/* Decorative Icon */}
-          <img 
-            src={saranoIcon} 
-            alt="" 
-            className="absolute -right-4 -bottom-4 w-24 h-24 object-contain opacity-20 rotate-12" 
-          />
-          <CardHeader className="pb-2 relative z-10">
+          <CardHeader className="pb-2">
             <CardTitle className="text-xl text-primary-foreground">Ciao, {profile?.username || "amico"}! 🎭</CardTitle>
             <CardDescription className="text-primary-foreground/80">
               Pronto a fare qualche scherzo?
             </CardDescription>
           </CardHeader>
-          <CardContent className="relative z-10">
+          <CardContent>
             <div className="flex items-center gap-2">
               <Coins className="w-5 h-5" />
               <span className="font-bold text-lg">{profile?.credits || 0}</span>
@@ -287,6 +281,11 @@ const Dashboard = () => {
             </div>
           )}
         </section>
+
+        {/* Wordmark Footer */}
+        <div className="flex justify-center pt-4 pb-8">
+          <img src={saranoWordmark} alt="sarano.ai" className="h-4 object-contain opacity-50" />
+        </div>
       </main>
 
       {/* Bottom Navigation */}
