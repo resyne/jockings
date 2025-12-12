@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
-import saranoIcon from "@/assets/sarano-icon.jpg";
+import saranoIcon from "@/assets/sarano-icon.png";
 
 const emailSchema = z.string().email("Email non valida");
 const passwordSchema = z.string().min(6, "La password deve avere almeno 6 caratteri");
