@@ -352,6 +352,7 @@ const Dashboard = () => {
                   getStatusColor={getStatusColor}
                   getStatusLabel={getStatusLabel}
                   onRepeat={() => navigate(`/create-prank?repeat=${prank.id}`)}
+                  onQuickCall={(theme) => navigate(`/create-prank?phone=${encodeURIComponent(prank.victim_phone)}&firstName=${encodeURIComponent(prank.victim_first_name)}&lastName=${encodeURIComponent(prank.victim_last_name)}&theme=${encodeURIComponent(theme)}`)}
                   onCancel={() => handleCancelPrank(prank.id)}
                 />
               ))}

@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, RotateCcw, Calendar, Clock, X, CalendarClock, Download, Loader2 } from "lucide-react";
+import { Play, Pause, RotateCcw, Calendar, Clock, X, CalendarClock, Download, Loader2, PhoneCall } from "lucide-react";
 import { useState, useRef } from "react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -12,6 +12,7 @@ interface Prank {
   id: string;
   victim_first_name: string;
   victim_last_name: string;
+  victim_phone?: string;
   prank_theme: string;
   call_status: string;
   recording_url: string | null;
@@ -24,11 +25,18 @@ interface PrankCardProps {
   getStatusColor: (status: string) => string;
   getStatusLabel: (status: string) => string;
   onRepeat: () => void;
+  onQuickCall?: (theme: string) => void;
   onCancel?: () => void;
   showDetails?: boolean;
 }
 
-const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, onCancel, showDetails = false }: PrankCardProps) => {
+const QUICK_PROMPTS = [
+  { label: "📞 È caduta la linea!", theme: "Dici che è caduta la linea e che stavi dicendo qualcosa di importante" },
+  { label: "😤 Perché hai staccato?", theme: "Chiedi perché ha staccato improvvisamente, sembri un po' offeso" },
+  { label: "🔄 Richiamata urgente", theme: "Fingi di essere della stessa azienda e dici che devi riprendere la conversazione precedente" },
+];
+
+const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, onQuickCall, onCancel, showDetails = false }: PrankCardProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
@@ -229,6 +237,26 @@ const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, onCancel, 
           <div className="mt-3 pt-3 border-t">
             <div className="h-1 bg-primary/20 rounded-full overflow-hidden">
               <div className="h-full bg-primary rounded-full animate-pulse" style={{ width: "60%" }} />
+            </div>
+          </div>
+        )}
+
+        {/* Quick Call Buttons */}
+        {onQuickCall && !isScheduled && (prank.call_status === "completed" || prank.call_status === "recording_available" || prank.call_status === "no_answer" || prank.call_status === "busy" || prank.call_status === "failed") && (
+          <div className="mt-3 pt-3 border-t border-border">
+            <p className="text-xs text-muted-foreground mb-2">Richiama veloce:</p>
+            <div className="flex flex-wrap gap-2">
+              {QUICK_PROMPTS.map((prompt, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-7 px-2"
+                  onClick={() => onQuickCall(prompt.theme)}
+                >
+                  {prompt.label}
+                </Button>
+              ))}
             </div>
           </div>
         )}
