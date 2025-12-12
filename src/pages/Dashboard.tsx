@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Phone, Plus, History, Settings, LogOut, Coins, User } from "lucide-react";
+import { Phone, Plus, History, Settings, LogOut, Coins, User, Users } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import PrankCard from "@/components/PrankCard";
 import saranoWordmarkIcon from "@/assets/sarano-wordmark-icon.png";
@@ -22,11 +22,19 @@ interface Prank {
   id: string;
   victim_first_name: string;
   victim_last_name: string;
+  victim_phone: string;
   prank_theme: string;
   call_status: string;
   recording_url: string | null;
   created_at: string;
   scheduled_at: string | null;
+}
+
+interface RecentVictim {
+  phone: string;
+  firstName: string;
+  lastName: string;
+  lastPrankDate: string;
 }
 
 const Dashboard = () => {
@@ -113,10 +121,10 @@ const Dashboard = () => {
     if (!user) return;
     const { data, error } = await supabase
       .from("pranks")
-      .select("id, victim_first_name, victim_last_name, prank_theme, call_status, recording_url, created_at, scheduled_at")
+      .select("id, victim_first_name, victim_last_name, victim_phone, prank_theme, call_status, recording_url, created_at, scheduled_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
-      .limit(5);
+      .limit(10);
     
     if (error) {
       console.error("Error fetching pranks:", error);
@@ -255,8 +263,53 @@ const Dashboard = () => {
           </Button>
         </div>
 
+        {/* Recent Victims */}
+        {(() => {
+          const recentVictims: RecentVictim[] = [];
+          const seenPhones = new Set<string>();
+          for (const prank of pranks) {
+            if (!seenPhones.has(prank.victim_phone)) {
+              seenPhones.add(prank.victim_phone);
+              recentVictims.push({
+                phone: prank.victim_phone,
+                firstName: prank.victim_first_name,
+                lastName: prank.victim_last_name,
+                lastPrankDate: prank.created_at
+              });
+            }
+            if (recentVictims.length >= 4) break;
+          }
+          
+          if (recentVictims.length === 0) return null;
+          
+          return (
+            <section className="animate-slide-up" style={{ animationDelay: "0.2s" }}>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg font-bold text-foreground">Vittime Recenti</h2>
+              </div>
+              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                {recentVictims.map((victim) => (
+                  <Card 
+                    key={victim.phone} 
+                    className="min-w-[120px] flex-shrink-0 cursor-pointer hover:bg-muted transition-all shadow-card"
+                    onClick={() => navigate(`/create-prank?phone=${encodeURIComponent(victim.phone)}&firstName=${encodeURIComponent(victim.firstName)}&lastName=${encodeURIComponent(victim.lastName)}`)}
+                  >
+                    <CardContent className="p-4 text-center">
+                      <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-secondary/20 flex items-center justify-center">
+                        <User className="w-6 h-6 text-secondary" />
+                      </div>
+                      <p className="font-semibold text-sm text-foreground truncate">{victim.firstName}</p>
+                      <p className="text-xs text-muted-foreground truncate">{victim.lastName}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </section>
+          );
+        })()}
+
         {/* Recent Pranks */}
-        <section className="animate-slide-up" style={{ animationDelay: "0.2s" }}>
+        <section className="animate-slide-up" style={{ animationDelay: "0.25s" }}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-foreground">Scherzi Recenti</h2>
           {pranks.length > 0 && (
@@ -282,7 +335,7 @@ const Dashboard = () => {
             </Card>
           ) : (
             <div className="space-y-3">
-              {pranks.map((prank) => (
+              {pranks.slice(0, 5).map((prank) => (
                 <PrankCard
                   key={prank.id}
                   prank={prank}
