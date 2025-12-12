@@ -295,7 +295,7 @@ const AdminCalls = () => {
                             <div className="bg-muted/50 rounded-lg p-2">
                               <span className="text-muted-foreground">Voice Provider:</span>
                               <p className="font-mono font-medium text-primary">
-                                {call.voice_provider === 'elevenlabs' ? '🔊 ElevenLabs' : '🎙️ OpenAI/Polly'}
+                                {call.voice_provider === 'elevenlabs' || call.voice_provider === '11labs' ? '🔊 ElevenLabs' : '🎙️ OpenAI/Polly'}
                               </p>
                             </div>
                             <div className="bg-muted/50 rounded-lg p-2">
@@ -314,7 +314,7 @@ const AdminCalls = () => {
                         </div>
 
                         {/* ElevenLabs Settings */}
-                        {call.voice_provider === 'elevenlabs' && (
+                        {(call.voice_provider === 'elevenlabs' || call.voice_provider === '11labs') && (
                           <div className="space-y-2">
                             <div className="flex items-center gap-2 text-sm font-medium">
                               <Mic className="w-4 h-4 text-purple-500" />
