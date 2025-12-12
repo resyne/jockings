@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Phone, User, Mic, Globe, Send, CalendarClock } from "lucide-react";
+import saranoIcon from "@/assets/sarano-icon.png";
 import { z } from "zod";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -327,6 +328,7 @@ const CreatePrank = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
+          <img src={saranoIcon} alt="sarano.ai" className="w-8 h-8 object-contain" />
           <div>
             <h1 className="font-bold">Crea Scherzo</h1>
             <p className="text-xs text-muted-foreground">Configura la tua chiamata AI</p>
