@@ -146,17 +146,17 @@ const Dashboard = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "completed": return "bg-green-500/10 text-green-600 border-green-500/20";
-      case "in_progress": return "bg-blue-500/10 text-blue-600 border-blue-500/20";
-      case "initiated": return "bg-cyan-500/10 text-cyan-600 border-cyan-500/20";
-      case "ringing": return "bg-indigo-500/10 text-indigo-600 border-indigo-500/20";
+      case "completed": return "bg-green-500/10 text-green-500 border-green-500/20";
+      case "in_progress": return "bg-secondary/10 text-secondary border-secondary/20";
+      case "initiated": return "bg-secondary/10 text-secondary border-secondary/20";
+      case "ringing": return "bg-secondary/10 text-secondary border-secondary/20";
       case "failed": 
       case "no_answer":
-      case "busy": return "bg-red-500/10 text-red-600 border-red-500/20";
-      case "recording_available": return "bg-purple-500/10 text-purple-600 border-purple-500/20";
-      case "scheduled": return "bg-orange-500/10 text-orange-600 border-orange-500/20";
-      case "cancelled": return "bg-gray-500/10 text-gray-600 border-gray-500/20";
-      default: return "bg-yellow-500/10 text-yellow-600 border-yellow-500/20";
+      case "busy": return "bg-destructive/10 text-destructive border-destructive/20";
+      case "recording_available": return "bg-purple-500/10 text-purple-500 border-purple-500/20";
+      case "scheduled": return "bg-accent/10 text-accent border-accent/20";
+      case "cancelled": return "bg-muted text-muted-foreground border-border";
+      default: return "bg-accent/10 text-accent border-accent/20";
     }
   };
 
@@ -254,8 +254,8 @@ const Dashboard = () => {
         <section className="animate-slide-up" style={{ animationDelay: "0.2s" }}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-foreground">Scherzi Recenti</h2>
-            {pranks.length > 0 && (
-              <Button variant="link" className="text-primary p-0" onClick={() => navigate("/history")}>
+          {pranks.length > 0 && (
+              <Button variant="link" className="text-secondary p-0" onClick={() => navigate("/history")}>
                 Vedi tutti →
               </Button>
             )}
@@ -297,19 +297,19 @@ const Dashboard = () => {
         <div className="flex justify-around max-w-lg mx-auto">
           <Button variant="ghost" className="flex-col gap-1 h-auto py-2" onClick={() => navigate("/dashboard")}>
             <Phone className="w-5 h-5 text-primary" />
-            <span className="text-xs text-foreground">Home</span>
+            <span className="text-xs text-primary">Home</span>
           </Button>
           <Button variant="ghost" className="flex-col gap-1 h-auto py-2" onClick={() => navigate("/create-prank")}>
-            <Plus className="w-5 h-5 text-foreground" />
-            <span className="text-xs text-foreground">Nuovo</span>
+            <Plus className="w-5 h-5 text-secondary" />
+            <span className="text-xs text-muted-foreground">Nuovo</span>
           </Button>
           <Button variant="ghost" className="flex-col gap-1 h-auto py-2" onClick={() => navigate("/history")}>
-            <History className="w-5 h-5 text-foreground" />
-            <span className="text-xs text-foreground">Storia</span>
+            <History className="w-5 h-5 text-secondary" />
+            <span className="text-xs text-muted-foreground">Storia</span>
           </Button>
           <Button variant="ghost" className="flex-col gap-1 h-auto py-2" onClick={() => navigate("/settings")}>
-            <Settings className="w-5 h-5 text-foreground" />
-            <span className="text-xs text-foreground">Profilo</span>
+            <Settings className="w-5 h-5 text-secondary" />
+            <span className="text-xs text-muted-foreground">Profilo</span>
           </Button>
         </div>
       </nav>
