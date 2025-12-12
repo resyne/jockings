@@ -14,7 +14,16 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Poppins', 'sans-serif'],
+        sans: ['JetBrains Mono', 'monospace'],
+        mono: ['JetBrains Mono', 'monospace'],
+      },
+      fontSize: {
+        'h1': ['28px', { lineHeight: '120%', letterSpacing: '-0.5%', fontWeight: '800' }],
+        'h2': ['22px', { lineHeight: '130%', letterSpacing: '-0.25%', fontWeight: '700' }],
+        'h3': ['18px', { lineHeight: '140%', fontWeight: '500' }],
+        'body': ['16px', { lineHeight: '150%', fontWeight: '400' }],
+        'small': ['14px', { lineHeight: '150%', fontWeight: '400' }],
+        'btn': ['15px', { lineHeight: '100%', letterSpacing: '2%', fontWeight: '600' }],
       },
       colors: {
         border: "hsl(var(--border))",
