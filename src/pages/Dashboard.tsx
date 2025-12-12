@@ -195,34 +195,29 @@ const Dashboard = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 glass border-b border-border px-4 py-3">
         <div className="flex items-center justify-between max-w-lg mx-auto">
-          <div className="flex items-center gap-3">
-            <img src={saranoIcon} alt="sarano.ai" className="w-10 h-10 object-contain" />
-            <div>
-              <p className="font-semibold text-sm text-foreground">{profile?.username || "Utente"}</p>
-              <p className="text-xs text-muted-foreground">{user?.email}</p>
-            </div>
-          </div>
+          <img src={saranoWordmark} alt="sarano.ai" className="h-5 object-contain" />
           <Button variant="ghost" size="icon" onClick={handleLogout}>
             <LogOut className="w-5 h-5" />
           </Button>
         </div>
       </header>
 
-      {/* Wordmark */}
-      <div className="px-4 pt-4 max-w-lg mx-auto">
-        <img src={saranoWordmark} alt="sarano.ai" className="h-5 object-contain" />
-      </div>
-
-      <main className="px-4 py-4 max-w-lg mx-auto space-y-6">
+      <main className="px-4 py-6 max-w-lg mx-auto space-y-6">
         {/* Welcome Card */}
         <Card className="bg-primary text-primary-foreground shadow-card animate-slide-up overflow-hidden relative">
-          <CardHeader className="pb-2">
+          {/* Decorative Icon */}
+          <img 
+            src={saranoIcon} 
+            alt="" 
+            className="absolute -right-4 -bottom-4 w-24 h-24 object-contain opacity-20 rotate-12" 
+          />
+          <CardHeader className="pb-2 relative z-10">
             <CardTitle className="text-xl text-primary-foreground">Ciao, {profile?.username || "amico"}! 🎭</CardTitle>
             <CardDescription className="text-primary-foreground/80">
               Pronto a fare qualche scherzo?
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative z-10">
             <div className="flex items-center gap-2">
               <Coins className="w-5 h-5" />
               <span className="font-bold text-lg">{profile?.credits || 0}</span>
