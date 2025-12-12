@@ -125,20 +125,20 @@ const Auth = () => {
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
       {/* Background decoration */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-primary/10 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-secondary/10 blur-3xl" />
+        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-secondary/5 blur-3xl" />
       </div>
 
       {/* Logo */}
       <div className="mb-8 text-center animate-slide-up">
-        <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-background-level-1 shadow-glow mb-4 overflow-hidden">
+        <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl shadow-card mb-4 overflow-hidden">
           <img src={saranoIcon} alt="sarano.ai" className="w-full h-full object-cover" />
         </div>
-        <h1 className="text-3xl font-bold text-highlight">sarano.ai</h1>
+        <h1 className="text-3xl font-bold text-foreground">sarano.ai</h1>
         <p className="text-muted-foreground mt-1">Scherzi telefonici con AI</p>
       </div>
 
-      <Card className="w-full max-w-md shadow-soft animate-slide-up" style={{ animationDelay: "0.1s" }}>
+      <Card className="w-full max-w-md shadow-card animate-slide-up" style={{ animationDelay: "0.1s" }}>
         <CardHeader className="text-center pb-4">
           <CardTitle className="text-2xl">
             {mode === "login" && "Bentornato! 👋"}
@@ -212,7 +212,7 @@ const Auth = () => {
               </div>
             )}
 
-            <Button type="submit" className="w-full h-12 text-lg gradient-primary" disabled={loading}>
+            <Button type="submit" className="w-full h-12 text-lg bg-primary text-primary-foreground" disabled={loading}>
               {loading ? (
                 <span className="animate-pulse">Caricamento...</span>
               ) : (

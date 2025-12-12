@@ -191,17 +191,17 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <header className="sticky top-0 z-50 glass border-b px-4 py-3">
+      <header className="sticky top-0 z-50 glass border-b border-border px-4 py-3">
         <div className="flex items-center justify-between max-w-lg mx-auto">
           <div className="flex items-center gap-3">
             <Avatar className="w-10 h-10 border-2 border-primary/20">
               <AvatarImage src={profile?.avatar_url || undefined} />
-              <AvatarFallback className="gradient-primary text-primary-foreground">
+              <AvatarFallback className="bg-primary text-primary-foreground">
                 {profile?.username?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
               </AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-semibold text-sm">{profile?.username || "Utente"}</p>
+              <p className="font-semibold text-sm text-foreground">{profile?.username || "Utente"}</p>
               <p className="text-xs text-muted-foreground">{user?.email}</p>
             </div>
           </div>
@@ -213,11 +213,9 @@ const Dashboard = () => {
 
       <main className="px-4 py-6 max-w-lg mx-auto space-y-6">
         {/* Welcome Card */}
-        <Card className="gradient-primary text-primary-foreground shadow-glow animate-slide-up overflow-hidden relative">
-          <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/10" />
-          <div className="absolute -right-4 -bottom-4 w-20 h-20 rounded-full bg-white/10" />
+        <Card className="bg-primary text-primary-foreground shadow-card animate-slide-up overflow-hidden relative">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xl">Ciao, {profile?.username || "amico"}! 🎭</CardTitle>
+            <CardTitle className="text-xl text-primary-foreground">Ciao, {profile?.username || "amico"}! 🎭</CardTitle>
             <CardDescription className="text-primary-foreground/80">
               Pronto a fare qualche scherzo?
             </CardDescription>
@@ -235,7 +233,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-2 gap-3">
           <Button
             onClick={() => navigate("/create-prank")}
-            className="h-auto py-6 flex flex-col gap-2 gradient-primary shadow-soft hover:shadow-glow transition-all animate-slide-up"
+            className="h-auto py-6 flex flex-col gap-2 bg-primary text-primary-foreground shadow-card hover:bg-primary/90 transition-all animate-slide-up"
             style={{ animationDelay: "0.1s" }}
           >
             <Plus className="w-8 h-8" />
@@ -244,18 +242,18 @@ const Dashboard = () => {
           <Button
             variant="outline"
             onClick={() => navigate("/history")}
-            className="h-auto py-6 flex flex-col gap-2 shadow-soft hover:bg-accent/10 transition-all animate-slide-up"
+            className="h-auto py-6 flex flex-col gap-2 shadow-card hover:bg-muted transition-all animate-slide-up border-border"
             style={{ animationDelay: "0.15s" }}
           >
             <History className="w-8 h-8 text-primary" />
-            <span className="font-semibold">Cronologia</span>
+            <span className="font-semibold text-foreground">Cronologia</span>
           </Button>
         </div>
 
         {/* Recent Pranks */}
         <section className="animate-slide-up" style={{ animationDelay: "0.2s" }}>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold">Scherzi Recenti</h2>
+            <h2 className="text-lg font-bold text-foreground">Scherzi Recenti</h2>
             {pranks.length > 0 && (
               <Button variant="link" className="text-primary p-0" onClick={() => navigate("/history")}>
                 Vedi tutti →
@@ -264,14 +262,14 @@ const Dashboard = () => {
           </div>
 
           {pranks.length === 0 ? (
-            <Card className="text-center py-12">
+            <Card className="text-center py-12 shadow-card">
               <CardContent>
                 <Phone className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
                 <p className="text-muted-foreground">Nessuno scherzo ancora</p>
                 <p className="text-sm text-muted-foreground/70 mb-4">
                   Crea il tuo primo scherzo telefonico AI!
                 </p>
-                <Button onClick={() => navigate("/create-prank")} className="gradient-primary">
+                <Button onClick={() => navigate("/create-prank")} className="bg-primary text-primary-foreground">
                   <Plus className="w-4 h-4 mr-2" />
                   Crea Scherzo
                 </Button>
@@ -295,23 +293,23 @@ const Dashboard = () => {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 glass border-t px-4 py-2 safe-area-bottom">
+      <nav className="fixed bottom-0 left-0 right-0 glass border-t border-border px-4 py-2 safe-area-bottom">
         <div className="flex justify-around max-w-lg mx-auto">
           <Button variant="ghost" className="flex-col gap-1 h-auto py-2" onClick={() => navigate("/dashboard")}>
             <Phone className="w-5 h-5 text-primary" />
-            <span className="text-xs">Home</span>
+            <span className="text-xs text-foreground">Home</span>
           </Button>
           <Button variant="ghost" className="flex-col gap-1 h-auto py-2" onClick={() => navigate("/create-prank")}>
-            <Plus className="w-5 h-5" />
-            <span className="text-xs">Nuovo</span>
+            <Plus className="w-5 h-5 text-foreground" />
+            <span className="text-xs text-foreground">Nuovo</span>
           </Button>
           <Button variant="ghost" className="flex-col gap-1 h-auto py-2" onClick={() => navigate("/history")}>
-            <History className="w-5 h-5" />
-            <span className="text-xs">Storia</span>
+            <History className="w-5 h-5 text-foreground" />
+            <span className="text-xs text-foreground">Storia</span>
           </Button>
           <Button variant="ghost" className="flex-col gap-1 h-auto py-2" onClick={() => navigate("/settings")}>
-            <Settings className="w-5 h-5" />
-            <span className="text-xs">Profilo</span>
+            <Settings className="w-5 h-5 text-foreground" />
+            <span className="text-xs text-foreground">Profilo</span>
           </Button>
         </div>
       </nav>
