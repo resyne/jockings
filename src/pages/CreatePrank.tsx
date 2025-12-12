@@ -324,7 +324,7 @@ const CreatePrank = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 glass border-b px-4 py-3">
         <div className="flex items-center gap-3 max-w-lg mx-auto">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
