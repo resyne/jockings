@@ -10,6 +10,7 @@ import { Phone, Plus, History, Settings, LogOut, Coins, User } from "lucide-reac
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import PrankCard from "@/components/PrankCard";
 import saranoWordmarkIcon from "@/assets/sarano-wordmark-icon.png";
+import saranoIcon from "@/assets/sarano-icon.png";
 
 interface Profile {
   username: string | null;
@@ -182,7 +183,11 @@ const Dashboard = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <Phone className="w-12 h-12 mx-auto text-primary animate-bounce-soft" />
+          <img 
+            src={saranoIcon} 
+            alt="Caricamento..." 
+            className="w-16 h-16 mx-auto animate-icon-spin" 
+          />
           <p className="mt-4 text-muted-foreground">Caricamento...</p>
         </div>
       </div>
@@ -194,7 +199,11 @@ const Dashboard = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 glass border-b border-border px-4 py-3">
         <div className="flex items-center justify-between max-w-lg mx-auto">
-          <img src={saranoWordmarkIcon} alt="sarano.ai" className="h-8 object-contain" />
+          <img 
+            src={saranoWordmarkIcon} 
+            alt="sarano.ai" 
+            className="h-8 object-contain animate-bounce-in hover:animate-icon-pulse cursor-pointer transition-transform hover:scale-105" 
+          />
           <Button variant="ghost" size="icon" onClick={handleLogout}>
             <LogOut className="w-5 h-5" />
           </Button>
@@ -204,13 +213,19 @@ const Dashboard = () => {
       <main className="px-4 py-6 max-w-lg mx-auto space-y-6">
         {/* Welcome Card */}
         <Card className="bg-primary text-primary-foreground shadow-card animate-slide-up overflow-hidden relative">
-          <CardHeader className="pb-2">
+          {/* Floating decorative icon */}
+          <img 
+            src={saranoIcon} 
+            alt="" 
+            className="absolute -right-2 -bottom-2 w-20 h-20 object-contain opacity-20 animate-float pointer-events-none" 
+          />
+          <CardHeader className="pb-2 relative z-10">
             <CardTitle className="text-xl text-primary-foreground">Ciao, {profile?.username || "amico"}! 🎭</CardTitle>
             <CardDescription className="text-primary-foreground/80">
               Pronto a fare qualche scherzo?
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative z-10">
             <div className="flex items-center gap-2">
               <Coins className="w-5 h-5" />
               <span className="font-bold text-lg">{profile?.credits || 0}</span>

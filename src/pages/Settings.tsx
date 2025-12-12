@@ -81,7 +81,11 @@ const Settings = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <img src={saranoIcon} alt="sarano.ai" className="w-10 h-10 object-contain" />
+          <img 
+            src={saranoIcon} 
+            alt="sarano.ai" 
+            className="w-10 h-10 object-contain animate-bounce-in hover:animate-icon-wiggle cursor-pointer transition-transform" 
+          />
           <div>
             <h1 className="font-bold">Impostazioni</h1>
             <p className="text-xs text-muted-foreground">Gestisci il tuo account</p>
