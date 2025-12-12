@@ -109,13 +109,18 @@ const CreatePrank = () => {
     const phoneParam = searchParams.get("phone");
     const firstNameParam = searchParams.get("firstName");
     const lastNameParam = searchParams.get("lastName");
+    const themeParam = searchParams.get("theme");
     
     if (repeatId && user) {
       loadPrankData(repeatId);
     } else if (phoneParam) {
-      // Pre-fill from recent victim
+      // Pre-fill from recent victim or quick call
       if (firstNameParam) setVictimFirstName(firstNameParam);
       if (lastNameParam) setVictimLastName(lastNameParam);
+      if (themeParam) {
+        setPrankTheme(themeParam);
+        setSelectedPreset("custom");
+      }
       
       // Parse phone number to extract country code
       const matchedCountry = COUNTRY_CODES.find(c => phoneParam.startsWith(c.code));
