@@ -9,8 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Phone, Plus, History, Settings, LogOut, Coins, User } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import PrankCard from "@/components/PrankCard";
-import saranoIcon from "@/assets/sarano-icon.png";
-import saranoWordmark from "@/assets/sarano-wordmark.png";
+import saranoWordmarkIcon from "@/assets/sarano-wordmark-icon.png";
 
 interface Profile {
   username: string | null;
@@ -195,13 +194,7 @@ const Dashboard = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 glass border-b border-border px-4 py-3">
         <div className="flex items-center justify-between max-w-lg mx-auto">
-          <div className="flex items-center gap-3">
-            <img src={saranoIcon} alt="sarano.ai" className="w-10 h-10 object-contain" />
-            <div>
-              <p className="font-semibold text-sm text-foreground">{profile?.username || "Utente"}</p>
-              <p className="text-xs text-muted-foreground">{user?.email}</p>
-            </div>
-          </div>
+          <img src={saranoWordmarkIcon} alt="sarano.ai" className="h-8 object-contain" />
           <Button variant="ghost" size="icon" onClick={handleLogout}>
             <LogOut className="w-5 h-5" />
           </Button>
@@ -287,11 +280,6 @@ const Dashboard = () => {
             </div>
           )}
         </section>
-
-        {/* Wordmark Footer */}
-        <div className="flex justify-center pt-4 pb-8">
-          <img src={saranoWordmark} alt="sarano.ai" className="h-4 object-contain opacity-50" />
-        </div>
       </main>
 
       {/* Bottom Navigation */}
