@@ -33,11 +33,10 @@ const buildFirstMessage = (prank: any, greeting: string): string => {
   }
 };
 
-// Build system prompt for VAPI transient assistant - FULLY DYNAMIC
-const buildSystemPrompt = (prank: any): string => {
+// Build system prompt for VAPI transient assistant - uses template from settings
+const buildSystemPrompt = (prank: any, templateIT: string | null, templateEN: string | null): string => {
   const isItalian = prank.language === 'Italiano';
   const isMale = prank.voice_gender === 'male';
-  const greeting = getTimeBasedGreeting(prank.language);
 
   // Personality tone descriptions
   const toneMapIT: Record<string, string> = {
@@ -60,19 +59,24 @@ const buildSystemPrompt = (prank: any): string => {
 
   const toneMap = isItalian ? toneMapIT : toneMapEN;
   const tone = toneMap[prank.personality_tone] || toneMap['friendly'];
-  const lang = isItalian ? 'italiano' : 'English';
   const genderDesc = isItalian 
     ? (isMale ? 'un uomo' : 'una donna')
     : (isMale ? 'a man' : 'a woman');
+  const victimName = `${prank.victim_first_name} ${prank.victim_last_name}`;
 
-  if (isItalian) {
-    return `Sei ${genderDesc} che sta facendo uno scherzo telefonico a ${prank.victim_first_name} ${prank.victim_last_name}.
+  // Use template from settings if available, otherwise use default
+  let template = isItalian ? templateIT : templateEN;
+  
+  // Default templates if not configured
+  if (!template) {
+    if (isItalian) {
+      template = `Sei {{GENDER}} che sta facendo uno scherzo telefonico a {{VICTIM_NAME}}.
 
 SCENARIO DELLO SCHERZO:
-${prank.prank_theme}
+{{PRANK_THEME}}
 
 PERSONALITÀ E TONO:
-${tone}
+{{PERSONALITY_TONE}}
 
 REGOLE FONDAMENTALI:
 1. Parla SOLO in italiano
@@ -87,14 +91,14 @@ REGOLE FONDAMENTALI:
 10. La priorità è mantenere la conversazione credibile e divertente
 
 IMPORTANTE: I primi 3 secondi sono cruciali. La prima impressione determina il successo dello scherzo.`;
-  } else {
-    return `You are ${genderDesc} making a prank phone call to ${prank.victim_first_name} ${prank.victim_last_name}.
+    } else {
+      template = `You are {{GENDER}} making a prank phone call to {{VICTIM_NAME}}.
 
 PRANK SCENARIO:
-${prank.prank_theme}
+{{PRANK_THEME}}
 
 PERSONALITY AND TONE:
-${tone}
+{{PERSONALITY_TONE}}
 
 FUNDAMENTAL RULES:
 1. Speak ONLY in English
@@ -109,7 +113,15 @@ FUNDAMENTAL RULES:
 10. Priority is keeping the conversation believable and entertaining
 
 IMPORTANT: The first 3 seconds are crucial. First impression determines the success of the prank.`;
+    }
   }
+
+  // Replace placeholders
+  return template
+    .replace(/\{\{GENDER\}\}/g, genderDesc)
+    .replace(/\{\{VICTIM_NAME\}\}/g, victimName)
+    .replace(/\{\{PRANK_THEME\}\}/g, prank.prank_theme)
+    .replace(/\{\{PERSONALITY_TONE\}\}/g, tone);
 };
 
 serve(async (req) => {
@@ -186,6 +198,8 @@ serve(async (req) => {
         'vapi_background_sound',
         'vapi_backchanneling',
         'vapi_end_call_message',
+        'vapi_system_prompt_it',
+        'vapi_system_prompt_en',
         'elevenlabs_model', // ElevenLabs TTS model selection
       ]),
       voiceSettingsQuery,
@@ -241,7 +255,9 @@ serve(async (req) => {
 
     // === BUILD DYNAMIC CONTENT ===
     const greeting = getTimeBasedGreeting(prank.language);
-    const systemPrompt = buildSystemPrompt(prank);
+    const systemPromptTemplateIT = settings['vapi_system_prompt_it'] || null;
+    const systemPromptTemplateEN = settings['vapi_system_prompt_en'] || null;
+    const systemPrompt = buildSystemPrompt(prank, systemPromptTemplateIT, systemPromptTemplateEN);
     const firstMessage = buildFirstMessage(prank, greeting);
     const transcriberLanguage = prank.language === 'Italiano' ? 'it' : 'en';
     const endCallMessage = prank.language === 'Italiano' ? 'Arrivederci!' : 'Goodbye!';

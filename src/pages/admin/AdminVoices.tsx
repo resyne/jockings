@@ -170,6 +170,9 @@ interface VapiSettings {
   backgroundSound: string;
   backchannelingEnabled: boolean;
   endCallMessage: string;
+  // System prompt template
+  systemPromptTemplateIT: string;
+  systemPromptTemplateEN: string;
 }
 
 interface VapiPhoneNumber {
@@ -188,6 +191,50 @@ interface VerifiedCallerId {
   is_active: boolean;
   is_default: boolean;
 }
+
+const DEFAULT_SYSTEM_PROMPT_IT = `Sei {{GENDER}} che sta facendo uno scherzo telefonico a {{VICTIM_NAME}}.
+
+SCENARIO DELLO SCHERZO:
+{{PRANK_THEME}}
+
+PERSONALITÀ E TONO:
+{{PERSONALITY_TONE}}
+
+REGOLE FONDAMENTALI:
+1. Parla SOLO in italiano
+2. Risposte BREVI: massimo 1-2 frasi per turno
+3. NON rivelare MAI che è uno scherzo
+4. Quando ti presenti, usa nomi italiani realistici (es. Marco Bianchi, Giulia Ferri) - MAI "Mario Rossi"
+5. Resta SEMPRE nel personaggio, qualunque cosa dica l'interlocutore
+6. Se dicono "numero sbagliato", insisti che riconosci la voce
+7. Se si arrabbiano, mantieni la calma ma resta nel ruolo
+8. Reagisci naturalmente a quello che dice, non seguire uno script rigido
+9. Usa espressioni e modi di dire italiani autentici
+10. La priorità è mantenere la conversazione credibile e divertente
+
+IMPORTANTE: I primi 3 secondi sono cruciali. La prima impressione determina il successo dello scherzo.`;
+
+const DEFAULT_SYSTEM_PROMPT_EN = `You are {{GENDER}} making a prank phone call to {{VICTIM_NAME}}.
+
+PRANK SCENARIO:
+{{PRANK_THEME}}
+
+PERSONALITY AND TONE:
+{{PERSONALITY_TONE}}
+
+FUNDAMENTAL RULES:
+1. Speak ONLY in English
+2. Keep responses SHORT: maximum 1-2 sentences per turn
+3. NEVER reveal that this is a prank
+4. When introducing yourself, use realistic names (e.g., John Smith, Sarah Miller) - NEVER obviously fake names
+5. ALWAYS stay in character, no matter what the person says
+6. If they say "wrong number", insist you recognize their voice
+7. If they get angry, stay calm but remain in character
+8. React naturally to what they say, dont follow a rigid script
+9. Use authentic expressions and idioms
+10. Priority is keeping the conversation believable and entertaining
+
+IMPORTANT: The first 3 seconds are crucial. First impression determines the success of the prank.`;
 
 const DEFAULT_VAPI_SETTINGS: VapiSettings = {
   phoneNumberId: "",
@@ -209,6 +256,8 @@ const DEFAULT_VAPI_SETTINGS: VapiSettings = {
   backgroundSound: "off",
   backchannelingEnabled: false,
   endCallMessage: "Arrivederci!",
+  systemPromptTemplateIT: DEFAULT_SYSTEM_PROMPT_IT,
+  systemPromptTemplateEN: DEFAULT_SYSTEM_PROMPT_EN,
 };
 
 const DEFAULT_GLOBAL_SETTINGS: GlobalVoiceSettings = {
@@ -532,6 +581,8 @@ const AdminVoices = () => {
         "vapi_background_sound",
         "vapi_backchanneling",
         "vapi_end_call_message",
+        "vapi_system_prompt_it",
+        "vapi_system_prompt_en",
         "elevenlabs_model",
       ]);
     
@@ -556,6 +607,8 @@ const AdminVoices = () => {
         if (key === "vapi_background_sound") newSettings.backgroundSound = value;
         if (key === "vapi_backchanneling") newSettings.backchannelingEnabled = value === "true";
         if (key === "vapi_end_call_message") newSettings.endCallMessage = value;
+        if (key === "vapi_system_prompt_it") newSettings.systemPromptTemplateIT = value;
+        if (key === "vapi_system_prompt_en") newSettings.systemPromptTemplateEN = value;
         if (key === "elevenlabs_model") setElevenlabsModel(value);
       });
       
@@ -591,6 +644,8 @@ const AdminVoices = () => {
         { key: "vapi_background_sound", value: vapiSettings.backgroundSound },
         { key: "vapi_backchanneling", value: vapiSettings.backchannelingEnabled.toString() },
         { key: "vapi_end_call_message", value: vapiSettings.endCallMessage },
+        { key: "vapi_system_prompt_it", value: vapiSettings.systemPromptTemplateIT },
+        { key: "vapi_system_prompt_en", value: vapiSettings.systemPromptTemplateEN },
         { key: "elevenlabs_model", value: elevenlabsModel },
       ];
 
@@ -1437,6 +1492,59 @@ const AdminVoices = () => {
                           {vapiSettings.backchannelingEnabled ? "ON" : "OFF"}
                         </Button>
                       </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* System Prompt Section */}
+                <div className="p-4 rounded-lg bg-orange-500/5 border border-orange-500/20 space-y-4">
+                  <h4 className="font-medium flex items-center gap-2 text-orange-600">
+                    <Brain className="w-4 h-4" />
+                    System Prompt Template
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    Template per il system prompt dell'AI. Usa questi placeholder: <code className="bg-muted px-1 rounded">{"{{GENDER}}"}</code> (un uomo/una donna), <code className="bg-muted px-1 rounded">{"{{VICTIM_NAME}}"}</code>, <code className="bg-muted px-1 rounded">{"{{PRANK_THEME}}"}</code>, <code className="bg-muted px-1 rounded">{"{{PERSONALITY_TONE}}"}</code>
+                  </p>
+                  
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        🇮🇹 Template Italiano
+                      </Label>
+                      <Textarea
+                        value={vapiSettings.systemPromptTemplateIT}
+                        onChange={(e) => setVapiSettings({ ...vapiSettings, systemPromptTemplateIT: e.target.value })}
+                        placeholder="System prompt per chiamate in italiano..."
+                        rows={12}
+                        className="font-mono text-xs"
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setVapiSettings({ ...vapiSettings, systemPromptTemplateIT: DEFAULT_SYSTEM_PROMPT_IT })}
+                      >
+                        Ripristina Default
+                      </Button>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        🇬🇧 Template English
+                      </Label>
+                      <Textarea
+                        value={vapiSettings.systemPromptTemplateEN}
+                        onChange={(e) => setVapiSettings({ ...vapiSettings, systemPromptTemplateEN: e.target.value })}
+                        placeholder="System prompt for English calls..."
+                        rows={12}
+                        className="font-mono text-xs"
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setVapiSettings({ ...vapiSettings, systemPromptTemplateEN: DEFAULT_SYSTEM_PROMPT_EN })}
+                      >
+                        Restore Default
+                      </Button>
                     </div>
                   </div>
                 </div>
