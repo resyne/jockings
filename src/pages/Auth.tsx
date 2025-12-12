@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Phone, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
+import saranoIcon from "@/assets/sarano-icon.jpg";
 
 const emailSchema = z.string().email("Email non valida");
 const passwordSchema = z.string().min(6, "La password deve avere almeno 6 caratteri");
@@ -130,10 +131,10 @@ const Auth = () => {
 
       {/* Logo */}
       <div className="mb-8 text-center animate-slide-up">
-        <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl gradient-primary shadow-glow mb-4">
-          <Phone className="w-10 h-10 text-primary-foreground" />
+        <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-background-level-1 shadow-glow mb-4 overflow-hidden">
+          <img src={saranoIcon} alt="sarano.ai" className="w-full h-full object-cover" />
         </div>
-        <h1 className="text-3xl font-bold gradient-text">Prank.AI</h1>
+        <h1 className="text-3xl font-bold text-highlight">sarano.ai</h1>
         <p className="text-muted-foreground mt-1">Scherzi telefonici con AI</p>
       </div>
 
