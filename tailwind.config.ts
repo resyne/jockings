@@ -14,16 +14,21 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['JetBrains Mono', 'monospace'],
+        sans: ['Inter', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       fontSize: {
-        'h1': ['28px', { lineHeight: '120%', letterSpacing: '-0.5%', fontWeight: '800' }],
-        'h2': ['22px', { lineHeight: '130%', letterSpacing: '-0.25%', fontWeight: '700' }],
-        'h3': ['18px', { lineHeight: '140%', fontWeight: '500' }],
-        'body': ['16px', { lineHeight: '150%', fontWeight: '400' }],
-        'small': ['14px', { lineHeight: '150%', fontWeight: '400' }],
-        'btn': ['15px', { lineHeight: '100%', letterSpacing: '2%', fontWeight: '600' }],
+        // Section titles - Inter Semibold
+        'section': ['18px', { lineHeight: '130%', fontWeight: '600' }],
+        'section-lg': ['20px', { lineHeight: '130%', fontWeight: '600' }],
+        // Body - Inter Regular
+        'body': ['15px', { lineHeight: '150%', fontWeight: '400' }],
+        'body-lg': ['16px', { lineHeight: '150%', fontWeight: '400' }],
+        // Metadata - JetBrains Mono Regular
+        'meta': ['12px', { lineHeight: '140%', fontWeight: '400' }],
+        'meta-lg': ['13px', { lineHeight: '140%', fontWeight: '400' }],
+        // Badge/Label - JetBrains Mono Medium
+        'badge': ['12px', { lineHeight: '100%', letterSpacing: '0.02em', fontWeight: '500' }],
       },
       colors: {
         border: "hsl(var(--border))",
