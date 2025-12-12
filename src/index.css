@@ -26,8 +26,8 @@
     --muted: 0 0% 12%;               /* #1E1E1E - Level 2 / Hover */
     --muted-foreground: 0 0% 82%;    /* #D2D2D2 - Secondary Text */
     
-    --accent: 205 100% 63%;          /* #42ACFF - Sky Pop Blue (Accent) */
-    --accent-foreground: 0 0% 100%;  /* White text on blue */
+    --accent: 350 100% 62%;          /* #FF3B5C - Punch Red (Accent) */
+    --accent-foreground: 0 0% 100%;  /* White text on red */
     
     --destructive: 350 100% 62%;     /* #FF3B5C - Error (same as primary) */
     --destructive-foreground: 0 0% 100%;
