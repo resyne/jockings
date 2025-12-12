@@ -131,30 +131,30 @@ const Auth = () => {
       </div>
 
       {/* Logo */}
-      <div className="mb-8 text-center animate-slide-up">
-        <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl shadow-card mb-4 overflow-hidden bg-card">
-          <img src={saranoIcon} alt="sarano.ai" className="w-16 h-16 object-contain" />
+      <div className="mb-4 sm:mb-8 text-center animate-slide-up">
+        <div className="inline-flex items-center justify-center w-14 h-14 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl shadow-card mb-2 sm:mb-4 overflow-hidden bg-card">
+          <img src={saranoIcon} alt="sarano.ai" className="w-10 h-10 sm:w-16 sm:h-16 object-contain" />
         </div>
-        <img src={saranoWordmark} alt="sarano.ai" className="h-8 mx-auto" />
-        <p className="text-muted-foreground mt-2">Scherzi telefonici con AI</p>
+        <img src={saranoWordmark} alt="sarano.ai" className="h-6 sm:h-8 mx-auto" />
+        <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">Scherzi telefonici con AI</p>
       </div>
 
       <Card className="w-full max-w-md shadow-card animate-slide-up" style={{ animationDelay: "0.1s" }}>
-        <CardHeader className="text-center pb-4">
-          <CardTitle className="text-2xl">
+        <CardHeader className="text-center pb-2 sm:pb-4 pt-4 sm:pt-6">
+          <CardTitle className="text-xl sm:text-2xl">
             {mode === "login" && "Bentornato! 👋"}
             {mode === "signup" && "Crea il tuo account 🎉"}
             {mode === "forgot" && "Recupera password 🔑"}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-sm sm:text-base">
             {mode === "login" && "Accedi per iniziare a creare scherzi"}
             {mode === "signup" && "Registrati per iniziare a divertirti"}
             {mode === "forgot" && "Ti invieremo un link per resettare la password"}
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-4">
-          <form onSubmit={handleEmailAuth} className="space-y-4">
+        <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6">
+          <form onSubmit={handleEmailAuth} className="space-y-3 sm:space-y-4">
             {mode === "signup" && (
               <div className="space-y-2">
                 <Label htmlFor="username">Username</Label>
@@ -166,7 +166,7 @@ const Auth = () => {
                     placeholder="Il tuo nickname"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="pl-10 h-12"
+                    className="pl-10 h-10 sm:h-12"
                   />
                 </div>
               </div>
@@ -182,7 +182,7 @@ const Auth = () => {
                   placeholder="la.tua@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 h-12"
+                  className="pl-10 h-10 sm:h-12"
                   required
                 />
               </div>
@@ -199,7 +199,7 @@ const Auth = () => {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10 h-12"
+                    className="pl-10 pr-10 h-10 sm:h-12"
                     required
                   />
                   <button
@@ -213,7 +213,7 @@ const Auth = () => {
               </div>
             )}
 
-            <Button type="submit" className="w-full h-12 text-lg bg-primary text-primary-foreground" disabled={loading}>
+            <Button type="submit" className="w-full h-10 sm:h-12 text-base sm:text-lg bg-primary text-primary-foreground" disabled={loading}>
               {loading ? (
                 <span className="animate-pulse">Caricamento...</span>
               ) : (
@@ -240,7 +240,7 @@ const Auth = () => {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-12"
+                className="w-full h-10 sm:h-12"
                 onClick={handleGoogleAuth}
               >
                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
