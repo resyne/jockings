@@ -110,6 +110,7 @@ const CreatePrank = () => {
     const firstNameParam = searchParams.get("firstName");
     const lastNameParam = searchParams.get("lastName");
     const themeParam = searchParams.get("theme");
+    const addThemeParam = searchParams.get("addTheme");
     
     if (repeatId && user) {
       loadPrankData(repeatId);
@@ -117,7 +118,12 @@ const CreatePrank = () => {
       // Pre-fill from recent victim or quick call
       if (firstNameParam) setVictimFirstName(firstNameParam);
       if (lastNameParam) setVictimLastName(lastNameParam);
-      if (themeParam) {
+      
+      // Handle theme: if addTheme exists, append it to existing theme
+      if (themeParam && addThemeParam) {
+        setPrankTheme(`${themeParam}. ${addThemeParam}`);
+        setSelectedPreset("custom");
+      } else if (themeParam) {
         setPrankTheme(themeParam);
         setSelectedPreset("custom");
       }

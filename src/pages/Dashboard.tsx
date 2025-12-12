@@ -345,14 +345,14 @@ const Dashboard = () => {
             </Card>
           ) : (
             <div className="space-y-3">
-              {pranks.slice(0, 5).map((prank) => (
+              {pranks.slice(0, 5).map((prank, index) => (
                 <PrankCard
                   key={prank.id}
                   prank={prank}
                   getStatusColor={getStatusColor}
                   getStatusLabel={getStatusLabel}
                   onRepeat={() => navigate(`/create-prank?repeat=${prank.id}`)}
-                  onQuickCall={(theme) => navigate(`/create-prank?phone=${encodeURIComponent(prank.victim_phone)}&firstName=${encodeURIComponent(prank.victim_first_name)}&lastName=${encodeURIComponent(prank.victim_last_name)}&theme=${encodeURIComponent(theme)}`)}
+                  onQuickCall={index === 0 ? (theme) => navigate(`/create-prank?phone=${encodeURIComponent(prank.victim_phone)}&firstName=${encodeURIComponent(prank.victim_first_name)}&lastName=${encodeURIComponent(prank.victim_last_name)}&theme=${encodeURIComponent(prank.prank_theme)}&addTheme=${encodeURIComponent(theme)}`) : undefined}
                   onCancel={() => handleCancelPrank(prank.id)}
                 />
               ))}
