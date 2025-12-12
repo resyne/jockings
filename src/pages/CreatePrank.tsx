@@ -106,8 +106,25 @@ const CreatePrank = () => {
 
   useEffect(() => {
     const repeatId = searchParams.get("repeat");
+    const phoneParam = searchParams.get("phone");
+    const firstNameParam = searchParams.get("firstName");
+    const lastNameParam = searchParams.get("lastName");
+    
     if (repeatId && user) {
       loadPrankData(repeatId);
+    } else if (phoneParam) {
+      // Pre-fill from recent victim
+      if (firstNameParam) setVictimFirstName(firstNameParam);
+      if (lastNameParam) setVictimLastName(lastNameParam);
+      
+      // Parse phone number to extract country code
+      const matchedCountry = COUNTRY_CODES.find(c => phoneParam.startsWith(c.code));
+      if (matchedCountry) {
+        setPhoneCountryCode(matchedCountry.code);
+        setVictimPhone(phoneParam.replace(matchedCountry.code, "").trim());
+      } else {
+        setVictimPhone(phoneParam);
+      }
     }
   }, [searchParams, user]);
 
