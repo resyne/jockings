@@ -30,17 +30,17 @@ interface Prank {
   scheduled_at: string | null;
 }
 
-interface RecentVictim {
+interface Victim {
   phone: string;
   firstName: string;
   lastName: string;
-  lastPrankDate: string;
 }
 
 const Dashboard = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [pranks, setPranks] = useState<Prank[]>([]);
+  const [victims, setVictims] = useState<Victim[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -67,6 +67,7 @@ const Dashboard = () => {
     if (user) {
       fetchProfile();
       fetchPranks();
+      fetchVictims();
 
       // Realtime subscription for pranks updates
       const channel = supabase
@@ -132,6 +133,34 @@ const Dashboard = () => {
       setPranks(data || []);
     }
     setLoading(false);
+  };
+
+  const fetchVictims = async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from("pranks")
+      .select("victim_first_name, victim_last_name, victim_phone")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+    
+    if (error) {
+      console.error("Error fetching victims:", error);
+    } else if (data) {
+      // Extract unique victims by phone
+      const uniqueVictims: Victim[] = [];
+      const seenPhones = new Set<string>();
+      for (const prank of data) {
+        if (!seenPhones.has(prank.victim_phone)) {
+          seenPhones.add(prank.victim_phone);
+          uniqueVictims.push({
+            phone: prank.victim_phone,
+            firstName: prank.victim_first_name,
+            lastName: prank.victim_last_name
+          });
+        }
+      }
+      setVictims(uniqueVictims);
+    }
   };
 
   const handleCancelPrank = async (prankId: string) => {
@@ -263,50 +292,31 @@ const Dashboard = () => {
           </Button>
         </div>
 
-        {/* Recent Victims */}
-        {(() => {
-          const recentVictims: RecentVictim[] = [];
-          const seenPhones = new Set<string>();
-          for (const prank of pranks) {
-            if (!seenPhones.has(prank.victim_phone)) {
-              seenPhones.add(prank.victim_phone);
-              recentVictims.push({
-                phone: prank.victim_phone,
-                firstName: prank.victim_first_name,
-                lastName: prank.victim_last_name,
-                lastPrankDate: prank.created_at
-              });
-            }
-            if (recentVictims.length >= 4) break;
-          }
-          
-          if (recentVictims.length === 0) return null;
-          
-          return (
-            <section className="animate-slide-up" style={{ animationDelay: "0.2s" }}>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-bold text-foreground">Vittime Recenti</h2>
-              </div>
-              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                {recentVictims.map((victim) => (
-                  <Card 
-                    key={victim.phone} 
-                    className="min-w-[120px] flex-shrink-0 cursor-pointer hover:bg-muted transition-all shadow-card"
-                    onClick={() => navigate(`/create-prank?phone=${encodeURIComponent(victim.phone)}&firstName=${encodeURIComponent(victim.firstName)}&lastName=${encodeURIComponent(victim.lastName)}`)}
-                  >
-                    <CardContent className="p-4 text-center">
-                      <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-secondary/20 flex items-center justify-center">
-                        <User className="w-6 h-6 text-secondary" />
-                      </div>
-                      <p className="font-semibold text-sm text-foreground truncate">{victim.firstName}</p>
-                      <p className="text-xs text-muted-foreground truncate">{victim.lastName}</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </section>
-          );
-        })()}
+        {/* Victims */}
+        {victims.length > 0 && (
+          <section className="animate-slide-up" style={{ animationDelay: "0.2s" }}>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-bold text-foreground">Vittime</h2>
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
+              {victims.map((victim) => (
+                <Card 
+                  key={victim.phone} 
+                  className="min-w-[120px] flex-shrink-0 cursor-pointer hover:bg-muted transition-all shadow-card"
+                  onClick={() => navigate(`/create-prank?phone=${encodeURIComponent(victim.phone)}&firstName=${encodeURIComponent(victim.firstName)}&lastName=${encodeURIComponent(victim.lastName)}`)}
+                >
+                  <CardContent className="p-4 text-center">
+                    <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-secondary/20 flex items-center justify-center">
+                      <User className="w-6 h-6 text-secondary" />
+                    </div>
+                    <p className="font-semibold text-sm text-foreground truncate">{victim.firstName}</p>
+                    <p className="text-xs text-muted-foreground truncate">{victim.lastName}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Recent Pranks */}
         <section className="animate-slide-up" style={{ animationDelay: "0.25s" }}>
