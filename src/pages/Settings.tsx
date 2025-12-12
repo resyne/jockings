@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, User, Mail, Coins, LogOut, Save } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+import saranoIcon from "@/assets/sarano-icon.png";
 
 interface Profile {
   username: string | null;
@@ -80,6 +81,7 @@ const Settings = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
+          <img src={saranoIcon} alt="sarano.ai" className="w-8 h-8 object-contain" />
           <div>
             <h1 className="font-bold">Impostazioni</h1>
             <p className="text-xs text-muted-foreground">Gestisci il tuo account</p>

@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 import saranoIcon from "@/assets/sarano-icon.png";
+import saranoWordmark from "@/assets/sarano-wordmark.png";
 
 const emailSchema = z.string().email("Email non valida");
 const passwordSchema = z.string().min(6, "La password deve avere almeno 6 caratteri");
@@ -131,11 +132,11 @@ const Auth = () => {
 
       {/* Logo */}
       <div className="mb-8 text-center animate-slide-up">
-        <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl shadow-card mb-4 overflow-hidden">
-          <img src={saranoIcon} alt="sarano.ai" className="w-full h-full object-cover" />
+        <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl shadow-card mb-4 overflow-hidden bg-card">
+          <img src={saranoIcon} alt="sarano.ai" className="w-16 h-16 object-contain" />
         </div>
-        <h1 className="text-3xl font-bold text-foreground">sarano.ai</h1>
-        <p className="text-muted-foreground mt-1">Scherzi telefonici con AI</p>
+        <img src={saranoWordmark} alt="sarano.ai" className="h-8 mx-auto" />
+        <p className="text-muted-foreground mt-2">Scherzi telefonici con AI</p>
       </div>
 
       <Card className="w-full max-w-md shadow-card animate-slide-up" style={{ animationDelay: "0.1s" }}>

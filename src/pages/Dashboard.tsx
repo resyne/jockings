@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Phone, Plus, History, Settings, LogOut, Coins, User } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import PrankCard from "@/components/PrankCard";
+import saranoIcon from "@/assets/sarano-icon.png";
 
 interface Profile {
   username: string | null;
@@ -194,12 +195,7 @@ const Dashboard = () => {
       <header className="sticky top-0 z-50 glass border-b border-border px-4 py-3">
         <div className="flex items-center justify-between max-w-lg mx-auto">
           <div className="flex items-center gap-3">
-            <Avatar className="w-10 h-10 border-2 border-primary/20">
-              <AvatarImage src={profile?.avatar_url || undefined} />
-              <AvatarFallback className="bg-primary text-primary-foreground">
-                {profile?.username?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
-              </AvatarFallback>
-            </Avatar>
+            <img src={saranoIcon} alt="sarano.ai" className="w-10 h-10 object-contain" />
             <div>
               <p className="font-semibold text-sm text-foreground">{profile?.username || "Utente"}</p>
               <p className="text-xs text-muted-foreground">{user?.email}</p>
