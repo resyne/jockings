@@ -86,28 +86,60 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Inter', sans-serif;
   }
 
   /* Typography Scale */
+  h1, h2, h3 {
+    @apply font-semibold text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+
   h1 {
-    @apply text-[28px] font-extrabold leading-[120%] tracking-tight text-foreground;
+    font-size: 20px;
+    line-height: 130%;
   }
 
   h2 {
-    @apply text-[22px] font-bold leading-[130%] tracking-tight text-foreground;
+    font-size: 18px;
+    line-height: 130%;
   }
 
   h3 {
-    @apply text-[18px] font-medium leading-[140%] text-foreground;
+    font-size: 16px;
+    line-height: 140%;
+    font-weight: 500;
   }
 
   p {
-    @apply text-[16px] font-normal leading-[150%] text-muted-foreground;
+    font-size: 15px;
+    line-height: 150%;
+    @apply text-muted-foreground;
   }
 
   small, .text-small {
-    @apply text-[14px] font-normal leading-[150%] text-muted-foreground;
+    font-size: 12px;
+    line-height: 140%;
+    font-family: 'JetBrains Mono', monospace;
+    @apply text-muted-foreground;
+  }
+
+  /* Metadata text */
+  .text-meta {
+    font-size: 12px;
+    line-height: 140%;
+    font-family: 'JetBrains Mono', monospace;
+    @apply text-muted-foreground;
+  }
+
+  /* Badge/Label text */
+  .text-badge {
+    font-size: 12px;
+    line-height: 100%;
+    letter-spacing: 0.02em;
+    font-weight: 500;
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
   }
 }
 
