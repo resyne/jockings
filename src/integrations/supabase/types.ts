@@ -162,8 +162,11 @@ export type Database = {
           updated_at: string
           user_id: string
           victim_first_name: string
+          victim_first_name_encrypted: string | null
           victim_last_name: string
+          victim_last_name_encrypted: string | null
           victim_phone: string
+          victim_phone_encrypted: string | null
           voice_gender: string
           voice_provider: string
         }
@@ -191,8 +194,11 @@ export type Database = {
           updated_at?: string
           user_id: string
           victim_first_name: string
+          victim_first_name_encrypted?: string | null
           victim_last_name: string
+          victim_last_name_encrypted?: string | null
           victim_phone: string
+          victim_phone_encrypted?: string | null
           voice_gender: string
           voice_provider?: string
         }
@@ -220,8 +226,11 @@ export type Database = {
           updated_at?: string
           user_id?: string
           victim_first_name?: string
+          victim_first_name_encrypted?: string | null
           victim_last_name?: string
+          victim_last_name_encrypted?: string | null
           victim_phone?: string
+          victim_phone_encrypted?: string | null
           voice_gender?: string
           voice_provider?: string
         }
@@ -451,6 +460,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      decrypt_victim_data: { Args: { encrypted_text: string }; Returns: string }
+      encrypt_victim_data: { Args: { plain_text: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
