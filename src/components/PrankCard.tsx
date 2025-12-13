@@ -33,7 +33,6 @@ interface PrankCardProps {
 const QUICK_PROMPTS = [
   { label: "📞 È caduta la linea!", theme: "Dici che è caduta la linea e che stavi dicendo qualcosa di importante" },
   { label: "😤 Perché hai staccato?", theme: "Chiedi perché ha staccato improvvisamente, sembri un po' offeso" },
-  { label: "🔄 Richiamata urgente", theme: "Fingi di essere della stessa azienda e dici che devi riprendere la conversazione precedente" },
 ];
 
 const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, onQuickCall, onCancel, showDetails = false }: PrankCardProps) => {
