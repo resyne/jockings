@@ -2,14 +2,58 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Headphones } from "lucide-react";
 import saranoWordmarkIcon from "@/assets/sarano-wordmark-icon.png";
+import saranoIcon from "@/assets/sarano-icon.png";
+
+const FloatingIcon = ({ 
+  className, 
+  style 
+}: { 
+  className?: string; 
+  style?: React.CSSProperties;
+}) => (
+  <img 
+    src={saranoIcon} 
+    alt="" 
+    className={`absolute opacity-[0.03] pointer-events-none ${className}`}
+    style={style}
+  />
+);
 
 const Inizia = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
+      {/* Floating Background Icons */}
+      <div className="absolute inset-0 pointer-events-none">
+        <FloatingIcon 
+          className="w-24 h-24 animate-float" 
+          style={{ top: '10%', left: '5%', animationDelay: '0s' }} 
+        />
+        <FloatingIcon 
+          className="w-16 h-16 animate-float" 
+          style={{ top: '20%', right: '10%', animationDelay: '1s' }} 
+        />
+        <FloatingIcon 
+          className="w-20 h-20 animate-float" 
+          style={{ top: '50%', left: '8%', animationDelay: '2s' }} 
+        />
+        <FloatingIcon 
+          className="w-12 h-12 animate-float" 
+          style={{ top: '70%', right: '15%', animationDelay: '0.5s' }} 
+        />
+        <FloatingIcon 
+          className="w-14 h-14 animate-float" 
+          style={{ top: '80%', left: '20%', animationDelay: '1.5s' }} 
+        />
+        <FloatingIcon 
+          className="w-18 h-18 animate-float" 
+          style={{ top: '30%', right: '5%', animationDelay: '2.5s' }} 
+        />
+      </div>
+
       {/* Header */}
-      <header className="p-4 flex justify-center">
+      <header className="p-4 flex justify-center relative z-10">
         <img 
           src={saranoWordmarkIcon} 
           alt="sarano.ai" 
@@ -18,7 +62,7 @@ const Inizia = () => {
       </header>
 
       {/* Hero Section */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 text-center">
+      <main className="flex-1 flex flex-col items-center justify-center px-6 text-center relative z-10">
         {/* Section Label */}
         <span className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-6">
           Si comincia.
