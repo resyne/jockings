@@ -14,7 +14,7 @@ const FloatingIcon = ({
   <img 
     src={saranoIcon} 
     alt="" 
-    className={`absolute opacity-[0.03] pointer-events-none ${className}`}
+    className={`absolute opacity-[0.06] pointer-events-none ${className}`}
     style={style}
   />
 );
@@ -27,28 +27,52 @@ const Inizia = () => {
       {/* Floating Background Icons */}
       <div className="absolute inset-0 pointer-events-none">
         <FloatingIcon 
-          className="w-24 h-24 animate-float" 
-          style={{ top: '10%', left: '5%', animationDelay: '0s' }} 
-        />
-        <FloatingIcon 
-          className="w-16 h-16 animate-float" 
-          style={{ top: '20%', right: '10%', animationDelay: '1s' }} 
-        />
-        <FloatingIcon 
           className="w-20 h-20 animate-float" 
-          style={{ top: '50%', left: '8%', animationDelay: '2s' }} 
-        />
-        <FloatingIcon 
-          className="w-12 h-12 animate-float" 
-          style={{ top: '70%', right: '15%', animationDelay: '0.5s' }} 
+          style={{ top: '5%', left: '3%', animationDelay: '0s' }} 
         />
         <FloatingIcon 
           className="w-14 h-14 animate-float" 
-          style={{ top: '80%', left: '20%', animationDelay: '1.5s' }} 
+          style={{ top: '8%', right: '8%', animationDelay: '1.2s' }} 
+        />
+        <FloatingIcon 
+          className="w-10 h-10 animate-float" 
+          style={{ top: '15%', left: '25%', animationDelay: '0.5s' }} 
+        />
+        <FloatingIcon 
+          className="w-16 h-16 animate-float" 
+          style={{ top: '25%', right: '20%', animationDelay: '2s' }} 
+        />
+        <FloatingIcon 
+          className="w-12 h-12 animate-float" 
+          style={{ top: '35%', left: '5%', animationDelay: '1.8s' }} 
         />
         <FloatingIcon 
           className="w-18 h-18 animate-float" 
-          style={{ top: '30%', right: '5%', animationDelay: '2.5s' }} 
+          style={{ top: '40%', right: '3%', animationDelay: '0.8s' }} 
+        />
+        <FloatingIcon 
+          className="w-8 h-8 animate-float" 
+          style={{ top: '55%', left: '15%', animationDelay: '2.5s' }} 
+        />
+        <FloatingIcon 
+          className="w-14 h-14 animate-float" 
+          style={{ top: '60%', right: '12%', animationDelay: '1s' }} 
+        />
+        <FloatingIcon 
+          className="w-10 h-10 animate-float" 
+          style={{ top: '70%', left: '8%', animationDelay: '1.5s' }} 
+        />
+        <FloatingIcon 
+          className="w-16 h-16 animate-float" 
+          style={{ top: '75%', right: '5%', animationDelay: '0.3s' }} 
+        />
+        <FloatingIcon 
+          className="w-12 h-12 animate-float" 
+          style={{ top: '85%', left: '20%', animationDelay: '2.2s' }} 
+        />
+        <FloatingIcon 
+          className="w-10 h-10 animate-float" 
+          style={{ top: '90%', right: '25%', animationDelay: '1.7s' }} 
         />
       </div>
 
