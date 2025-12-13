@@ -9,11 +9,11 @@ const Inizia = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="p-6">
+      <header className="p-4 flex justify-center">
         <img 
           src={saranoWordmarkIcon} 
           alt="sarano.ai" 
-          className="h-6 animate-bounce-in"
+          className="h-8 animate-bounce-in"
         />
       </header>
 
