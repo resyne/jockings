@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Inizia from "./pages/Inizia";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import CreatePrank from "./pages/CreatePrank";
@@ -26,7 +27,8 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Navigate to="/auth" replace />} />
+          <Route path="/" element={<Navigate to="/inizia" replace />} />
+          <Route path="/inizia" element={<Inizia />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/create-prank" element={<CreatePrank />} />
