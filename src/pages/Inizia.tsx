@@ -2,82 +2,14 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Headphones } from "lucide-react";
 import saranoWordmarkIcon from "@/assets/sarano-wordmark-icon.png";
-import saranoIcon from "@/assets/sarano-icon.png";
-
-const FloatingIcon = ({ 
-  className, 
-  style 
-}: { 
-  className?: string; 
-  style?: React.CSSProperties;
-}) => (
-  <img 
-    src={saranoIcon} 
-    alt="" 
-    className={`absolute opacity-[0.06] pointer-events-none ${className}`}
-    style={style}
-  />
-);
 
 const Inizia = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
-      {/* Floating Background Icons */}
-      <div className="absolute inset-0 pointer-events-none">
-        <FloatingIcon 
-          className="w-20 h-20 animate-float" 
-          style={{ top: '5%', left: '3%', animationDelay: '0s' }} 
-        />
-        <FloatingIcon 
-          className="w-14 h-14 animate-float" 
-          style={{ top: '8%', right: '8%', animationDelay: '1.2s' }} 
-        />
-        <FloatingIcon 
-          className="w-10 h-10 animate-float" 
-          style={{ top: '15%', left: '25%', animationDelay: '0.5s' }} 
-        />
-        <FloatingIcon 
-          className="w-16 h-16 animate-float" 
-          style={{ top: '25%', right: '20%', animationDelay: '2s' }} 
-        />
-        <FloatingIcon 
-          className="w-12 h-12 animate-float" 
-          style={{ top: '35%', left: '5%', animationDelay: '1.8s' }} 
-        />
-        <FloatingIcon 
-          className="w-18 h-18 animate-float" 
-          style={{ top: '40%', right: '3%', animationDelay: '0.8s' }} 
-        />
-        <FloatingIcon 
-          className="w-8 h-8 animate-float" 
-          style={{ top: '55%', left: '15%', animationDelay: '2.5s' }} 
-        />
-        <FloatingIcon 
-          className="w-14 h-14 animate-float" 
-          style={{ top: '60%', right: '12%', animationDelay: '1s' }} 
-        />
-        <FloatingIcon 
-          className="w-10 h-10 animate-float" 
-          style={{ top: '70%', left: '8%', animationDelay: '1.5s' }} 
-        />
-        <FloatingIcon 
-          className="w-16 h-16 animate-float" 
-          style={{ top: '75%', right: '5%', animationDelay: '0.3s' }} 
-        />
-        <FloatingIcon 
-          className="w-12 h-12 animate-float" 
-          style={{ top: '85%', left: '20%', animationDelay: '2.2s' }} 
-        />
-        <FloatingIcon 
-          className="w-10 h-10 animate-float" 
-          style={{ top: '90%', right: '25%', animationDelay: '1.7s' }} 
-        />
-      </div>
-
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="p-4 flex justify-center relative z-10">
+      <header className="p-4 flex justify-center">
         <img 
           src={saranoWordmarkIcon} 
           alt="sarano.ai" 
@@ -86,7 +18,7 @@ const Inizia = () => {
       </header>
 
       {/* Hero Section */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 text-center relative z-10">
+      <main className="flex-1 flex flex-col items-center justify-center px-6 text-center">
         {/* Section Label */}
         <span className="text-xs font-mono uppercase tracking-widest text-secondary mb-6">
           Si comincia.
