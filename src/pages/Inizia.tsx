@@ -88,7 +88,7 @@ const Inizia = () => {
       {/* Hero Section */}
       <main className="flex-1 flex flex-col items-center justify-center px-6 text-center relative z-10">
         {/* Section Label */}
-        <span className="text-xs font-mono uppercase tracking-widest text-info mb-6">
+        <span className="text-xs font-mono uppercase tracking-widest text-secondary mb-6">
           Si comincia.
         </span>
 
@@ -99,7 +99,7 @@ const Inizia = () => {
 
         {/* H2 Subtitle */}
         <h2 className="text-xl md:text-2xl font-medium text-secondary-foreground mb-6">
-          Telefonate <span className="text-info">AI</span> personalizzate per ridere forte.
+          Telefonate <span className="text-secondary">AI</span> personalizzate per ridere forte.
         </h2>
 
         {/* Supporting Line */}
@@ -125,7 +125,7 @@ const Inizia = () => {
           </Button>
 
           {/* Micro-copy */}
-          <p className="text-xs text-info flex items-center gap-1.5">
+          <p className="text-xs text-secondary flex items-center gap-1.5">
             <Headphones className="w-3.5 h-3.5" />
             Prima lo provi su di te. Gratis.
           </p>
