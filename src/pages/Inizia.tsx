@@ -1,24 +1,26 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Headphones } from "lucide-react";
-import saranoLogoPayoff from "@/assets/sarano-logo-payoff.png";
+import saranoWordmarkIcon from "@/assets/sarano-wordmark-icon.png";
 
 const Inizia = () => {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Hero Section */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 text-center -mt-16 md:-mt-20">
-        {/* Logo with payoff */}
+      {/* Header */}
+      <header className="p-4 flex justify-center">
         <img 
-          src={saranoLogoPayoff} 
-          alt="sarano.ai - Laugh first. Explain later." 
-          className="h-16 md:h-20 mb-10 animate-bounce-in"
+          src={saranoWordmarkIcon} 
+          alt="sarano.ai" 
+          className="h-8 animate-bounce-in"
         />
+      </header>
 
+      {/* Hero Section */}
+      <main className="flex-1 flex flex-col items-center justify-center px-6 text-center">
         {/* Section Label */}
-        <span className="text-xs font-mono uppercase tracking-widest text-muted-foreground/50 mb-6">
+        <span className="text-xs font-mono uppercase tracking-widest text-secondary mb-6">
           Si comincia.
         </span>
 
@@ -28,19 +30,19 @@ const Inizia = () => {
         </h1>
 
         {/* H2 Subtitle */}
-        <h2 className="text-xl md:text-2xl font-medium text-secondary-foreground/80 mb-6">
-          Telefonate <span className="text-secondary/90">AI</span> personalizzate per ridere forte.
+        <h2 className="text-xl md:text-2xl font-medium text-secondary-foreground mb-6">
+          Telefonate <span className="text-secondary">AI</span> personalizzate per ridere forte.
         </h2>
 
         {/* Supporting Line */}
-        <p className="text-base text-muted-foreground/60 mb-2 max-w-sm">
+        <p className="text-base text-muted-foreground mb-2 max-w-sm">
           Inserisci nome, cognome e contesto.
           <br />
           Poi goditi la scena.
         </p>
 
         {/* Micro-wink */}
-        <p className="text-sm text-muted-foreground/40 italic mb-10 max-w-xs">
+        <p className="text-sm text-muted-foreground/70 italic mb-10 max-w-xs">
           Preferibilmente a qualcuno che ti inviterà ancora a cena.
         </p>
 
