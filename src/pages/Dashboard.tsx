@@ -296,7 +296,7 @@ const Dashboard = () => {
               <h2 className="text-lg font-bold text-foreground">Vittime</h2>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
-              {victims.map((victim) => (
+              {victims.map((victim, index) => (
                 <Card 
                   key={victim.phone} 
                   className="min-w-[120px] flex-shrink-0 cursor-pointer hover:bg-muted transition-all shadow-card"
@@ -306,8 +306,8 @@ const Dashboard = () => {
                     <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-secondary/20 flex items-center justify-center">
                       <User className="w-6 h-6 text-secondary" />
                     </div>
-                    <p className="font-semibold text-sm text-foreground truncate">{victim.firstName}</p>
-                    <p className="text-xs text-muted-foreground truncate">{victim.lastName}</p>
+                    <p className="font-semibold text-sm text-foreground truncate">Vittima {index + 1}</p>
+                    <p className="text-xs text-muted-foreground truncate">Tocca per richiamare</p>
                   </CardContent>
                 </Card>
               ))}
