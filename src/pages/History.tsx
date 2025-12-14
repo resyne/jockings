@@ -51,14 +51,13 @@ const History = () => {
 
   const fetchPranks = async (userId: string) => {
     const { data, error } = await supabase
-      .from("pranks_decrypted")
-      .select("id, victim_first_name, victim_last_name, prank_theme, call_status, recording_url, created_at")
-      .eq("user_id", userId)
+      .rpc("get_user_pranks_decrypted")
       .order("created_at", { ascending: false });
 
     if (!error && data) {
-      setPranks(data);
-      setFilteredPranks(data);
+      const rows = data as Prank[];
+      setPranks(rows);
+      setFilteredPranks(rows);
     }
     setLoading(false);
   };
