@@ -134,7 +134,7 @@ const Auth = () => {
         <img 
           src={saranoLogoPayoff} 
           alt="sarano.ai - Laugh first. Explain later." 
-          className="h-10 sm:h-12 mx-auto mb-2"
+          className="h-12 sm:h-16 mx-auto mb-2"
         />
         <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">Scherzi telefonici con AI</p>
       </div>

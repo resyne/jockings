@@ -14,7 +14,7 @@ const Inizia = () => {
         <img 
           src={saranoLogoPayoff} 
           alt="sarano.ai - Laugh first. Explain later." 
-          className="h-10 md:h-12 mb-10 animate-bounce-in"
+          className="h-16 md:h-20 mb-10 animate-bounce-in"
         />
 
         {/* Section Label */}
