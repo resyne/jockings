@@ -235,9 +235,9 @@ serve(async (req) => {
 
     console.log('=== PRE-GENERATING AUDIO BEFORE CALL ===');
 
-    // Run all initial queries in parallel
+    // Run all initial queries in parallel using decrypted view for prank data
     const [prankResult, phoneNumbersResult, callerIdsResult, aiModelResult, globalVoiceSettingsResult] = await Promise.all([
-      supabase.from('pranks').select('*').eq('id', prankId).single(),
+      supabase.from('pranks_decrypted').select('*').eq('id', prankId).single(),
       supabase.from('twilio_phone_numbers').select('*').eq('is_active', true),
       supabase.from('verified_caller_ids').select('*').eq('is_active', true).order('is_default', { ascending: false }),
       supabase.from('app_settings').select('value').eq('key', 'ai_model').single(),

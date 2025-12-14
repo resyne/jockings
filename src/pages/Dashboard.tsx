@@ -121,7 +121,7 @@ const Dashboard = () => {
   const fetchPranks = async () => {
     if (!user) return;
     const { data, error } = await supabase
-      .from("pranks")
+      .from("pranks_decrypted")
       .select("id, victim_first_name, victim_last_name, victim_phone, prank_theme, call_status, recording_url, created_at, scheduled_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
@@ -138,7 +138,7 @@ const Dashboard = () => {
   const fetchVictims = async () => {
     if (!user) return;
     const { data, error } = await supabase
-      .from("pranks")
+      .from("pranks_decrypted")
       .select("victim_first_name, victim_last_name, victim_phone")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });

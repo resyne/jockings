@@ -148,9 +148,9 @@ serve(async (req) => {
 
     console.log('=== VAPI TRANSIENT ASSISTANT CALL ===');
 
-    // Fetch prank details first
+    // Fetch prank details using decrypted view for victim data
     const { data: prank, error: prankError } = await supabase
-      .from('pranks')
+      .from('pranks_decrypted')
       .select('*')
       .eq('id', prankId)
       .single();
