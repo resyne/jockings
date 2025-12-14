@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -25,19 +25,24 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const hasCheckedSession = useRef(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
-        navigate("/dashboard");
+        navigate("/dashboard", { replace: true });
       }
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        navigate("/dashboard");
-      }
-    });
+    // Check session only once, non-blocking
+    if (!hasCheckedSession.current) {
+      hasCheckedSession.current = true;
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) {
+          navigate("/dashboard", { replace: true });
+        }
+      });
+    }
 
     return () => subscription.unsubscribe();
   }, [navigate]);
