@@ -18,7 +18,7 @@ const Inizia = () => {
         />
 
         {/* Section Label */}
-        <span className="text-xs font-mono uppercase tracking-widest text-secondary mb-6">
+        <span className="text-xs font-mono uppercase tracking-widest text-muted-foreground/50 mb-6">
           Si comincia.
         </span>
 
@@ -28,19 +28,19 @@ const Inizia = () => {
         </h1>
 
         {/* H2 Subtitle */}
-        <h2 className="text-xl md:text-2xl font-medium text-secondary-foreground mb-6">
-          Telefonate <span className="text-secondary">AI</span> personalizzate per ridere forte.
+        <h2 className="text-xl md:text-2xl font-medium text-secondary-foreground/80 mb-6">
+          Telefonate <span className="text-secondary/90">AI</span> personalizzate per ridere forte.
         </h2>
 
         {/* Supporting Line */}
-        <p className="text-base text-muted-foreground mb-2 max-w-sm">
+        <p className="text-base text-muted-foreground/60 mb-2 max-w-sm">
           Inserisci nome, cognome e contesto.
           <br />
           Poi goditi la scena.
         </p>
 
         {/* Micro-wink */}
-        <p className="text-sm text-muted-foreground/70 italic mb-10 max-w-xs">
+        <p className="text-sm text-muted-foreground/40 italic mb-10 max-w-xs">
           Preferibilmente a qualcuno che ti inviterà ancora a cena.
         </p>
 
