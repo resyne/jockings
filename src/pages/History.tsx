@@ -30,7 +30,7 @@ const History = () => {
       if (!session?.user) {
         navigate("/auth");
       } else {
-        fetchPranks(session.user.id);
+        fetchPranks();
       }
     });
   }, [navigate]);
@@ -49,17 +49,23 @@ const History = () => {
     }
   }, [search, pranks]);
 
-  const fetchPranks = async (userId: string) => {
-    const { data, error } = await supabase
-      .from("pranks")
-      .select("id, victim_first_name, victim_last_name, prank_theme, call_status, recording_url, created_at")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
+  const fetchPranks = async () => {
+    const { data, error } = await supabase.rpc('get_user_pranks_decrypted');
 
-    if (!error && data) {
-      setPranks(data);
-      setFilteredPranks(data);
+    if (error) {
+      console.error('Error fetching pranks:', error);
+      setLoading(false);
+      return;
     }
+
+    const allPranks: Prank[] = (data || []) as Prank[];
+
+    const sortedPranks = allPranks.sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+
+    setPranks(sortedPranks);
+    setFilteredPranks(sortedPranks);
     setLoading(false);
   };
 
