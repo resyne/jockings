@@ -67,7 +67,6 @@ const Dashboard = () => {
     if (user) {
       fetchProfile();
       fetchPranks();
-      fetchVictims();
 
       // Realtime subscription for pranks updates
       const channel = supabase
@@ -120,46 +119,41 @@ const Dashboard = () => {
 
   const fetchPranks = async () => {
     if (!user) return;
-    const { data, error } = await supabase
-      .from("pranks")
-      .select("id, victim_first_name, victim_last_name, victim_phone, prank_theme, call_status, recording_url, created_at, scheduled_at")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(10);
-    
-    if (error) {
-      console.error("Error fetching pranks:", error);
-    } else {
-      setPranks(data || []);
-    }
-    setLoading(false);
-  };
 
-  const fetchVictims = async () => {
-    if (!user) return;
-    const { data, error } = await supabase
-      .from("pranks")
-      .select("victim_first_name, victim_last_name, victim_phone")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
-    
+    const { data, error } = await supabase.rpc('get_user_pranks_decrypted');
+
     if (error) {
-      console.error("Error fetching victims:", error);
-    } else if (data) {
-      const uniqueVictims: Victim[] = [];
-      const seenPhones = new Set<string>();
-      for (const prank of data) {
-        if (!seenPhones.has(prank.victim_phone)) {
-          seenPhones.add(prank.victim_phone);
-          uniqueVictims.push({
-            phone: prank.victim_phone,
-            firstName: prank.victim_first_name,
-            lastName: prank.victim_last_name
-          });
-        }
-      }
-      setVictims(uniqueVictims);
+      console.error('Error fetching pranks:', error);
+      setLoading(false);
+      return;
     }
+
+    const allPranks: Prank[] = (data || []) as Prank[];
+
+    // Sort pranks by creation date (newest first)
+    const sortedPranks = allPranks.sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+
+    setPranks(sortedPranks.slice(0, 10));
+
+    // Build unique victims list from all pranks
+    const uniqueVictims: Victim[] = [];
+    const seenPhones = new Set<string>();
+
+    for (const prank of allPranks) {
+      if (!seenPhones.has(prank.victim_phone)) {
+        seenPhones.add(prank.victim_phone);
+        uniqueVictims.push({
+          phone: prank.victim_phone,
+          firstName: prank.victim_first_name,
+          lastName: prank.victim_last_name,
+        });
+      }
+    }
+
+    setVictims(uniqueVictims);
+    setLoading(false);
   };
 
 
