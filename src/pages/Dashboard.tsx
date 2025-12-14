@@ -126,8 +126,9 @@ const Dashboard = () => {
       .limit(10);
     
     if (error) {
-      console.error("Error fetching pranks:", error);
+      console.error("Error fetching pranks (get_user_pranks_decrypted):", error);
     } else {
+      console.log("Fetched pranks (decrypted):", data);
       setPranks((data as Prank[]) || []);
     }
     setLoading(false);

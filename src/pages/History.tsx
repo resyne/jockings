@@ -55,6 +55,7 @@ const History = () => {
       .order("created_at", { ascending: false });
 
     if (!error && data) {
+      console.log("Fetched history pranks (decrypted):", data);
       const rows = data as Prank[];
       setPranks(rows);
       setFilteredPranks(rows);
