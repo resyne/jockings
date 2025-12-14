@@ -121,16 +121,14 @@ const Dashboard = () => {
   const fetchPranks = async () => {
     if (!user) return;
     const { data, error } = await supabase
-      .from("pranks_decrypted")
-      .select("id, victim_first_name, victim_last_name, victim_phone, prank_theme, call_status, recording_url, created_at, scheduled_at")
-      .eq("user_id", user.id)
+      .rpc("get_user_pranks_decrypted")
       .order("created_at", { ascending: false })
       .limit(10);
     
     if (error) {
       console.error("Error fetching pranks:", error);
     } else {
-      setPranks(data || []);
+      setPranks((data as Prank[]) || []);
     }
     setLoading(false);
   };
@@ -138,24 +136,22 @@ const Dashboard = () => {
   const fetchVictims = async () => {
     if (!user) return;
     const { data, error } = await supabase
-      .from("pranks_decrypted")
-      .select("victim_first_name, victim_last_name, victim_phone")
-      .eq("user_id", user.id)
+      .rpc("get_user_pranks_decrypted")
       .order("created_at", { ascending: false });
     
     if (error) {
       console.error("Error fetching victims:", error);
     } else if (data) {
-      // Extract unique victims by phone
+      const rows = data as any[];
       const uniqueVictims: Victim[] = [];
       const seenPhones = new Set<string>();
-      for (const prank of data) {
+      for (const prank of rows) {
         if (!seenPhones.has(prank.victim_phone)) {
           seenPhones.add(prank.victim_phone);
           uniqueVictims.push({
             phone: prank.victim_phone,
             firstName: prank.victim_first_name,
-            lastName: prank.victim_last_name
+            lastName: prank.victim_last_name,
           });
         }
       }
