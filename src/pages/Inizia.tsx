@@ -1,24 +1,22 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Headphones } from "lucide-react";
-import saranoWordmarkIcon from "@/assets/sarano-wordmark-icon.png";
+import saranoLogoPayoff from "@/assets/sarano-logo-payoff.png";
 
 const Inizia = () => {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="p-4 flex justify-center">
-        <img 
-          src={saranoWordmarkIcon} 
-          alt="sarano.ai" 
-          className="h-8 animate-bounce-in"
-        />
-      </header>
-
       {/* Hero Section */}
       <main className="flex-1 flex flex-col items-center justify-center px-6 text-center">
+        {/* Logo with payoff */}
+        <img 
+          src={saranoLogoPayoff} 
+          alt="sarano.ai - Laugh first. Explain later." 
+          className="h-16 md:h-20 mb-10 animate-bounce-in"
+        />
+
         {/* Section Label */}
         <span className="text-xs font-mono uppercase tracking-widest text-secondary mb-6">
           Si comincia.

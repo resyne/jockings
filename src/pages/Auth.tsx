@@ -8,8 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
-import saranoIcon from "@/assets/sarano-icon.png";
-import saranoWordmark from "@/assets/sarano-wordmark.png";
+import saranoLogoPayoff from "@/assets/sarano-logo-payoff.png";
 
 const emailSchema = z.string().email("Email non valida");
 const passwordSchema = z.string().min(6, "La password deve avere almeno 6 caratteri");
@@ -132,10 +131,11 @@ const Auth = () => {
 
       {/* Logo */}
       <div className="mb-4 sm:mb-8 text-center animate-slide-up">
-        <div className="inline-flex items-center justify-center w-14 h-14 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl shadow-card mb-2 sm:mb-4 overflow-hidden bg-card">
-          <img src={saranoIcon} alt="sarano.ai" className="w-10 h-10 sm:w-16 sm:h-16 object-contain" />
-        </div>
-        <img src={saranoWordmark} alt="sarano.ai" className="h-6 sm:h-8 mx-auto" />
+        <img 
+          src={saranoLogoPayoff} 
+          alt="sarano.ai - Laugh first. Explain later." 
+          className="h-12 sm:h-16 mx-auto mb-2"
+        />
         <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">Scherzi telefonici con AI</p>
       </div>
 
