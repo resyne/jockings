@@ -549,6 +549,38 @@ export type Database = {
     Functions: {
       decrypt_victim_data: { Args: { encrypted_text: string }; Returns: string }
       encrypt_victim_data: { Args: { plain_text: string }; Returns: string }
+      get_user_pranks_decrypted: {
+        Args: never
+        Returns: {
+          call_status: string
+          conversation_history: Json
+          created_at: string
+          creativity_level: number
+          elevenlabs_similarity: number
+          elevenlabs_speed: number
+          elevenlabs_stability: number
+          elevenlabs_style: number
+          elevenlabs_voice_id: string
+          id: string
+          language: string
+          max_duration: number
+          personality_tone: string
+          prank_theme: string
+          pregenerated_background_url: string
+          pregenerated_greeting_url: string
+          recording_url: string
+          scheduled_at: string
+          send_recording: boolean
+          twilio_call_sid: string
+          updated_at: string
+          user_id: string
+          victim_first_name: string
+          victim_last_name: string
+          victim_phone: string
+          voice_gender: string
+          voice_provider: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
