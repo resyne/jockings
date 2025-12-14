@@ -1,21 +1,28 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Headphones } from "lucide-react";
-import saranoWordmarkPayoff from "@/assets/sarano-wordmark-payoff.png";
+import saranoWordmarkIcon from "@/assets/sarano-wordmark-icon.png";
 
 const Inizia = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
-      {/* Hero Section */}
-      <main className="flex flex-col items-center text-center max-w-md">
-        {/* Wordmark + Icon + Payoff */}
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header */}
+      <header className="p-4 flex justify-center">
         <img 
-          src={saranoWordmarkPayoff} 
-          alt="sarano.ai - Laugh first. Explain later." 
-          className="w-full max-w-xs mb-12 animate-bounce-in"
+          src={saranoWordmarkIcon} 
+          alt="sarano.ai" 
+          className="h-8 animate-bounce-in"
         />
+      </header>
+
+      {/* Hero Section */}
+      <main className="flex-1 flex flex-col items-center justify-center px-6 text-center">
+        {/* Section Label */}
+        <span className="text-xs font-mono uppercase tracking-widest text-secondary mb-6">
+          Si comincia.
+        </span>
 
         {/* H1 Title */}
         <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4 leading-tight">
@@ -56,6 +63,9 @@ const Inizia = () => {
           </p>
         </div>
       </main>
+
+      {/* Footer spacer */}
+      <div className="h-16" />
     </div>
   );
 };

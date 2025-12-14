@@ -133,15 +133,17 @@ const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, onQuickCal
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold text-sm sm:text-base line-clamp-2">
-                {prank.prank_theme}
+              <h3 className="font-semibold truncate">
+                {prank.victim_first_name} {prank.victim_last_name}
               </h3>
               <Badge variant="outline" className={`text-xs shrink-0 ${getStatusColor(prank.call_status)}`}>
                 {getStatusLabel(prank.call_status)}
               </Badge>
             </div>
-            {/* Victim info is currently cifrata: la nascondiamo per non confondere l'utente */}
-            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+              {prank.prank_theme}
+            </p>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
               {isScheduled && prank.scheduled_at ? (
                 <span className="flex items-center gap-1 text-orange-600 font-medium">
                   <CalendarClock className="w-3 h-3" />

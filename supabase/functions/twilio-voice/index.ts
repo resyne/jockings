@@ -205,9 +205,9 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
-    // Get prank details using decrypted view and global voice settings in parallel
+    // Get prank details and global voice settings in parallel
     const [prankResult, globalSettingsResult] = await Promise.all([
-      supabase.from('pranks_decrypted').select('*').eq('id', prankId).single(),
+      supabase.from('pranks').select('*').eq('id', prankId).single(),
       supabase.from('app_settings').select('key, value').in('key', ['elevenlabs_stability', 'elevenlabs_similarity', 'elevenlabs_style', 'elevenlabs_speed', 'elevenlabs_speaker_boost', 'elevenlabs_model'])
     ]);
 

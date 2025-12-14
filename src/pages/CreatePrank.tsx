@@ -183,7 +183,7 @@ const CreatePrank = () => {
 
   const loadPrankData = async (prankId: string) => {
     const { data, error } = await supabase
-      .from("pranks_decrypted")
+      .from("pranks")
       .select("*")
       .eq("id", prankId)
       .eq("user_id", user.id)

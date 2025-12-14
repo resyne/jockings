@@ -121,15 +121,16 @@ const Dashboard = () => {
   const fetchPranks = async () => {
     if (!user) return;
     const { data, error } = await supabase
-      .rpc("get_user_pranks_decrypted")
+      .from("pranks")
+      .select("id, victim_first_name, victim_last_name, victim_phone, prank_theme, call_status, recording_url, created_at, scheduled_at")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(10);
     
     if (error) {
-      console.error("Error fetching pranks (get_user_pranks_decrypted):", error);
+      console.error("Error fetching pranks:", error);
     } else {
-      console.log("Fetched pranks (decrypted):", data);
-      setPranks((data as Prank[]) || []);
+      setPranks(data || []);
     }
     setLoading(false);
   };
@@ -137,22 +138,24 @@ const Dashboard = () => {
   const fetchVictims = async () => {
     if (!user) return;
     const { data, error } = await supabase
-      .rpc("get_user_pranks_decrypted")
+      .from("pranks")
+      .select("victim_first_name, victim_last_name, victim_phone")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     
     if (error) {
       console.error("Error fetching victims:", error);
     } else if (data) {
-      const rows = data as any[];
+      // Extract unique victims by phone
       const uniqueVictims: Victim[] = [];
       const seenPhones = new Set<string>();
-      for (const prank of rows) {
+      for (const prank of data) {
         if (!seenPhones.has(prank.victim_phone)) {
           seenPhones.add(prank.victim_phone);
           uniqueVictims.push({
             phone: prank.victim_phone,
             firstName: prank.victim_first_name,
-            lastName: prank.victim_last_name,
+            lastName: prank.victim_last_name
           });
         }
       }
@@ -296,7 +299,7 @@ const Dashboard = () => {
               <h2 className="text-lg font-bold text-foreground">Vittime</h2>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
-              {victims.map((victim, index) => (
+              {victims.map((victim) => (
                 <Card 
                   key={victim.phone} 
                   className="min-w-[120px] flex-shrink-0 cursor-pointer hover:bg-muted transition-all shadow-card"
@@ -306,8 +309,8 @@ const Dashboard = () => {
                     <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-secondary/20 flex items-center justify-center">
                       <User className="w-6 h-6 text-secondary" />
                     </div>
-                    <p className="font-semibold text-sm text-foreground truncate">Vittima {index + 1}</p>
-                    <p className="text-xs text-muted-foreground truncate">Tocca per richiamare</p>
+                    <p className="font-semibold text-sm text-foreground truncate">{victim.firstName}</p>
+                    <p className="text-xs text-muted-foreground truncate">{victim.lastName}</p>
                   </CardContent>
                 </Card>
               ))}
