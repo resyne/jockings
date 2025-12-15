@@ -61,17 +61,7 @@ const AdminVoices = () => {
   const [isAddVapiPhoneOpen, setIsAddVapiPhoneOpen] = useState(false);
   const [newVapiPhone, setNewVapiPhone] = useState({ phone_number_id: "", phone_number: "", friendly_name: "" });
   
-  // VAPI Voice Presets
-  interface VapiVoicePreset {
-    id: string;
-    language: string;
-    gender: string;
-    voiceId: string;
-    voiceProvider: string;
-    voice_name: string;
-    description: string;
-    notes: string;
-  }
+  // VAPI Voice Presets (type imported from @/types/vapiSettings)
   const [vapiVoicePresets, setVapiVoicePresets] = useState<VapiVoicePreset[]>([]);
   const [isAddVapiPresetOpen, setIsAddVapiPresetOpen] = useState(false);
   const [newVapiPreset, setNewVapiPreset] = useState<Omit<VapiVoicePreset, 'id'>>({

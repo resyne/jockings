@@ -313,3 +313,46 @@ export const getAiProviderFromModel = (model: string): string => {
   const foundModel = VAPI_AI_MODELS.find(m => m.value === model);
   return foundModel?.provider || 'openai';
 };
+
+// Personality Tone Maps (centralized for all Edge Functions)
+export const PERSONALITY_TONES_IT: Record<string, string> = {
+  'enthusiastic': 'Entusiasta e pieno di energia! Usa esclamazioni come "fantastico!", "incredibile!", "meraviglioso!". Ridi facilmente e trasmetti gioia.',
+  'serious': 'Serio, formale e professionale. Usa espressioni come "mi permetta di informarla", "la informo che", "come da regolamento". Parla come un funzionario statale.',
+  'angry': 'Irritato e impaziente. Usa espressioni come "ma insomma!", "possibile che...", "mi sta prendendo in giro?". Alza il tono quando non ottieni risposte.',
+  'confused': 'Confuso e smemorato. Perdi il filo del discorso. Usa "aspetti... come dicevo?", "scusi, mi sono perso", "ah sì, ecco...". Fai domande a caso.',
+  'mysterious': 'Misterioso e criptico. Parla a bassa voce. Usa "non posso dire di più...", "ci sono cose che non sa...", "faccia attenzione...". Fai pause drammatiche.',
+  'friendly': 'Amichevole e caloroso. Usa "caro mio", "tesoro", "carissimo/a". Fai domande personali sulla famiglia, sul lavoro. Ridi spesso.',
+};
+
+export const PERSONALITY_TONES_EN: Record<string, string> = {
+  'enthusiastic': 'Enthusiastic and full of energy! Use expressions like "fantastic!", "amazing!", "wonderful!". Laugh easily and transmit joy.',
+  'serious': 'Serious, formal and professional. Use expressions like "I must inform you", "according to regulations", "as per protocol". Speak like a government official.',
+  'angry': 'Irritated and impatient. Use expressions like "excuse me?!", "are you kidding me?", "this is unacceptable!". Raise your tone when you dont get answers.',
+  'confused': 'Confused and forgetful. Lose track of the conversation. Use "wait... what was I saying?", "sorry, I got lost", "oh yes, right...". Ask random questions.',
+  'mysterious': 'Mysterious and cryptic. Speak in a low voice. Use "I cannot say more...", "there are things you dont know...", "be careful...". Make dramatic pauses.',
+  'friendly': 'Friendly and warm. Use "my friend", "dear", "buddy". Ask personal questions about family, work. Laugh often.',
+};
+
+// Voice Test Personality Tones (simplified for test dialog)
+export const VOICE_TEST_TONES: Record<string, string> = {
+  'enthusiastic': 'estremamente entusiasta, eccitato e felice',
+  'serious': 'molto serio, formale e professionale',
+  'angry': 'frustrato, irritato e sempre più arrabbiato',
+  'confused': 'confuso, incerto e facilmente distratto',
+  'mysterious': 'misterioso, criptico e drammaticamente segreto',
+  'friendly': 'caldo, amichevole e chiacchierone come un vecchio amico',
+};
+
+// Default Voice IDs
+export const DEFAULT_VOICE_ID_IT_MALE = "onwK4e9ZLuTAKqWW03F9"; // Daniel
+export const DEFAULT_VOICE_ID_IT_FEMALE = "21m00Tcm4TlvDq8ikWAM"; // Rachel
+export const DEFAULT_VOICE_ID_EN_MALE = "JBFqnCBsd6RMkjVDRZzb"; // George  
+export const DEFAULT_VOICE_ID_EN_FEMALE = "EXAVITQu4vr4xnSDxMaL"; // Sarah
+
+// Default ElevenLabs Model
+export const DEFAULT_ELEVENLABS_MODEL = "eleven_turbo_v2_5";
+
+// Default Transcriber Settings
+export const DEFAULT_TRANSCRIBER_PROVIDER = "deepgram";
+export const DEFAULT_TRANSCRIBER_MODEL = "nova-2";
+export const DEFAULT_TRANSCRIBER_LANGUAGE = "it";
