@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,15 +9,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Phone, User, Mic, Globe, Send, CalendarClock } from "lucide-react";
+import { ArrowLeft, Phone, User, Mic, Globe, Send, CalendarClock, Play, Square, Loader2 } from "lucide-react";
 import saranoIcon from "@/assets/sarano-icon.png";
 import { z } from "zod";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 
 const phoneSchema = z.string().regex(/^\d{6,14}$/, "Numero di telefono non valido");
-
-const LANGUAGES = ["Italiano", "English"];
 
 const COUNTRY_CODES = [
   { code: "+39", country: "IT", flag: "🇮🇹", name: "Italia" },
@@ -55,6 +53,10 @@ interface VoiceOption {
   voice_name: string | null;
   description: string | null;
   elevenlabs_voice_id: string | null;
+  elevenlabs_stability: number | null;
+  elevenlabs_similarity: number | null;
+  elevenlabs_style: number | null;
+  elevenlabs_speed: number | null;
   gender: string;
   language: string;
 }
@@ -66,8 +68,11 @@ const CreatePrank = () => {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [presets, setPresets] = useState<PrankPreset[]>([]);
-  const [availableVoices, setAvailableVoices] = useState<VoiceOption[]>([]);
+  const [allVoices, setAllVoices] = useState<VoiceOption[]>([]);
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>("");
+  const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
+  const [loadingPreviewId, setLoadingPreviewId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Form state
   const [victimFirstName, setVictimFirstName] = useState("");
@@ -78,8 +83,6 @@ const CreatePrank = () => {
   const [selectedPreset, setSelectedPreset] = useState("custom");
   const [prankTheme, setPrankTheme] = useState("");
   const [realDetail, setRealDetail] = useState(""); // Optional real detail about the victim
-  const [voiceGender, setVoiceGender] = useState("male");
-  const [language, setLanguage] = useState("Italiano");
   const [personalityTone, setPersonalityTone] = useState("enthusiastic");
   const [maxDuration] = useState(120); // Default 120 seconds, managed from admin
   const [creativityLevel] = useState([50]); // Default 50%, managed from admin
@@ -100,11 +103,8 @@ const CreatePrank = () => {
 
   useEffect(() => {
     fetchPresets();
+    fetchAllVoices();
   }, []);
-
-  useEffect(() => {
-    fetchVoices();
-  }, [language, voiceGender]);
 
   useEffect(() => {
     const repeatId = searchParams.get("repeat");
@@ -141,6 +141,16 @@ const CreatePrank = () => {
     }
   }, [searchParams, user]);
 
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
   const fetchPresets = async () => {
     const { data } = await supabase
       .from("prank_presets")
@@ -153,23 +163,82 @@ const CreatePrank = () => {
     }
   };
 
-  const fetchVoices = async () => {
+  const fetchAllVoices = async () => {
     const { data } = await supabase
       .from("voice_settings")
-      .select("id, voice_name, description, elevenlabs_voice_id, gender, language")
-      .eq("language", language)
-      .eq("gender", voiceGender)
-      .eq("is_active", true);
+      .select("id, voice_name, description, elevenlabs_voice_id, elevenlabs_stability, elevenlabs_similarity, elevenlabs_style, elevenlabs_speed, gender, language")
+      .eq("is_active", true)
+      .order("gender", { ascending: true });
 
     if (data && data.length > 0) {
-      setAvailableVoices(data);
+      setAllVoices(data);
       // Auto-select first voice if none selected
-      if (!selectedVoiceId || !data.find(v => v.id === selectedVoiceId)) {
+      if (!selectedVoiceId) {
         setSelectedVoiceId(data[0].id);
       }
-    } else {
-      setAvailableVoices([]);
-      setSelectedVoiceId("");
+    }
+  };
+
+  const maleVoices = allVoices.filter(v => v.gender === "male");
+  const femaleVoices = allVoices.filter(v => v.gender === "female");
+
+  const playVoicePreview = async (voice: VoiceOption) => {
+    // If already playing this voice, stop it
+    if (playingVoiceId === voice.id) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      setPlayingVoiceId(null);
+      return;
+    }
+
+    // Stop any currently playing audio
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+
+    setLoadingPreviewId(voice.id);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("test-voice", {
+        body: {
+          voiceId: voice.elevenlabs_voice_id,
+          stability: voice.elevenlabs_stability || 0.5,
+          similarity: voice.elevenlabs_similarity || 0.75,
+          style: voice.elevenlabs_style || 0,
+          speed: voice.elevenlabs_speed || 1,
+          language: voice.language,
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.audioContent) {
+        const audioUrl = `data:audio/mpeg;base64,${data.audioContent}`;
+        const audio = new Audio(audioUrl);
+        audioRef.current = audio;
+        
+        audio.onended = () => {
+          setPlayingVoiceId(null);
+          audioRef.current = null;
+        };
+        
+        audio.onerror = () => {
+          setPlayingVoiceId(null);
+          audioRef.current = null;
+          toast({ title: "Errore", description: "Impossibile riprodurre l'audio", variant: "destructive" });
+        };
+
+        await audio.play();
+        setPlayingVoiceId(voice.id);
+      }
+    } catch (error: any) {
+      console.error("Voice preview error:", error);
+      toast({ title: "Errore", description: "Impossibile caricare l'anteprima", variant: "destructive" });
+    } finally {
+      setLoadingPreviewId(null);
     }
   };
 
@@ -204,8 +273,6 @@ const CreatePrank = () => {
         setVictimPhone(phone);
       }
       setPrankTheme(data.prank_theme);
-      setVoiceGender(data.voice_gender);
-      setLanguage(data.language);
       setPersonalityTone(data.personality_tone);
       
       // Find and set the voice based on elevenlabs_voice_id
@@ -263,7 +330,7 @@ const CreatePrank = () => {
 
     try {
       // Get selected voice settings
-      const selectedVoice = availableVoices.find(v => v.id === selectedVoiceId);
+      const selectedVoice = allVoices.find(v => v.id === selectedVoiceId);
       
       // Fetch full voice settings for the selected voice
       const { data: voiceSettings } = selectedVoiceId && selectedVoiceId.length > 0
@@ -272,14 +339,7 @@ const CreatePrank = () => {
             .select("*")
             .eq("id", selectedVoiceId)
             .single()
-        : await supabase
-            .from("voice_settings")
-            .select("*")
-            .eq("language", language)
-            .eq("gender", voiceGender)
-            .eq("is_active", true)
-            .limit(1)
-            .maybeSingle();
+        : { data: null };
 
       const scheduledAt = scheduleCall ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : null;
       
@@ -293,14 +353,14 @@ const CreatePrank = () => {
           victim_phone: `${phoneCountryCode}${victimPhone.replace(/\s/g, "")}`,
           prank_theme: prankTheme.trim(),
           real_detail: realDetail.trim() || null,
-          voice_gender: voiceGender,
+          voice_gender: voiceSettings?.gender || "male",
           voice_provider: voiceSettings?.voice_provider || "elevenlabs",
           elevenlabs_stability: voiceSettings?.elevenlabs_stability || 0.5,
           elevenlabs_similarity: voiceSettings?.elevenlabs_similarity || 0.75,
           elevenlabs_style: voiceSettings?.elevenlabs_style || 0,
           elevenlabs_speed: voiceSettings?.elevenlabs_speed || 1,
           elevenlabs_voice_id: voiceSettings?.elevenlabs_voice_id || null,
-          language,
+          language: voiceSettings?.language || "Italiano",
           personality_tone: personalityTone,
           max_duration: maxDuration,
           creativity_level: creativityLevel[0],
@@ -518,7 +578,7 @@ const CreatePrank = () => {
             </CardContent>
           </Card>
 
-          {/* Voice & Language Settings */}
+          {/* Voice Selection */}
           <Card className="animate-slide-up" style={{ animationDelay: "0.15s" }}>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
@@ -526,74 +586,67 @@ const CreatePrank = () => {
                   <Globe className="w-5 h-5 text-accent" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">Voce e Lingua</CardTitle>
-                  <CardDescription>Personalizza la voce AI</CardDescription>
+                  <CardTitle className="text-lg">Voce</CardTitle>
+                  <CardDescription>Scegli chi farà la chiamata</CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>Lingua / Accento</Label>
-                  <Select value={language} onValueChange={setLanguage}>
-                    <SelectTrigger className="h-12">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {LANGUAGES.map((lang) => (
-                        <SelectItem key={lang} value={lang}>{lang}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Genere Voce</Label>
-                  <Select value={voiceGender} onValueChange={setVoiceGender}>
-                    <SelectTrigger className="h-12">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">Maschile 👨</SelectItem>
-                      <SelectItem value="female">Femminile 👩</SelectItem>
-                    </SelectContent>
-                  </Select>
-               </div>
-              </div>
-
-              {/* Voice Selection Cards */}
-              {availableVoices.length > 0 && (
+            <CardContent className="space-y-6">
+              {/* Male Voices */}
+              {maleVoices.length > 0 && (
                 <div className="space-y-3">
-                  <Label>Voce</Label>
+                  <Label className="text-muted-foreground">👨 Voci Maschili</Label>
                   <div className="grid gap-3">
-                    {availableVoices.map((voice) => (
+                    {maleVoices.map((voice) => (
                       <div
                         key={voice.id}
                         onClick={() => setSelectedVoiceId(voice.id)}
                         className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
                           selectedVoiceId === voice.id
                             ? "border-primary bg-primary/10 shadow-md"
-                            : "border-border bg-card hover:border-primary/50 hover:bg-accent/50"
+                            : "border-border bg-card hover:border-primary/50 hover:bg-accent/5"
                         }`}
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex-1 min-w-0">
                             <h4 className="font-semibold text-foreground">
                               {voice.voice_name || "Voce senza nome"}
                             </h4>
                             {voice.description && (
-                              <p className="text-sm text-muted-foreground mt-1">
+                              <p className="text-sm text-muted-foreground mt-0.5 truncate">
                                 {voice.description}
                               </p>
                             )}
                           </div>
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                            selectedVoiceId === voice.id
-                              ? "border-primary bg-primary"
-                              : "border-muted-foreground"
-                          }`}>
-                            {selectedVoiceId === voice.id && (
-                              <div className="w-2 h-2 rounded-full bg-primary-foreground" />
-                            )}
+                          <div className="flex items-center gap-2">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-9 w-9 shrink-0"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                playVoicePreview(voice);
+                              }}
+                              disabled={loadingPreviewId === voice.id}
+                            >
+                              {loadingPreviewId === voice.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : playingVoiceId === voice.id ? (
+                                <Square className="w-4 h-4 text-primary" />
+                              ) : (
+                                <Play className="w-4 h-4" />
+                              )}
+                            </Button>
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
+                              selectedVoiceId === voice.id
+                                ? "border-primary bg-primary"
+                                : "border-muted-foreground"
+                            }`}>
+                              {selectedVoiceId === voice.id && (
+                                <div className="w-2 h-2 rounded-full bg-primary-foreground" />
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -602,13 +655,76 @@ const CreatePrank = () => {
                 </div>
               )}
 
-              {availableVoices.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-2">
-                  Nessuna voce configurata per {language} {voiceGender === "male" ? "maschile" : "femminile"}
+              {/* Female Voices */}
+              {femaleVoices.length > 0 && (
+                <div className="space-y-3">
+                  <Label className="text-muted-foreground">👩 Voci Femminili</Label>
+                  <div className="grid gap-3">
+                    {femaleVoices.map((voice) => (
+                      <div
+                        key={voice.id}
+                        onClick={() => setSelectedVoiceId(voice.id)}
+                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                          selectedVoiceId === voice.id
+                            ? "border-primary bg-primary/10 shadow-md"
+                            : "border-border bg-card hover:border-primary/50 hover:bg-accent/5"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-foreground">
+                              {voice.voice_name || "Voce senza nome"}
+                            </h4>
+                            {voice.description && (
+                              <p className="text-sm text-muted-foreground mt-0.5 truncate">
+                                {voice.description}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-9 w-9 shrink-0"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                playVoicePreview(voice);
+                              }}
+                              disabled={loadingPreviewId === voice.id}
+                            >
+                              {loadingPreviewId === voice.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : playingVoiceId === voice.id ? (
+                                <Square className="w-4 h-4 text-primary" />
+                              ) : (
+                                <Play className="w-4 h-4" />
+                              )}
+                            </Button>
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
+                              selectedVoiceId === voice.id
+                                ? "border-primary bg-primary"
+                                : "border-muted-foreground"
+                            }`}>
+                              {selectedVoiceId === voice.id && (
+                                <div className="w-2 h-2 rounded-full bg-primary-foreground" />
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {allVoices.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Nessuna voce configurata
                 </p>
               )}
 
-              <div className="space-y-2">
+              <div className="space-y-2 pt-2 border-t">
                 <Label>Tono Personalità</Label>
                 <Select value={personalityTone} onValueChange={setPersonalityTone}>
                   <SelectTrigger className="h-12">
