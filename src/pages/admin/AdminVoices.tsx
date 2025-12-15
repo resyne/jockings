@@ -197,6 +197,9 @@ interface VapiSettings {
   // System prompt template
   systemPromptTemplateIT: string;
   systemPromptTemplateEN: string;
+  // First message template
+  firstMessageTemplateIT: string;
+  firstMessageTemplateEN: string;
 }
 
 interface VapiPhoneNumber {
@@ -265,6 +268,10 @@ FUNDAMENTAL RULES:
 
 IMPORTANT: The first 3 seconds are crucial. First impression determines the success of the prank.`;
 
+const DEFAULT_FIRST_MESSAGE_IT = `{{GREETING}}! Parlo con {{VICTIM_NAME}}?`;
+
+const DEFAULT_FIRST_MESSAGE_EN = `{{GREETING}}! Am I speaking with {{VICTIM_NAME}}?`;
+
 const DEFAULT_VAPI_SETTINGS: VapiSettings = {
   phoneNumberId: "",
   assistantId: "",
@@ -318,6 +325,9 @@ const DEFAULT_VAPI_SETTINGS: VapiSettings = {
   // System prompt templates
   systemPromptTemplateIT: DEFAULT_SYSTEM_PROMPT_IT,
   systemPromptTemplateEN: DEFAULT_SYSTEM_PROMPT_EN,
+  // First message templates
+  firstMessageTemplateIT: DEFAULT_FIRST_MESSAGE_IT,
+  firstMessageTemplateEN: DEFAULT_FIRST_MESSAGE_EN,
 };
 
 // DEFAULT_GLOBAL_SETTINGS removed - using DEFAULT_VAPI_SETTINGS
@@ -593,6 +603,8 @@ const AdminVoices = () => {
         "vapi_end_call_phrases",
         "vapi_system_prompt_it",
         "vapi_system_prompt_en",
+        "vapi_first_message_it",
+        "vapi_first_message_en",
         "vapi_start_speaking_wait",
         "vapi_smart_endpointing_enabled",
         "vapi_smart_endpointing_provider",
@@ -643,6 +655,8 @@ const AdminVoices = () => {
         if (key === "vapi_end_call_phrases") newSettings.endCallPhrases = value;
         if (key === "vapi_system_prompt_it") newSettings.systemPromptTemplateIT = value;
         if (key === "vapi_system_prompt_en") newSettings.systemPromptTemplateEN = value;
+        if (key === "vapi_first_message_it") newSettings.firstMessageTemplateIT = value;
+        if (key === "vapi_first_message_en") newSettings.firstMessageTemplateEN = value;
         if (key === "vapi_start_speaking_wait") newSettings.startSpeakingWaitSeconds = parseFloat(value);
         if (key === "vapi_smart_endpointing_enabled") newSettings.smartEndpointingEnabled = value === "true";
         if (key === "vapi_smart_endpointing_provider") newSettings.smartEndpointingProvider = value;
@@ -704,6 +718,8 @@ const AdminVoices = () => {
         { key: "vapi_end_call_phrases", value: vapiSettings.endCallPhrases },
         { key: "vapi_system_prompt_it", value: vapiSettings.systemPromptTemplateIT },
         { key: "vapi_system_prompt_en", value: vapiSettings.systemPromptTemplateEN },
+        { key: "vapi_first_message_it", value: vapiSettings.firstMessageTemplateIT },
+        { key: "vapi_first_message_en", value: vapiSettings.firstMessageTemplateEN },
         { key: "vapi_start_speaking_wait", value: vapiSettings.startSpeakingWaitSeconds.toString() },
         { key: "vapi_smart_endpointing_enabled", value: vapiSettings.smartEndpointingEnabled.toString() },
         { key: "vapi_smart_endpointing_provider", value: vapiSettings.smartEndpointingProvider },
@@ -1654,6 +1670,59 @@ const AdminVoices = () => {
                       <Label>Frasi Fine Chiamata</Label>
                       <Input value={vapiSettings.endCallPhrases} onChange={(e) => setVapiSettings({ ...vapiSettings, endCallPhrases: e.target.value })} placeholder="arrivederci, ciao ciao, a presto (separate da virgola)" />
                       <p className="text-xs text-muted-foreground">Frasi che se dette dall'AI terminano la chiamata (case insensitive)</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* First Message Template Section */}
+                <div className="p-4 rounded-lg bg-green-500/5 border border-green-500/20 space-y-4">
+                  <h4 className="font-medium flex items-center gap-2 text-green-600">
+                    <Phone className="w-4 h-4" />
+                    First Message Template
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    Template per il primo messaggio dell'AI. Placeholder disponibili: <code className="bg-muted px-1 rounded">{"{{GREETING}}"}</code> (Buongiorno/Buonasera), <code className="bg-muted px-1 rounded">{"{{VICTIM_NAME}}"}</code>, <code className="bg-muted px-1 rounded">{"{{VICTIM_FIRST_NAME}}"}</code>, <code className="bg-muted px-1 rounded">{"{{PRANK_THEME}}"}</code>
+                  </p>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        🇮🇹 First Message Italiano
+                      </Label>
+                      <Textarea
+                        value={vapiSettings.firstMessageTemplateIT}
+                        onChange={(e) => setVapiSettings({ ...vapiSettings, firstMessageTemplateIT: e.target.value })}
+                        placeholder="Primo messaggio per chiamate in italiano..."
+                        rows={3}
+                        className="font-mono text-xs"
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setVapiSettings({ ...vapiSettings, firstMessageTemplateIT: DEFAULT_FIRST_MESSAGE_IT })}
+                      >
+                        Ripristina Default
+                      </Button>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        🇬🇧 First Message English
+                      </Label>
+                      <Textarea
+                        value={vapiSettings.firstMessageTemplateEN}
+                        onChange={(e) => setVapiSettings({ ...vapiSettings, firstMessageTemplateEN: e.target.value })}
+                        placeholder="First message for English calls..."
+                        rows={3}
+                        className="font-mono text-xs"
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setVapiSettings({ ...vapiSettings, firstMessageTemplateEN: DEFAULT_FIRST_MESSAGE_EN })}
+                      >
+                        Restore Default
+                      </Button>
                     </div>
                   </div>
                 </div>
