@@ -68,10 +68,14 @@ const VAPI_VOICE_PROVIDERS = [
 const VAPI_TRANSCRIBER_PROVIDERS = [
   { value: "deepgram", label: "Deepgram", description: "⚡ Consigliato - Veloce e accurato", recommended: true },
   { value: "google", label: "Google", description: "Google Cloud Speech-to-Text" },
-  { value: "gladia", label: "Gladia", description: "Multilingue avanzato" },
+  { value: "assembly-ai", label: "Assembly AI", description: "Alta precisione" },
   { value: "azure", label: "Azure", description: "Microsoft Speech" },
-  { value: "talkscriber", label: "Talkscriber", description: "Whisper - Alta qualità" },
-  { value: "assembly-ai", label: "AssemblyAI", description: "Alta precisione" },
+  { value: "11labs", label: "11labs", description: "ElevenLabs STT" },
+  { value: "gladia", label: "Gladia", description: "Multilingue avanzato" },
+  { value: "openai", label: "OpenAI", description: "Whisper - Alta qualità" },
+  { value: "speechmatics", label: "Speechmatics", description: "Enterprise - Multi lingua" },
+  { value: "talkscriber", label: "Talkscriber", description: "Whisper ottimizzato" },
+  { value: "cartesia", label: "Cartesia", description: "Ultra bassa latenza" },
   { value: "custom-transcriber", label: "Custom", description: "Transcriber personalizzato" },
 ];
 
@@ -246,6 +250,64 @@ const AZURE_STT_LANGUAGES = [
   { value: "nl-NL", label: "🇳🇱 Nederlands" },
   { value: "ja-JP", label: "🇯🇵 日本語" },
   { value: "zh-CN", label: "🇨🇳 中文" },
+];
+
+// OpenAI STT (Whisper) Models
+const OPENAI_STT_MODELS = [
+  { value: "whisper-1", label: "Whisper 1", description: "⚡ Standard - Alta qualità", recommended: true },
+];
+
+// OpenAI STT Languages
+const OPENAI_STT_LANGUAGES = [
+  { value: "it", label: "🇮🇹 Italiano" },
+  { value: "en", label: "🇬🇧 English" },
+  { value: "es", label: "🇪🇸 Español" },
+  { value: "fr", label: "🇫🇷 Français" },
+  { value: "de", label: "🇩🇪 Deutsch" },
+  { value: "pt", label: "🇵🇹 Português" },
+  { value: "nl", label: "🇳🇱 Nederlands" },
+  { value: "ja", label: "🇯🇵 日本語" },
+  { value: "zh", label: "🇨🇳 中文" },
+];
+
+// Speechmatics STT Languages
+const SPEECHMATICS_LANGUAGES = [
+  { value: "it", label: "🇮🇹 Italiano" },
+  { value: "en", label: "🇬🇧 English" },
+  { value: "es", label: "🇪🇸 Español" },
+  { value: "fr", label: "🇫🇷 Français" },
+  { value: "de", label: "🇩🇪 Deutsch" },
+  { value: "pt", label: "🇵🇹 Português" },
+  { value: "nl", label: "🇳🇱 Nederlands" },
+  { value: "ja", label: "🇯🇵 日本語" },
+  { value: "ar", label: "🇸🇦 العربية" },
+  { value: "auto", label: "🌐 Auto-detect" },
+];
+
+// Cartesia STT Models
+const CARTESIA_MODELS = [
+  { value: "sonic", label: "Sonic", description: "⚡ Ultra bassa latenza", recommended: true },
+];
+
+// Cartesia Languages
+const CARTESIA_LANGUAGES = [
+  { value: "it", label: "🇮🇹 Italiano" },
+  { value: "en", label: "🇬🇧 English" },
+  { value: "es", label: "🇪🇸 Español" },
+  { value: "fr", label: "🇫🇷 Français" },
+  { value: "de", label: "🇩🇪 Deutsch" },
+];
+
+// 11labs STT Languages
+const ELEVENLABS_STT_LANGUAGES = [
+  { value: "it", label: "🇮🇹 Italiano" },
+  { value: "en", label: "🇬🇧 English" },
+  { value: "es", label: "🇪🇸 Español" },
+  { value: "fr", label: "🇫🇷 Français" },
+  { value: "de", label: "🇩🇪 Deutsch" },
+  { value: "pt", label: "🇵🇹 Português" },
+  { value: "pl", label: "🇵🇱 Polski" },
+  { value: "hi", label: "🇮🇳 हिन्दी" },
 ];
 
 interface VapiSettings {
@@ -1567,7 +1629,22 @@ const AdminVoices = () => {
                       <Label>Provider</Label>
                       <Select 
                         value={vapiSettings.transcriberProvider} 
-                        onValueChange={(value) => setVapiSettings({ ...vapiSettings, transcriberProvider: value, transcriberModel: value === 'deepgram' ? 'nova-2-phonecall' : value === 'google' ? 'telephony' : value === 'talkscriber' ? 'whisper' : value === 'gladia' ? 'fast' : value === 'assembly-ai' ? 'best' : '' })}
+                        onValueChange={(value) => {
+                          const modelMap: Record<string, string> = {
+                            'deepgram': 'nova-2-phonecall',
+                            'google': 'telephony',
+                            'talkscriber': 'whisper',
+                            'gladia': 'fast',
+                            'assembly-ai': 'best',
+                            'openai': 'whisper-1',
+                            'cartesia': 'sonic',
+                            'speechmatics': '',
+                            '11labs': '',
+                            'azure': '',
+                            'custom-transcriber': ''
+                          };
+                          setVapiSettings({ ...vapiSettings, transcriberProvider: value, transcriberModel: modelMap[value] || '' });
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -1710,6 +1787,56 @@ const AdminVoices = () => {
                       </div>
                     )}
                     
+                    {/* OpenAI Models */}
+                    {vapiSettings.transcriberProvider === "openai" && (
+                      <div className="space-y-2">
+                        <Label>Modello</Label>
+                        <Select 
+                          value={vapiSettings.transcriberModel} 
+                          onValueChange={(value) => setVapiSettings({ ...vapiSettings, transcriberModel: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {OPENAI_STT_MODELS.map((model) => (
+                              <SelectItem key={model.value} value={model.value}>
+                                <div className="flex flex-col">
+                                  <span className={model.recommended ? "font-medium" : ""}>{model.label}</span>
+                                  <span className="text-xs text-muted-foreground">{model.description}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    
+                    {/* Cartesia Models */}
+                    {vapiSettings.transcriberProvider === "cartesia" && (
+                      <div className="space-y-2">
+                        <Label>Modello</Label>
+                        <Select 
+                          value={vapiSettings.transcriberModel} 
+                          onValueChange={(value) => setVapiSettings({ ...vapiSettings, transcriberModel: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {CARTESIA_MODELS.map((model) => (
+                              <SelectItem key={model.value} value={model.value}>
+                                <div className="flex flex-col">
+                                  <span className={model.recommended ? "font-medium" : ""}>{model.label}</span>
+                                  <span className="text-xs text-muted-foreground">{model.description}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    
                     {/* Language Selection - Provider specific */}
                     <div className="space-y-2">
                       <Label>Lingua</Label>
@@ -1737,6 +1864,18 @@ const AdminVoices = () => {
                             <SelectItem key={lang.value} value={lang.value}>{lang.label}</SelectItem>
                           ))}
                           {vapiSettings.transcriberProvider === "azure" && AZURE_STT_LANGUAGES.map((lang) => (
+                            <SelectItem key={lang.value} value={lang.value}>{lang.label}</SelectItem>
+                          ))}
+                          {vapiSettings.transcriberProvider === "openai" && OPENAI_STT_LANGUAGES.map((lang) => (
+                            <SelectItem key={lang.value} value={lang.value}>{lang.label}</SelectItem>
+                          ))}
+                          {vapiSettings.transcriberProvider === "speechmatics" && SPEECHMATICS_LANGUAGES.map((lang) => (
+                            <SelectItem key={lang.value} value={lang.value}>{lang.label}</SelectItem>
+                          ))}
+                          {vapiSettings.transcriberProvider === "cartesia" && CARTESIA_LANGUAGES.map((lang) => (
+                            <SelectItem key={lang.value} value={lang.value}>{lang.label}</SelectItem>
+                          ))}
+                          {vapiSettings.transcriberProvider === "11labs" && ELEVENLABS_STT_LANGUAGES.map((lang) => (
                             <SelectItem key={lang.value} value={lang.value}>{lang.label}</SelectItem>
                           ))}
                           {vapiSettings.transcriberProvider === "custom-transcriber" && (
