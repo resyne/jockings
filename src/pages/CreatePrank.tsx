@@ -39,6 +39,7 @@ const TONES = [
   { value: "confused", label: "Confuso 🤔" },
   { value: "mysterious", label: "Misterioso 🕵️" },
   { value: "friendly", label: "Amichevole 😊" },
+  { value: "sexy", label: "Sexy 😏" },
 ];
 
 interface PrankPreset {
