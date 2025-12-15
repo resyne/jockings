@@ -79,7 +79,13 @@ const buildSystemPrompt = (prank: any, templateIT: string | null, templateEN: st
     ? (isVictimMale ? 'maschio' : 'femmina')
     : (isVictimMale ? 'male' : 'female');
   const victimName = `${prank.victim_first_name} ${prank.victim_last_name}`;
-  const realDetail = prank.real_detail || '';
+  
+  // Fallback for empty REAL_DETAIL to prevent AI from reading literal placeholder
+  const realDetailFallbackIT = 'Nessun dettaglio specifico fornito. Improvvisa basandoti sul contesto della conversazione.';
+  const realDetailFallbackEN = 'No specific detail provided. Improvise based on the conversation context.';
+  const realDetail = (prank.real_detail && prank.real_detail.trim()) 
+    ? prank.real_detail.trim() 
+    : (isItalian ? realDetailFallbackIT : realDetailFallbackEN);
 
   // Use template from settings if available, otherwise use default
   let template = isItalian ? templateIT : templateEN;
@@ -138,12 +144,15 @@ IMPORTANT: The first 3 seconds are crucial. First impression determines the succ
     }
   }
 
-  // Build real detail section if provided
-  const realDetailSection = realDetail 
+  // Build real detail section - always include now since realDetail has fallback
+  const hasUserDetail = prank.real_detail && prank.real_detail.trim();
+  const realDetailSection = hasUserDetail
     ? (isItalian 
         ? `DETTAGLIO REALE SULLA VITTIMA (usa questo per rendere lo scherzo più credibile):\n${realDetail}`
         : `REAL DETAIL ABOUT THE VICTIM (use this to make the prank more believable):\n${realDetail}`)
-    : '';
+    : (isItalian
+        ? `NOTA: ${realDetail}`
+        : `NOTE: ${realDetail}`);
 
   // Replace placeholders
   return template
