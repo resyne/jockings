@@ -250,7 +250,10 @@ serve(async (req) => {
       vapi_voice_provider: '11labs', // VAPI uses "11labs" not "elevenlabs"
       vapi_voice_id: 'onwK4e9ZLuTAKqWW03F9', // Default Italian male voice
       vapi_transcriber_provider: 'deepgram',
-      vapi_transcriber_model: 'nova-2', // Use nova-2 for multilingual support
+      vapi_transcriber_model: 'nova-2-phonecall', // Optimized for phone calls
+      vapi_filler_injection_enabled: 'true',
+      vapi_recording_enabled: 'true',
+      vapi_transcript_enabled: 'true',
       vapi_silence_timeout: '30',
       vapi_max_duration: '300',
       vapi_background_sound: 'off',
@@ -323,8 +326,11 @@ serve(async (req) => {
       prank.language === 'Italiano' ? 'Italian' : 'English'
     );
 
-    const endCallMessage = prank.language === 'Italiano' ? 'Arrivederci!' : 'Goodbye!';
+    const endCallMessage = settings['vapi_end_call_message'] || (prank.language === 'Italiano' ? 'Arrivederci!' : 'Goodbye!');
 
+    const recordingEnabled = settings['vapi_recording_enabled']
+      ? settings['vapi_recording_enabled'] === 'true'
+      : (prank.send_recording ?? true);
     // Get voice settings - PRIORITY: prank.elevenlabs_voice_id > voice_settings table > defaults
     let voiceId = prank.elevenlabs_voice_id || settings['vapi_voice_id'];
     let voiceProvider = '11labs'; // Always use 11labs for ElevenLabs voices
@@ -408,7 +414,7 @@ serve(async (req) => {
           stability: voiceSettings?.elevenlabs_stability ?? 0.4,
           similarityBoost: voiceSettings?.elevenlabs_similarity ?? 0.75,
           style: voiceSettings?.elevenlabs_style ?? 0,
-          fillerInjectionEnabled: true, // Natural filler words like "uhm", "eh"
+          fillerInjectionEnabled: settings['vapi_filler_injection_enabled'] === 'true',
         },
         
         // Transcriber configuration - use settings from admin panel
@@ -422,12 +428,12 @@ serve(async (req) => {
         // Call behavior settings
         silenceTimeoutSeconds: parseInt(settings['vapi_silence_timeout']),
         maxDurationSeconds: Math.min(
-          parseInt(settings['vapi_max_duration']), 
+          parseInt(settings['vapi_max_duration']),
           prank.max_duration || 300
         ),
         endCallMessage: endCallMessage,
         endCallFunctionEnabled: true,
-        recordingEnabled: prank.send_recording ?? true,
+        recordingEnabled: recordingEnabled,
       },
     };
 

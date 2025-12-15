@@ -450,7 +450,7 @@ const DEFAULT_VAPI_SETTINGS: VapiSettings = {
   aiModel: "gpt-4o-mini",
   temperature: 0.7,
   maxTokens: 150,
-  voiceProvider: "elevenlabs",
+  voiceProvider: "11labs",
   voiceId: "21m00Tcm4TlvDq8ikWAM",
   customVoiceId: "",
   voiceSpeed: 1.0,
