@@ -427,6 +427,14 @@ const AdminVoices = () => {
         { key: "elevenlabs_model", value: elevenlabsModel },
       ];
 
+      // Log all settings being saved
+      console.log("=== VOICE CONFIG SAVE ===");
+      console.log("Timestamp:", new Date().toISOString());
+      console.log("Settings being saved:");
+      settingsToSave.forEach(s => {
+        console.log(`  ${s.key}: ${s.value}`);
+      });
+
       for (const setting of settingsToSave) {
         const { error } = await supabase
           .from("app_settings")
@@ -434,8 +442,10 @@ const AdminVoices = () => {
         if (error) throw error;
       }
 
+      console.log("=== SAVE COMPLETE ===");
       toast({ title: "Salvato!", description: `Provider chiamate: ${callProvider === "vapi" ? "VAPI" : "Twilio/ElevenLabs"}` });
     } catch (error: any) {
+      console.error("=== SAVE ERROR ===", error);
       toast({ title: "Errore", description: error.message, variant: "destructive" });
     } finally {
       setSavingCallProvider(false);
@@ -471,6 +481,17 @@ const AdminVoices = () => {
   };
 
   const handleSave = async (setting: VoiceSetting) => {
+    // Log voice setting being saved
+    console.log("=== VOICE SETTING SAVE ===");
+    console.log("Timestamp:", new Date().toISOString());
+    console.log("Voice ID:", setting.id);
+    console.log("Language:", setting.language);
+    console.log("Gender:", setting.gender);
+    console.log("ElevenLabs Voice ID:", setting.elevenlabs_voice_id);
+    console.log("Voice Name:", setting.voice_name);
+    console.log("Rating:", setting.rating || 0);
+    console.log("Notes:", setting.notes);
+
     // Save voice ID, name, notes, and rating
     const { error } = await supabase
       .from("voice_settings")
@@ -484,8 +505,10 @@ const AdminVoices = () => {
       .eq("id", setting.id);
 
     if (error) {
+      console.error("=== VOICE SETTING SAVE ERROR ===", error);
       toast({ title: "Errore", description: error.message, variant: "destructive" });
     } else {
+      console.log("=== VOICE SETTING SAVE COMPLETE ===");
       toast({ title: "Salvato!", description: "Voce aggiornata" });
       fetchVoiceSettings();
       setSelectedSetting(null);
