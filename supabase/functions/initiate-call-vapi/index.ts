@@ -238,7 +238,15 @@ serve(async (req) => {
         'vapi_system_prompt_en',
         'vapi_first_message_it',
         'vapi_first_message_en',
-        'elevenlabs_model', // ElevenLabs TTS model selection
+        'elevenlabs_model',
+        // ElevenLabs voice fine-tuning from admin panel
+        'vapi_voice_stability',
+        'vapi_voice_similarity_boost',
+        'vapi_voice_style',
+        'vapi_voice_speed',
+        'vapi_voice_speaker_boost',
+        // Background denoising
+        'vapi_background_denoising',
       ]),
       voiceSettingsQuery,
       supabase.from('vapi_phone_numbers').select('*').eq('is_default', true).eq('is_active', true).single()
@@ -434,14 +442,17 @@ serve(async (req) => {
           maxTokens: parseInt(settings['vapi_max_tokens']),
         },
         
-        // Voice configuration - use voice_settings table parameters
+        // Voice configuration - use admin panel settings first, then voice_settings table as fallback
         voice: {
           provider: voiceProvider,
           voiceId: voiceId,
-          model: settings['elevenlabs_model'], // Use admin-configured ElevenLabs model
-          stability: voiceSettings?.elevenlabs_stability ?? 0.4,
-          similarityBoost: voiceSettings?.elevenlabs_similarity ?? 0.75,
-          style: voiceSettings?.elevenlabs_style ?? 0,
+          model: settings['elevenlabs_model'],
+          // Use admin panel settings with voice_settings fallback
+          stability: parseFloat(settings['vapi_voice_stability']) || voiceSettings?.elevenlabs_stability || 0.5,
+          similarityBoost: parseFloat(settings['vapi_voice_similarity_boost']) || voiceSettings?.elevenlabs_similarity || 0.75,
+          style: parseFloat(settings['vapi_voice_style']) || voiceSettings?.elevenlabs_style || 0,
+          speed: parseFloat(settings['vapi_voice_speed']) || voiceSettings?.elevenlabs_speed || 1.0,
+          useSpeakerBoost: settings['vapi_voice_speaker_boost'] === 'true',
           fillerInjectionEnabled: settings['vapi_filler_injection_enabled'] === 'true',
         },
         
@@ -479,6 +490,11 @@ serve(async (req) => {
     // Add backchanneling if enabled (natural "mhm", "ok" responses)
     if (settings['vapi_backchanneling'] === 'true') {
       vapiCallBody.assistant.backchannelingEnabled = true;
+    }
+
+    // Add background denoising if enabled
+    if (settings['vapi_background_denoising'] === 'true') {
+      vapiCallBody.assistant.backgroundDenoisingEnabled = true;
     }
 
     console.log('=== VAPI REQUEST ===');
