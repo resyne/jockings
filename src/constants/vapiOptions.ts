@@ -8,74 +8,74 @@ export const GENDERS = ["male", "female"] as const;
 // ElevenLabs TTS Models
 export const ELEVENLABS_MODELS = [
   { value: "eleven_turbo_v2_5", label: "Turbo v2.5", description: "⚡ Più veloce - 32 lingue - Consigliato", recommended: true },
-  { value: "eleven_multilingual_v2", label: "Multilingual v2", description: "Alta qualità - 29 lingue" },
-  { value: "eleven_turbo_v2", label: "Turbo v2", description: "Veloce - Solo inglese" },
-  { value: "eleven_flash_v2_5", label: "Flash v2.5", description: "Ultra veloce - Bassa latenza" },
-] as const;
+  { value: "eleven_multilingual_v2", label: "Multilingual v2", description: "Alta qualità - 29 lingue", recommended: false },
+  { value: "eleven_turbo_v2", label: "Turbo v2", description: "Veloce - Solo inglese", recommended: false },
+  { value: "eleven_flash_v2_5", label: "Flash v2.5", description: "Ultra veloce - Bassa latenza", recommended: false },
+];
 
 // AI Models for voice-test function
 export const AI_MODELS = [
   { value: "google/gemini-2.5-flash-lite", label: "Google Gemini 2.5 Flash Lite", description: "⚡ Velocissimo - Consigliato", recommended: true },
-  { value: "google/gemini-2.5-flash", label: "Google Gemini 2.5 Flash", description: "Molto veloce, buona qualità" },
-  { value: "openai/gpt-4o-mini", label: "OpenAI GPT-4o Mini", description: "Veloce, economico" },
-  { value: "openai/gpt-5-mini", label: "OpenAI GPT-5 Mini", description: "Più potente, più lento" },
-] as const;
+  { value: "google/gemini-2.5-flash", label: "Google Gemini 2.5 Flash", description: "Molto veloce, buona qualità", recommended: false },
+  { value: "openai/gpt-4o-mini", label: "OpenAI GPT-4o Mini", description: "Veloce, economico", recommended: false },
+  { value: "openai/gpt-5-mini", label: "OpenAI GPT-5 Mini", description: "Più potente, più lento", recommended: false },
+];
 
 // VAPI Voice Providers (TTS)
 export const VAPI_VOICE_PROVIDERS = [
   { value: "11labs", label: "ElevenLabs", description: "⚡ Alta qualità, bassa latenza", recommended: true },
-  { value: "openai", label: "OpenAI", description: "Veloce, buona qualità" },
-  { value: "azure", label: "Azure", description: "Microsoft TTS" },
-  { value: "deepgram", label: "Deepgram", description: "Ultra veloce" },
-  { value: "playht", label: "PlayHT", description: "Voci realistiche" },
-  { value: "cartesia", label: "Cartesia", description: "Sonic - Ultra bassa latenza" },
-  { value: "rime-ai", label: "Rime AI", description: "Voci naturali" },
-  { value: "lmnt", label: "LMNT", description: "Voci espressive" },
-  { value: "neets", label: "Neets", description: "Economico" },
-  { value: "tavus", label: "Tavus", description: "Video AI voices" },
-] as const;
+  { value: "openai", label: "OpenAI", description: "Veloce, buona qualità", recommended: false },
+  { value: "azure", label: "Azure", description: "Microsoft TTS", recommended: false },
+  { value: "deepgram", label: "Deepgram", description: "Ultra veloce", recommended: false },
+  { value: "playht", label: "PlayHT", description: "Voci realistiche", recommended: false },
+  { value: "cartesia", label: "Cartesia", description: "Sonic - Ultra bassa latenza", recommended: false },
+  { value: "rime-ai", label: "Rime AI", description: "Voci naturali", recommended: false },
+  { value: "lmnt", label: "LMNT", description: "Voci espressive", recommended: false },
+  { value: "neets", label: "Neets", description: "Economico", recommended: false },
+  { value: "tavus", label: "Tavus", description: "Video AI voices", recommended: false },
+];
 
 // VAPI Transcriber Providers (STT)
 export const VAPI_TRANSCRIBER_PROVIDERS = [
   { value: "deepgram", label: "Deepgram", description: "⚡ Consigliato - Veloce e accurato", recommended: true },
-  { value: "google", label: "Google", description: "Google Cloud Speech-to-Text" },
-  { value: "assembly-ai", label: "Assembly AI", description: "Alta precisione" },
-  { value: "azure", label: "Azure", description: "Microsoft Speech" },
-  { value: "11labs", label: "11labs", description: "ElevenLabs STT" },
-  { value: "gladia", label: "Gladia", description: "Multilingue avanzato" },
-  { value: "openai", label: "OpenAI", description: "Whisper - Alta qualità" },
-  { value: "speechmatics", label: "Speechmatics", description: "Enterprise - Multi lingua" },
-  { value: "talkscriber", label: "Talkscriber", description: "Whisper ottimizzato" },
-  { value: "cartesia", label: "Cartesia", description: "Ultra bassa latenza" },
-  { value: "custom-transcriber", label: "Custom", description: "Transcriber personalizzato" },
-] as const;
+  { value: "google", label: "Google", description: "Google Cloud Speech-to-Text", recommended: false },
+  { value: "assembly-ai", label: "Assembly AI", description: "Alta precisione", recommended: false },
+  { value: "azure", label: "Azure", description: "Microsoft Speech", recommended: false },
+  { value: "11labs", label: "11labs", description: "ElevenLabs STT", recommended: false },
+  { value: "gladia", label: "Gladia", description: "Multilingue avanzato", recommended: false },
+  { value: "openai", label: "OpenAI", description: "Whisper - Alta qualità", recommended: false },
+  { value: "speechmatics", label: "Speechmatics", description: "Enterprise - Multi lingua", recommended: false },
+  { value: "talkscriber", label: "Talkscriber", description: "Whisper ottimizzato", recommended: false },
+  { value: "cartesia", label: "Cartesia", description: "Ultra bassa latenza", recommended: false },
+  { value: "custom-transcriber", label: "Custom", description: "Transcriber personalizzato", recommended: false },
+];
 
 // VAPI AI Models (LLM) - Organized by provider
 export const VAPI_AI_MODELS = [
   // OpenAI - Most recommended for VAPI
   { value: "gpt-4o-mini", label: "OpenAI GPT-4o Mini", description: "⚡ Veloce - Consigliato", recommended: true, provider: "openai" },
-  { value: "gpt-4o", label: "OpenAI GPT-4o", description: "Potente, multimodale", provider: "openai" },
-  { value: "gpt-4-turbo", label: "OpenAI GPT-4 Turbo", description: "Alta qualità", provider: "openai" },
-  { value: "gpt-3.5-turbo", label: "OpenAI GPT-3.5 Turbo", description: "Economico, veloce", provider: "openai" },
-  { value: "gpt-5", label: "OpenAI GPT-5", description: "Nuovo modello avanzato", provider: "openai" },
-  { value: "gpt-5-mini", label: "OpenAI GPT-5 Mini", description: "Veloce, nuovo", provider: "openai" },
+  { value: "gpt-4o", label: "OpenAI GPT-4o", description: "Potente, multimodale", recommended: false, provider: "openai" },
+  { value: "gpt-4-turbo", label: "OpenAI GPT-4 Turbo", description: "Alta qualità", recommended: false, provider: "openai" },
+  { value: "gpt-3.5-turbo", label: "OpenAI GPT-3.5 Turbo", description: "Economico, veloce", recommended: false, provider: "openai" },
+  { value: "gpt-5", label: "OpenAI GPT-5", description: "Nuovo modello avanzato", recommended: false, provider: "openai" },
+  { value: "gpt-5-mini", label: "OpenAI GPT-5 Mini", description: "Veloce, nuovo", recommended: false, provider: "openai" },
   // Anthropic Claude
-  { value: "claude-3-5-sonnet-20241022", label: "Claude 3.5 Sonnet", description: "Bilanciato", provider: "anthropic" },
-  { value: "claude-3-opus-20240229", label: "Claude 3 Opus", description: "Più potente", provider: "anthropic" },
-  { value: "claude-3-haiku-20240307", label: "Claude 3 Haiku", description: "Ultra veloce", provider: "anthropic" },
+  { value: "claude-3-5-sonnet-20241022", label: "Claude 3.5 Sonnet", description: "Bilanciato", recommended: false, provider: "anthropic" },
+  { value: "claude-3-opus-20240229", label: "Claude 3 Opus", description: "Più potente", recommended: false, provider: "anthropic" },
+  { value: "claude-3-haiku-20240307", label: "Claude 3 Haiku", description: "Ultra veloce", recommended: false, provider: "anthropic" },
   // Google
-  { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash", description: "⚡ Ultra veloce", provider: "google" },
-  { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash", description: "Veloce", provider: "google" },
-  { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro", description: "Potente", provider: "google" },
+  { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash", description: "⚡ Ultra veloce", recommended: false, provider: "google" },
+  { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash", description: "Veloce", recommended: false, provider: "google" },
+  { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro", description: "Potente", recommended: false, provider: "google" },
   // Groq - Ultra fast inference
   { value: "llama-3.3-70b-versatile", label: "Llama 3.3 70B Versatile", description: "⚡ Groq - Ultra veloce", recommended: true, provider: "groq" },
-  { value: "llama-3.1-8b-instant", label: "Llama 3.1 8B Instant", description: "Groq - Istantaneo", provider: "groq" },
-  { value: "llama3-70b-8192", label: "Llama 3 70B", description: "Groq - Potente", provider: "groq" },
-  { value: "llama3-8b-8192", label: "Llama 3 8B", description: "Groq - Veloce", provider: "groq" },
-  { value: "gemma2-9b-it", label: "Gemma 2 9B IT", description: "Groq - Google", provider: "groq" },
-  { value: "deepseek-r1-distill-llama-70b", label: "DeepSeek R1 Distill", description: "Groq - Reasoning", provider: "groq" },
-  { value: "mistral-saba-24b", label: "Mistral Saba 24B", description: "Groq - Mistral", provider: "groq" },
-] as const;
+  { value: "llama-3.1-8b-instant", label: "Llama 3.1 8B Instant", description: "Groq - Istantaneo", recommended: false, provider: "groq" },
+  { value: "llama3-70b-8192", label: "Llama 3 70B", description: "Groq - Potente", recommended: false, provider: "groq" },
+  { value: "llama3-8b-8192", label: "Llama 3 8B", description: "Groq - Veloce", recommended: false, provider: "groq" },
+  { value: "gemma2-9b-it", label: "Gemma 2 9B IT", description: "Groq - Google", recommended: false, provider: "groq" },
+  { value: "deepseek-r1-distill-llama-70b", label: "DeepSeek R1 Distill", description: "Groq - Reasoning", recommended: false, provider: "groq" },
+  { value: "mistral-saba-24b", label: "Mistral Saba 24B", description: "Groq - Mistral", recommended: false, provider: "groq" },
+];
 
 // ElevenLabs Voices
 export const VAPI_ELEVENLABS_VOICES = [
@@ -106,14 +106,14 @@ export const VAPI_ELEVENLABS_VOICES = [
 // Deepgram STT Models
 export const DEEPGRAM_MODELS = [
   { value: "nova-2", label: "Nova 2", description: "⚡ Più veloce e accurato", recommended: true },
-  { value: "nova-2-general", label: "Nova 2 General", description: "General purpose" },
-  { value: "nova-2-meeting", label: "Nova 2 Meeting", description: "Ottimizzato per meeting" },
+  { value: "nova-2-general", label: "Nova 2 General", description: "General purpose", recommended: false },
+  { value: "nova-2-meeting", label: "Nova 2 Meeting", description: "Ottimizzato per meeting", recommended: false },
   { value: "nova-2-phonecall", label: "Nova 2 Phonecall", description: "⚡ Ottimizzato per telefonate", recommended: true },
-  { value: "nova-2-conversationalai", label: "Nova 2 ConversationalAI", description: "Ottimizzato per AI" },
-  { value: "nova", label: "Nova", description: "Versione precedente" },
-  { value: "enhanced", label: "Enhanced", description: "Qualità migliorata" },
-  { value: "base", label: "Base", description: "Economico" },
-] as const;
+  { value: "nova-2-conversationalai", label: "Nova 2 ConversationalAI", description: "Ottimizzato per AI", recommended: false },
+  { value: "nova", label: "Nova", description: "Versione precedente", recommended: false },
+  { value: "enhanced", label: "Enhanced", description: "Qualità migliorata", recommended: false },
+  { value: "base", label: "Base", description: "Economico", recommended: false },
+];
 
 // Deepgram Languages
 export const DEEPGRAM_LANGUAGES = [
@@ -132,13 +132,13 @@ export const DEEPGRAM_LANGUAGES = [
 // Google STT Models
 export const GOOGLE_STT_MODELS = [
   { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash", description: "⚡ Consigliato - Veloce", recommended: true },
-  { value: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite", description: "Ultra veloce, economico" },
-  { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro", description: "Massima qualità" },
-  { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash", description: "Veloce, stabile" },
-  { value: "gemini-2.0-flash-lite", label: "Gemini 2.0 Flash Lite", description: "Economico" },
-  { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash", description: "Versione precedente" },
-  { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro", description: "Pro, versione precedente" },
-] as const;
+  { value: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite", description: "Ultra veloce, economico", recommended: false },
+  { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro", description: "Massima qualità", recommended: false },
+  { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash", description: "Veloce, stabile", recommended: false },
+  { value: "gemini-2.0-flash-lite", label: "Gemini 2.0 Flash Lite", description: "Economico", recommended: false },
+  { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash", description: "Versione precedente", recommended: false },
+  { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro", description: "Pro, versione precedente", recommended: false },
+];
 
 // Google STT Languages
 export const GOOGLE_STT_LANGUAGES = [
@@ -177,8 +177,8 @@ export const OPENAI_STT_LANGUAGES = [
 // AssemblyAI Models
 export const ASSEMBLYAI_MODELS = [
   { value: "best", label: "Best", description: "⚡ Massima qualità", recommended: true },
-  { value: "nano", label: "Nano", description: "⚡ Ultra veloce, economico" },
-] as const;
+  { value: "nano", label: "Nano", description: "⚡ Ultra veloce, economico", recommended: false },
+];
 
 // AssemblyAI Languages
 export const ASSEMBLYAI_LANGUAGES = [
@@ -225,8 +225,8 @@ export const TALKSCRIBER_LANGUAGES = [
 // Gladia Models
 export const GLADIA_MODELS = [
   { value: "fast", label: "Fast", description: "⚡ Ultra veloce", recommended: true },
-  { value: "accurate", label: "Accurate", description: "Alta precisione" },
-] as const;
+  { value: "accurate", label: "Accurate", description: "Alta precisione", recommended: false },
+];
 
 // Gladia Languages
 export const GLADIA_LANGUAGES = [
