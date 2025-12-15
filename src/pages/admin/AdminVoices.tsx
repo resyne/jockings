@@ -159,15 +159,15 @@ const DEEPGRAM_LANGUAGES = [
   { value: "multi", label: "🌐 Multi-lingua" },
 ];
 
-// Google STT Models
+// Google STT Models (VAPI uses Gemini models for transcription)
 const GOOGLE_STT_MODELS = [
-  { value: "latest_long", label: "Latest Long", description: "⚡ Consigliato - Audio lunghi", recommended: true },
-  { value: "latest_short", label: "Latest Short", description: "Audio brevi" },
-  { value: "telephony", label: "Telephony", description: "⚡ Ottimizzato per telefonate", recommended: true },
-  { value: "telephony_short", label: "Telephony Short", description: "Telefonate brevi" },
-  { value: "medical_dictation", label: "Medical Dictation", description: "Dettatura medica" },
-  { value: "medical_conversation", label: "Medical Conversation", description: "Conversazioni mediche" },
-  { value: "command_and_search", label: "Command & Search", description: "Comandi vocali" },
+  { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash", description: "⚡ Consigliato - Veloce", recommended: true },
+  { value: "gemini-2.5-flash-lite", label: "Gemini 2.5 Flash Lite", description: "Ultra veloce, economico" },
+  { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro", description: "Massima qualità" },
+  { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash", description: "Veloce, stabile" },
+  { value: "gemini-2.0-flash-lite", label: "Gemini 2.0 Flash Lite", description: "Economico" },
+  { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash", description: "Versione precedente" },
+  { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro", description: "Pro, versione precedente" },
 ];
 
 // Google STT Languages
@@ -1632,7 +1632,7 @@ const AdminVoices = () => {
                         onValueChange={(value) => {
                           const modelMap: Record<string, string> = {
                             'deepgram': 'nova-2-phonecall',
-                            'google': 'telephony',
+                            'google': 'gemini-2.5-flash',
                             'talkscriber': 'whisper',
                             'gladia': 'fast',
                             'assembly-ai': 'best',
