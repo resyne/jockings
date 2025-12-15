@@ -47,13 +47,13 @@ serve(async (req) => {
       console.warn('Settings fetch error:', settingsError);
     }
 
-    const settings: Record<string, string> = {};
+    const appSettings: Record<string, string> = {};
     settingsData?.forEach((s: { key: string; value: string }) => {
-      if (s.value) settings[s.key] = s.value;
+      if (s.value) appSettings[s.key] = s.value;
     });
 
-    const aiModel = settings['ai_model'] || 'google/gemini-2.5-flash-lite';
-    const elevenlabsModel = settings['elevenlabs_model'] || 'eleven_turbo_v2_5';
+    const aiModel = appSettings['ai_model'] || 'google/gemini-2.5-flash-lite';
+    const elevenlabsModel = appSettings['elevenlabs_model'] || 'eleven_turbo_v2_5';
     console.log('Using AI model:', aiModel);
     console.log('Using ElevenLabs model:', elevenlabsModel);
 
@@ -129,11 +129,11 @@ Usa le forme grammaticali appropriate per il genere ${gender === 'male' ? 'masch
     console.log('AI response:', aiText);
 
     // Generate ElevenLabs audio
-    const settings = elevenlabsSettings || {};
-    const stability = (settings.stability ?? 50) / 100;
-    const similarityBoost = (settings.similarity ?? 75) / 100;
-    const style = (settings.style ?? 0) / 100;
-    const speed = settings.speed ?? 1.0;
+    const voiceParams = (elevenlabsSettings ?? {}) as { stability?: number; similarity?: number; style?: number; speed?: number };
+    const stability = (voiceParams.stability ?? 50) / 100;
+    const similarityBoost = (voiceParams.similarity ?? 75) / 100;
+    const style = (voiceParams.style ?? 0) / 100;
+    const speed = voiceParams.speed ?? 1.0;
 
     console.log('Generating ElevenLabs audio with voice:', voiceId);
     const elevenlabsResponse = await fetch(
