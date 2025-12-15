@@ -79,7 +79,7 @@ const Auth = () => {
         toast({ title: "Benvenuto! 🎉", description: "Login effettuato con successo" });
       } else if (mode === "signup") {
         const redirectUrl = `${window.location.origin}/dashboard`;
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -88,9 +88,15 @@ const Auth = () => {
           },
         });
         if (error) throw error;
+        
+        // Send welcome email (fire and forget, don't block registration)
+        supabase.functions.invoke("send-welcome-email", {
+          body: { email, name: username || email.split('@')[0] }
+        }).catch(err => console.error("Welcome email error:", err));
+        
         toast({
           title: "Registrazione completata! 🎊",
-          description: "Controlla la tua email per confermare l'account",
+          description: "Benvenuto nella famiglia degli scherzi!",
         });
       } else {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {

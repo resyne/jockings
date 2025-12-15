@@ -65,3 +65,12 @@ verify_jwt = true
 
 [functions.vapi-webhook]
 verify_jwt = false
+
+[functions.create-checkout]
+verify_jwt = true
+
+[functions.verify-payment]
+verify_jwt = true
+
+[functions.send-welcome-email]
+verify_jwt = false
