@@ -223,6 +223,9 @@ serve(async (req) => {
         'vapi_voice_provider',
         'vapi_voice_id',
         'vapi_custom_voice_id',
+        'vapi_filler_injection_enabled',
+        'vapi_recording_enabled',
+        'vapi_transcript_enabled',
         'vapi_transcriber_provider',
         'vapi_transcriber_model',
         'vapi_transcriber_language',
@@ -249,11 +252,12 @@ serve(async (req) => {
       vapi_max_tokens: '150',
       vapi_voice_provider: '11labs', // VAPI uses "11labs" not "elevenlabs"
       vapi_voice_id: 'onwK4e9ZLuTAKqWW03F9', // Default Italian male voice
-      vapi_transcriber_provider: 'deepgram',
-      vapi_transcriber_model: 'nova-2-phonecall', // Optimized for phone calls
       vapi_filler_injection_enabled: 'true',
       vapi_recording_enabled: 'true',
       vapi_transcript_enabled: 'true',
+      vapi_transcriber_provider: 'deepgram',
+      vapi_transcriber_model: 'nova-2', // Default (multi-language)
+      vapi_transcriber_language: 'it', // Default (used for Deepgram models)
       vapi_silence_timeout: '30',
       vapi_max_duration: '300',
       vapi_background_sound: 'off',
@@ -300,31 +304,55 @@ serve(async (req) => {
     const systemPrompt = buildSystemPrompt(prank, systemPromptTemplateIT, systemPromptTemplateEN);
     const firstMessage = buildFirstMessage(prank, greeting, firstMessageTemplateIT, firstMessageTemplateEN);
 
-    // VAPI expects language names (e.g., "Italian", "English", "Multilingual"), not locale codes.
-    const normalizeVapiTranscriberLanguage = (value?: string, fallback?: string): string => {
-      const v = (value || fallback || '').trim();
-      const lower = v.toLowerCase();
+    // VAPI transcriber configuration is provider/model-specific.
+    // Deepgram expects locale codes (it, en, en-US, ...), not language names.
+    const normalizeVapiTranscriberConfig = (
+      provider: string,
+      model: string,
+      languageValue: string | undefined,
+      prankLang: string
+    ): { model: string; language: string } => {
+      const fallbackLanguage = prankLang === 'Italiano' ? 'it' : 'en-US';
+      let language = (languageValue || fallbackLanguage).trim();
 
-      if (!lower) return 'Multilingual';
-      if (['multi', 'multilingual', 'auto'].includes(lower)) return 'Multilingual';
-      if (lower === 'italiano' || lower === 'italian' || lower.startsWith('it')) return 'Italian';
-      if (lower === 'english' || lower.startsWith('en')) return 'English';
-      if (lower.startsWith('es')) return 'Spanish';
-      if (lower.startsWith('fr')) return 'French';
-      if (lower.startsWith('de')) return 'German';
-      if (lower.startsWith('pt')) return 'Portuguese';
-      if (lower.startsWith('nl')) return 'Dutch';
-      if (lower.startsWith('ja')) return 'Japanese';
-      if (lower.startsWith('zh')) return 'Chinese';
+      // Accept some human-friendly values (in case they got stored)
+      const lower = language.toLowerCase();
+      if (lower === 'italiano' || lower === 'italian') language = 'it';
+      if (lower === 'english') language = 'en';
 
-      // If already a valid VAPI language string (e.g., "Italian"), keep it.
-      return v;
+      let normalizedModel = (model || '').trim();
+      if (!normalizedModel && provider === 'deepgram') normalizedModel = 'nova-2';
+
+      if (provider === 'deepgram') {
+        // For Deepgram models, avoid "Multilingual" strings.
+        if (['multi', 'multilingual', 'auto'].includes(lower)) {
+          language = fallbackLanguage;
+        }
+
+        // VAPI validation: nova-2-phonecall accepts only en or en-US.
+        if (normalizedModel === 'nova-2-phonecall') {
+          if (!language.toLowerCase().startsWith('en')) {
+            // Non-English call -> downgrade to nova-2 which supports more languages
+            normalizedModel = 'nova-2';
+            language = prankLang === 'Italiano' ? 'it' : fallbackLanguage;
+          } else if (language !== 'en' && language !== 'en-US') {
+            language = 'en';
+          }
+        }
+      }
+
+      return { model: normalizedModel, language };
     };
 
-    const transcriberLanguage = normalizeVapiTranscriberLanguage(
+    const normalizedTranscriber = normalizeVapiTranscriberConfig(
+      settings['vapi_transcriber_provider'],
+      settings['vapi_transcriber_model'],
       settings['vapi_transcriber_language'],
-      prank.language === 'Italiano' ? 'Italian' : 'English'
+      prank.language
     );
+
+    const transcriberLanguage = normalizedTranscriber.language;
+    const transcriberModel = normalizedTranscriber.model;
 
     const endCallMessage = settings['vapi_end_call_message'] || (prank.language === 'Italiano' ? 'Arrivederci!' : 'Goodbye!');
 
@@ -421,7 +449,7 @@ serve(async (req) => {
         // Different providers require different model formats
         transcriber: {
           provider: settings['vapi_transcriber_provider'],
-          model: settings['vapi_transcriber_model'], // Use model from admin settings
+          model: transcriberModel,
           language: transcriberLanguage,
         },
         
