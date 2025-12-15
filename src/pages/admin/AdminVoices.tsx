@@ -159,17 +159,21 @@ interface VapiSettings {
   voiceSimilarityBoost: number;
   voiceStyle: number;
   voiceUseSpeakerBoost: boolean;
+  fillerInjectionEnabled: boolean; // Natural filler words ("uhm", "eh")
   // Transcriber
   transcriberProvider: string;
   transcriberModel: string;
   transcriberLanguage: string;
   // Call settings
   firstMessage: string;
+  firstMessageMode: string; // 'assistant-speaks-first' | 'assistant-waits-for-user' | 'assistant-speaks-first-with-model-generated-message'
   silenceTimeoutSeconds: number;
   maxDurationSeconds: number;
   backgroundSound: string;
   backchannelingEnabled: boolean;
   endCallMessage: string;
+  voicemailMessage: string; // Message if forwarded to voicemail
+  endCallPhrases: string; // Comma-separated phrases that trigger hangup
   // Start Speaking Plan
   startSpeakingWaitSeconds: number;
   smartEndpointingEnabled: boolean;
@@ -179,6 +183,11 @@ interface VapiSettings {
   stopSpeakingNumWords: number;
   stopSpeakingVoiceSeconds: number;
   stopSpeakingBackoffSeconds: number;
+  // Background Speech Denoising Plan
+  smartDenoisingEnabled: boolean; // Krisp denoising
+  // Artifact Plan (Recording & Transcript)
+  recordingEnabled: boolean;
+  transcriptEnabled: boolean;
   // Advanced
   firstMessageInterruptionsEnabled: boolean;
   voicemailDetectionEnabled: boolean;
@@ -268,15 +277,19 @@ const DEFAULT_VAPI_SETTINGS: VapiSettings = {
   voiceSimilarityBoost: 0.75,
   voiceStyle: 0,
   voiceUseSpeakerBoost: true,
+  fillerInjectionEnabled: true, // Natural filler words ("uhm", "eh")
   transcriberProvider: "deepgram",
   transcriberModel: "nova-2",
   transcriberLanguage: "it",
   firstMessage: "Pronto?",
+  firstMessageMode: "assistant-speaks-first",
   silenceTimeoutSeconds: 30,
   maxDurationSeconds: 300,
   backgroundSound: "off",
   backchannelingEnabled: false,
   endCallMessage: "Arrivederci!",
+  voicemailMessage: "", // Empty = hang up if voicemail
+  endCallPhrases: "", // Comma-separated phrases that trigger hangup
   // Start Speaking Plan
   startSpeakingWaitSeconds: 0.4,
   smartEndpointingEnabled: true,
@@ -286,6 +299,11 @@ const DEFAULT_VAPI_SETTINGS: VapiSettings = {
   stopSpeakingNumWords: 0,
   stopSpeakingVoiceSeconds: 0.2,
   stopSpeakingBackoffSeconds: 1.0,
+  // Background Speech Denoising Plan
+  smartDenoisingEnabled: true, // Krisp denoising
+  // Artifact Plan
+  recordingEnabled: true,
+  transcriptEnabled: true,
   // Advanced
   firstMessageInterruptionsEnabled: false,
   voicemailDetectionEnabled: false,
@@ -555,15 +573,19 @@ const AdminVoices = () => {
         "vapi_voice_similarity_boost",
         "vapi_voice_style",
         "vapi_voice_speaker_boost",
+        "vapi_filler_injection_enabled",
         "vapi_transcriber_provider",
         "vapi_transcriber_model",
         "vapi_transcriber_language",
         "vapi_first_message",
+        "vapi_first_message_mode",
         "vapi_silence_timeout",
         "vapi_max_duration",
         "vapi_background_sound",
         "vapi_backchanneling",
         "vapi_end_call_message",
+        "vapi_voicemail_message",
+        "vapi_end_call_phrases",
         "vapi_system_prompt_it",
         "vapi_system_prompt_en",
         "vapi_start_speaking_wait",
@@ -573,6 +595,9 @@ const AdminVoices = () => {
         "vapi_stop_speaking_num_words",
         "vapi_stop_speaking_voice_seconds",
         "vapi_stop_speaking_backoff_seconds",
+        "vapi_smart_denoising_enabled",
+        "vapi_recording_enabled",
+        "vapi_transcript_enabled",
         "vapi_first_message_interruptions",
         "vapi_voicemail_detection",
         "vapi_hipaa_enabled",
@@ -598,15 +623,19 @@ const AdminVoices = () => {
         if (key === "vapi_voice_similarity_boost") newSettings.voiceSimilarityBoost = parseFloat(value);
         if (key === "vapi_voice_style") newSettings.voiceStyle = parseFloat(value);
         if (key === "vapi_voice_speaker_boost") newSettings.voiceUseSpeakerBoost = value === "true";
+        if (key === "vapi_filler_injection_enabled") newSettings.fillerInjectionEnabled = value === "true";
         if (key === "vapi_transcriber_provider") newSettings.transcriberProvider = value;
         if (key === "vapi_transcriber_model") newSettings.transcriberModel = value;
         if (key === "vapi_transcriber_language") newSettings.transcriberLanguage = value;
         if (key === "vapi_first_message") newSettings.firstMessage = value;
+        if (key === "vapi_first_message_mode") newSettings.firstMessageMode = value;
         if (key === "vapi_silence_timeout") newSettings.silenceTimeoutSeconds = parseInt(value);
         if (key === "vapi_max_duration") newSettings.maxDurationSeconds = parseInt(value);
         if (key === "vapi_background_sound") newSettings.backgroundSound = value;
         if (key === "vapi_backchanneling") newSettings.backchannelingEnabled = value === "true";
         if (key === "vapi_end_call_message") newSettings.endCallMessage = value;
+        if (key === "vapi_voicemail_message") newSettings.voicemailMessage = value;
+        if (key === "vapi_end_call_phrases") newSettings.endCallPhrases = value;
         if (key === "vapi_system_prompt_it") newSettings.systemPromptTemplateIT = value;
         if (key === "vapi_system_prompt_en") newSettings.systemPromptTemplateEN = value;
         if (key === "vapi_start_speaking_wait") newSettings.startSpeakingWaitSeconds = parseFloat(value);
@@ -616,6 +645,9 @@ const AdminVoices = () => {
         if (key === "vapi_stop_speaking_num_words") newSettings.stopSpeakingNumWords = parseInt(value);
         if (key === "vapi_stop_speaking_voice_seconds") newSettings.stopSpeakingVoiceSeconds = parseFloat(value);
         if (key === "vapi_stop_speaking_backoff_seconds") newSettings.stopSpeakingBackoffSeconds = parseFloat(value);
+        if (key === "vapi_smart_denoising_enabled") newSettings.smartDenoisingEnabled = value === "true";
+        if (key === "vapi_recording_enabled") newSettings.recordingEnabled = value === "true";
+        if (key === "vapi_transcript_enabled") newSettings.transcriptEnabled = value === "true";
         if (key === "vapi_first_message_interruptions") newSettings.firstMessageInterruptionsEnabled = value === "true";
         if (key === "vapi_voicemail_detection") newSettings.voicemailDetectionEnabled = value === "true";
         if (key === "vapi_hipaa_enabled") newSettings.hipaaEnabled = value === "true";
@@ -652,15 +684,19 @@ const AdminVoices = () => {
         { key: "vapi_voice_similarity_boost", value: vapiSettings.voiceSimilarityBoost.toString() },
         { key: "vapi_voice_style", value: vapiSettings.voiceStyle.toString() },
         { key: "vapi_voice_speaker_boost", value: vapiSettings.voiceUseSpeakerBoost.toString() },
+        { key: "vapi_filler_injection_enabled", value: vapiSettings.fillerInjectionEnabled.toString() },
         { key: "vapi_transcriber_provider", value: vapiSettings.transcriberProvider },
         { key: "vapi_transcriber_model", value: vapiSettings.transcriberModel },
         { key: "vapi_transcriber_language", value: vapiSettings.transcriberLanguage },
         { key: "vapi_first_message", value: vapiSettings.firstMessage },
+        { key: "vapi_first_message_mode", value: vapiSettings.firstMessageMode },
         { key: "vapi_silence_timeout", value: vapiSettings.silenceTimeoutSeconds.toString() },
         { key: "vapi_max_duration", value: vapiSettings.maxDurationSeconds.toString() },
         { key: "vapi_background_sound", value: vapiSettings.backgroundSound },
         { key: "vapi_backchanneling", value: vapiSettings.backchannelingEnabled.toString() },
         { key: "vapi_end_call_message", value: vapiSettings.endCallMessage },
+        { key: "vapi_voicemail_message", value: vapiSettings.voicemailMessage },
+        { key: "vapi_end_call_phrases", value: vapiSettings.endCallPhrases },
         { key: "vapi_system_prompt_it", value: vapiSettings.systemPromptTemplateIT },
         { key: "vapi_system_prompt_en", value: vapiSettings.systemPromptTemplateEN },
         { key: "vapi_start_speaking_wait", value: vapiSettings.startSpeakingWaitSeconds.toString() },
@@ -670,6 +706,9 @@ const AdminVoices = () => {
         { key: "vapi_stop_speaking_num_words", value: vapiSettings.stopSpeakingNumWords.toString() },
         { key: "vapi_stop_speaking_voice_seconds", value: vapiSettings.stopSpeakingVoiceSeconds.toString() },
         { key: "vapi_stop_speaking_backoff_seconds", value: vapiSettings.stopSpeakingBackoffSeconds.toString() },
+        { key: "vapi_smart_denoising_enabled", value: vapiSettings.smartDenoisingEnabled.toString() },
+        { key: "vapi_recording_enabled", value: vapiSettings.recordingEnabled.toString() },
+        { key: "vapi_transcript_enabled", value: vapiSettings.transcriptEnabled.toString() },
         { key: "vapi_first_message_interruptions", value: vapiSettings.firstMessageInterruptionsEnabled.toString() },
         { key: "vapi_voicemail_detection", value: vapiSettings.voicemailDetectionEnabled.toString() },
         { key: "vapi_hipaa_enabled", value: vapiSettings.hipaaEnabled.toString() },
@@ -1542,6 +1581,10 @@ const AdminVoices = () => {
                     {/* Advanced Toggles */}
                     <div className="grid grid-cols-2 gap-3">
                       <div className="flex items-center justify-between p-2 rounded bg-muted/30">
+                        <Label className="text-xs">Filler Words (uhm, eh)</Label>
+                        <Button variant={vapiSettings.fillerInjectionEnabled ? "default" : "outline"} size="sm" onClick={() => setVapiSettings({ ...vapiSettings, fillerInjectionEnabled: !vapiSettings.fillerInjectionEnabled })}>{vapiSettings.fillerInjectionEnabled ? "ON" : "OFF"}</Button>
+                      </div>
+                      <div className="flex items-center justify-between p-2 rounded bg-muted/30">
                         <Label className="text-xs">Backchanneling</Label>
                         <Button variant={vapiSettings.backchannelingEnabled ? "default" : "outline"} size="sm" onClick={() => setVapiSettings({ ...vapiSettings, backchannelingEnabled: !vapiSettings.backchannelingEnabled })}>{vapiSettings.backchannelingEnabled ? "ON" : "OFF"}</Button>
                       </div>
@@ -1554,11 +1597,35 @@ const AdminVoices = () => {
                         <Button variant={vapiSettings.voicemailDetectionEnabled ? "default" : "outline"} size="sm" onClick={() => setVapiSettings({ ...vapiSettings, voicemailDetectionEnabled: !vapiSettings.voicemailDetectionEnabled })}>{vapiSettings.voicemailDetectionEnabled ? "ON" : "OFF"}</Button>
                       </div>
                       <div className="flex items-center justify-between p-2 rounded bg-muted/30">
+                        <Label className="text-xs">Smart Denoising (Krisp)</Label>
+                        <Button variant={vapiSettings.smartDenoisingEnabled ? "default" : "outline"} size="sm" onClick={() => setVapiSettings({ ...vapiSettings, smartDenoisingEnabled: !vapiSettings.smartDenoisingEnabled })}>{vapiSettings.smartDenoisingEnabled ? "ON" : "OFF"}</Button>
+                      </div>
+                      <div className="flex items-center justify-between p-2 rounded bg-muted/30">
                         <Label className="text-xs">Background Denoising</Label>
                         <Button variant={vapiSettings.backgroundDenoisingEnabled ? "default" : "outline"} size="sm" onClick={() => setVapiSettings({ ...vapiSettings, backgroundDenoisingEnabled: !vapiSettings.backgroundDenoisingEnabled })}>{vapiSettings.backgroundDenoisingEnabled ? "ON" : "OFF"}</Button>
                       </div>
+                      <div className="flex items-center justify-between p-2 rounded bg-muted/30">
+                        <Label className="text-xs">Recording</Label>
+                        <Button variant={vapiSettings.recordingEnabled ? "default" : "outline"} size="sm" onClick={() => setVapiSettings({ ...vapiSettings, recordingEnabled: !vapiSettings.recordingEnabled })}>{vapiSettings.recordingEnabled ? "ON" : "OFF"}</Button>
+                      </div>
+                      <div className="flex items-center justify-between p-2 rounded bg-muted/30">
+                        <Label className="text-xs">Transcript</Label>
+                        <Button variant={vapiSettings.transcriptEnabled ? "default" : "outline"} size="sm" onClick={() => setVapiSettings({ ...vapiSettings, transcriptEnabled: !vapiSettings.transcriptEnabled })}>{vapiSettings.transcriptEnabled ? "ON" : "OFF"}</Button>
+                      </div>
                     </div>
+                    {/* Call Messages & Settings */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Modalità Primo Messaggio</Label>
+                        <Select value={vapiSettings.firstMessageMode} onValueChange={(value) => setVapiSettings({ ...vapiSettings, firstMessageMode: value })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="assistant-speaks-first">Assistente parla prima</SelectItem>
+                            <SelectItem value="assistant-waits-for-user">Attende l'utente</SelectItem>
+                            <SelectItem value="assistant-speaks-first-with-model-generated-message">Messaggio generato dal modello</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <div className="space-y-2">
                         <Label>Suono di Sottofondo</Label>
                         <Select value={vapiSettings.backgroundSound} onValueChange={(value) => setVapiSettings({ ...vapiSettings, backgroundSound: value })}>
@@ -1566,7 +1633,6 @@ const AdminVoices = () => {
                           <SelectContent>
                             <SelectItem value="off">Nessuno</SelectItem>
                             <SelectItem value="office">Ufficio</SelectItem>
-                            <SelectItem value="convention">Convention</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -1574,6 +1640,15 @@ const AdminVoices = () => {
                         <Label>Messaggio Fine Chiamata</Label>
                         <Input value={vapiSettings.endCallMessage} onChange={(e) => setVapiSettings({ ...vapiSettings, endCallMessage: e.target.value })} placeholder="Arrivederci!" />
                       </div>
+                      <div className="space-y-2">
+                        <Label>Messaggio Segreteria</Label>
+                        <Input value={vapiSettings.voicemailMessage} onChange={(e) => setVapiSettings({ ...vapiSettings, voicemailMessage: e.target.value })} placeholder="Lascia vuoto per riagganciare" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Frasi Fine Chiamata</Label>
+                      <Input value={vapiSettings.endCallPhrases} onChange={(e) => setVapiSettings({ ...vapiSettings, endCallPhrases: e.target.value })} placeholder="arrivederci, ciao ciao, a presto (separate da virgola)" />
+                      <p className="text-xs text-muted-foreground">Frasi che se dette dall'AI terminano la chiamata (case insensitive)</p>
                     </div>
                   </div>
                 </div>
