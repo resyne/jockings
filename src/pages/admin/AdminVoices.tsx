@@ -216,10 +216,12 @@ interface VerifiedCallerId {
   is_default: boolean;
 }
 
-const DEFAULT_SYSTEM_PROMPT_IT = `Sei {{GENDER}} che sta facendo uno scherzo telefonico a {{VICTIM_NAME}}.
+const DEFAULT_SYSTEM_PROMPT_IT = `Sei {{GENDER}} che sta facendo uno scherzo telefonico a {{VICTIM_NAME}} ({{VICTIM_GENDER}}).
 
 SCENARIO DELLO SCHERZO:
 {{PRANK_THEME}}
+
+{{REAL_DETAIL_SECTION}}
 
 PERSONALITÀ E TONO:
 {{PERSONALITY_TONE}}
@@ -234,14 +236,17 @@ REGOLE FONDAMENTALI:
 7. Se si arrabbiano, mantieni la calma ma resta nel ruolo
 8. Reagisci naturalmente a quello che dice, non seguire uno script rigido
 9. Usa espressioni e modi di dire italiani autentici
-10. La priorità è mantenere la conversazione credibile e divertente
+10. IMPORTANTE: Usa la grammatica corretta per il sesso della vittima (es. se è maschio: "caro", "gentile signore"; se è femmina: "cara", "gentile signora")
+11. La priorità è mantenere la conversazione credibile e divertente
 
 IMPORTANTE: I primi 3 secondi sono cruciali. La prima impressione determina il successo dello scherzo.`;
 
-const DEFAULT_SYSTEM_PROMPT_EN = `You are {{GENDER}} making a prank phone call to {{VICTIM_NAME}}.
+const DEFAULT_SYSTEM_PROMPT_EN = `You are {{GENDER}} making a prank phone call to {{VICTIM_NAME}} ({{VICTIM_GENDER}}).
 
 PRANK SCENARIO:
 {{PRANK_THEME}}
+
+{{REAL_DETAIL_SECTION}}
 
 PERSONALITY AND TONE:
 {{PERSONALITY_TONE}}
@@ -1660,7 +1665,7 @@ const AdminVoices = () => {
                     System Prompt Template
                   </h4>
                   <p className="text-xs text-muted-foreground">
-                    Template per il system prompt dell'AI. Usa questi placeholder: <code className="bg-muted px-1 rounded">{"{{GENDER}}"}</code> (un uomo/una donna), <code className="bg-muted px-1 rounded">{"{{VICTIM_NAME}}"}</code>, <code className="bg-muted px-1 rounded">{"{{PRANK_THEME}}"}</code>, <code className="bg-muted px-1 rounded">{"{{PERSONALITY_TONE}}"}</code>
+                    Template per il system prompt dell'AI. Placeholder disponibili: <code className="bg-muted px-1 rounded">{"{{GENDER}}"}</code> (un uomo/una donna), <code className="bg-muted px-1 rounded">{"{{VICTIM_NAME}}"}</code>, <code className="bg-muted px-1 rounded">{"{{VICTIM_GENDER}}"}</code> (maschio/femmina), <code className="bg-muted px-1 rounded">{"{{PRANK_THEME}}"}</code>, <code className="bg-muted px-1 rounded">{"{{PERSONALITY_TONE}}"}</code>, <code className="bg-muted px-1 rounded">{"{{REAL_DETAIL}}"}</code> (dettaglio opzionale), <code className="bg-muted px-1 rounded">{"{{REAL_DETAIL_SECTION}}"}</code> (sezione completa se presente)
                   </p>
                   
                   <div className="space-y-4">

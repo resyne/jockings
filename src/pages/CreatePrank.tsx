@@ -72,10 +72,12 @@ const CreatePrank = () => {
   // Form state
   const [victimFirstName, setVictimFirstName] = useState("");
   const [victimLastName, setVictimLastName] = useState("");
+  const [victimGender, setVictimGender] = useState("male"); // Gender of the VICTIM (for Italian grammar)
   const [phoneCountryCode, setPhoneCountryCode] = useState("+39");
   const [victimPhone, setVictimPhone] = useState("");
   const [selectedPreset, setSelectedPreset] = useState("custom");
   const [prankTheme, setPrankTheme] = useState("");
+  const [realDetail, setRealDetail] = useState(""); // Optional real detail about the victim
   const [voiceGender, setVoiceGender] = useState("male");
   const [language, setLanguage] = useState("Italiano");
   const [personalityTone, setPersonalityTone] = useState("enthusiastic");
@@ -287,8 +289,10 @@ const CreatePrank = () => {
           user_id: user.id,
           victim_first_name: victimFirstName.trim(),
           victim_last_name: victimLastName.trim(),
+          victim_gender: victimGender,
           victim_phone: `${phoneCountryCode}${victimPhone.replace(/\s/g, "")}`,
           prank_theme: prankTheme.trim(),
+          real_detail: realDetail.trim() || null,
           voice_gender: voiceGender,
           voice_provider: voiceSettings?.voice_provider || "elevenlabs",
           elevenlabs_stability: voiceSettings?.elevenlabs_stability || 0.5,
@@ -407,6 +411,19 @@ const CreatePrank = () => {
                 </div>
               </div>
               <div className="space-y-2">
+                <Label>Sesso Vittima</Label>
+                <Select value={victimGender} onValueChange={setVictimGender}>
+                  <SelectTrigger className="h-12">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Maschio 👨</SelectItem>
+                    <SelectItem value="female">Femmina 👩</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">Importante per l'italiano (es. "caro" vs "cara")</p>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="phone">Numero di Telefono</Label>
                 <div className="flex gap-2">
                   <Select value={phoneCountryCode} onValueChange={setPhoneCountryCode}>
@@ -487,6 +504,16 @@ const CreatePrank = () => {
                   }}
                   className="min-h-[100px]"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Dettaglio Reale (opzionale) 💣</Label>
+                <Textarea
+                  placeholder="Es: lavora come idraulico, ha appena comprato una macchina nuova, suo figlio si chiama Luca..."
+                  value={realDetail}
+                  onChange={(e) => setRealDetail(e.target.value)}
+                  className="min-h-[60px]"
+                />
+                <p className="text-xs text-muted-foreground">Un dettaglio vero sulla vittima rende lo scherzo molto più credibile!</p>
               </div>
             </CardContent>
           </Card>

@@ -162,6 +162,7 @@ export type Database = {
           prank_theme: string
           pregenerated_background_url: string | null
           pregenerated_greeting_url: string | null
+          real_detail: string | null
           recording_url: string | null
           scheduled_at: string | null
           send_recording: boolean
@@ -169,6 +170,7 @@ export type Database = {
           updated_at: string
           user_id: string
           victim_first_name: string
+          victim_gender: string | null
           victim_last_name: string
           victim_phone: string
           voice_gender: string
@@ -191,6 +193,7 @@ export type Database = {
           prank_theme: string
           pregenerated_background_url?: string | null
           pregenerated_greeting_url?: string | null
+          real_detail?: string | null
           recording_url?: string | null
           scheduled_at?: string | null
           send_recording?: boolean
@@ -198,6 +201,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           victim_first_name: string
+          victim_gender?: string | null
           victim_last_name: string
           victim_phone: string
           voice_gender: string
@@ -220,6 +224,7 @@ export type Database = {
           prank_theme?: string
           pregenerated_background_url?: string | null
           pregenerated_greeting_url?: string | null
+          real_detail?: string | null
           recording_url?: string | null
           scheduled_at?: string | null
           send_recording?: boolean
@@ -227,6 +232,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           victim_first_name?: string
+          victim_gender?: string | null
           victim_last_name?: string
           victim_phone?: string
           voice_gender?: string
