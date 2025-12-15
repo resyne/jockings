@@ -198,14 +198,16 @@ const Pricing = () => {
               <Zap className="w-8 h-8 mx-auto mb-2 text-primary" />
               Vuoi risparmiare?
             </DialogTitle>
-            <DialogDescription className="text-center space-y-2">
-              <p className="text-base">
-                Con <span className="font-bold text-primary">€9,99 al mese</span> ottieni{" "}
-                <span className="font-bold">5 prank</span>,
-              </p>
-              <p className="text-muted-foreground">
-                meno del pacchetto da 3 prank!
-              </p>
+            <DialogDescription className="text-center space-y-2" asChild>
+              <div>
+                <span className="block text-base">
+                  Con <span className="font-bold text-primary">€9,99 al mese</span> ottieni{" "}
+                  <span className="font-bold">5 prank</span>,
+                </span>
+                <span className="block text-muted-foreground">
+                  meno del pacchetto da 3 prank!
+                </span>
+              </div>
             </DialogDescription>
           </DialogHeader>
           
