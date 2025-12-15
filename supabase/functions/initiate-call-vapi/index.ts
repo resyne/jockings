@@ -384,10 +384,11 @@ serve(async (req) => {
           fillerInjectionEnabled: true, // Natural filler words like "uhm", "eh"
         },
         
-        // Transcriber configuration - use nova-2 for multilingual support
+        // Transcriber configuration - use settings from admin panel
+        // Different providers require different model formats
         transcriber: {
           provider: settings['vapi_transcriber_provider'],
-          model: 'nova-2', // Always use nova-2 for multilingual (nova-2-phonecall only supports en)
+          model: settings['vapi_transcriber_model'], // Use model from admin settings
           language: transcriberLanguage,
         },
         
