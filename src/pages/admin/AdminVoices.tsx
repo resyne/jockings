@@ -67,9 +67,10 @@ const VAPI_VOICE_PROVIDERS = [
 // VAPI Transcriber Providers (STT)
 const VAPI_TRANSCRIBER_PROVIDERS = [
   { value: "deepgram", label: "Deepgram", description: "⚡ Consigliato - Veloce e accurato", recommended: true },
+  { value: "google", label: "Google", description: "Google Cloud Speech-to-Text" },
   { value: "gladia", label: "Gladia", description: "Multilingue avanzato" },
   { value: "azure", label: "Azure", description: "Microsoft Speech" },
-  { value: "talkscriber", label: "Talkscriber", description: "Specializzato telefonate" },
+  { value: "talkscriber", label: "Talkscriber", description: "Whisper - Alta qualità" },
   { value: "assembly-ai", label: "AssemblyAI", description: "Alta precisione" },
   { value: "custom-transcriber", label: "Custom", description: "Transcriber personalizzato" },
 ];
@@ -138,6 +139,113 @@ const DEEPGRAM_MODELS = [
   { value: "nova", label: "Nova", description: "Versione precedente" },
   { value: "enhanced", label: "Enhanced", description: "Qualità migliorata" },
   { value: "base", label: "Base", description: "Economico" },
+];
+
+// Deepgram Languages
+const DEEPGRAM_LANGUAGES = [
+  { value: "it", label: "🇮🇹 Italiano" },
+  { value: "en", label: "🇬🇧 English" },
+  { value: "en-US", label: "🇺🇸 English (US)" },
+  { value: "en-GB", label: "🇬🇧 English (UK)" },
+  { value: "es", label: "🇪🇸 Español" },
+  { value: "fr", label: "🇫🇷 Français" },
+  { value: "de", label: "🇩🇪 Deutsch" },
+  { value: "pt", label: "🇵🇹 Português" },
+  { value: "nl", label: "🇳🇱 Nederlands" },
+  { value: "multi", label: "🌐 Multi-lingua" },
+];
+
+// Google STT Models
+const GOOGLE_STT_MODELS = [
+  { value: "latest_long", label: "Latest Long", description: "⚡ Consigliato - Audio lunghi", recommended: true },
+  { value: "latest_short", label: "Latest Short", description: "Audio brevi" },
+  { value: "telephony", label: "Telephony", description: "⚡ Ottimizzato per telefonate", recommended: true },
+  { value: "telephony_short", label: "Telephony Short", description: "Telefonate brevi" },
+  { value: "medical_dictation", label: "Medical Dictation", description: "Dettatura medica" },
+  { value: "medical_conversation", label: "Medical Conversation", description: "Conversazioni mediche" },
+  { value: "command_and_search", label: "Command & Search", description: "Comandi vocali" },
+];
+
+// Google STT Languages
+const GOOGLE_STT_LANGUAGES = [
+  { value: "it-IT", label: "🇮🇹 Italiano" },
+  { value: "en-US", label: "🇺🇸 English (US)" },
+  { value: "en-GB", label: "🇬🇧 English (UK)" },
+  { value: "es-ES", label: "🇪🇸 Español (España)" },
+  { value: "es-MX", label: "🇲🇽 Español (México)" },
+  { value: "fr-FR", label: "🇫🇷 Français" },
+  { value: "de-DE", label: "🇩🇪 Deutsch" },
+  { value: "pt-BR", label: "🇧🇷 Português (Brasil)" },
+  { value: "pt-PT", label: "🇵🇹 Português (Portugal)" },
+  { value: "nl-NL", label: "🇳🇱 Nederlands" },
+  { value: "ja-JP", label: "🇯🇵 日本語" },
+  { value: "zh-CN", label: "🇨🇳 中文" },
+];
+
+// Talkscriber STT Models
+const TALKSCRIBER_MODELS = [
+  { value: "whisper", label: "Whisper", description: "⚡ OpenAI Whisper - Alta qualità", recommended: true },
+];
+
+// Talkscriber Languages
+const TALKSCRIBER_LANGUAGES = [
+  { value: "it", label: "🇮🇹 Italiano" },
+  { value: "en", label: "🇬🇧 English" },
+  { value: "es", label: "🇪🇸 Español" },
+  { value: "fr", label: "🇫🇷 Français" },
+  { value: "de", label: "🇩🇪 Deutsch" },
+  { value: "pt", label: "🇵🇹 Português" },
+];
+
+// Gladia STT Models
+const GLADIA_MODELS = [
+  { value: "fast", label: "Fast", description: "⚡ Ultra veloce", recommended: true },
+  { value: "accurate", label: "Accurate", description: "Alta precisione" },
+];
+
+// Gladia Languages
+const GLADIA_LANGUAGES = [
+  { value: "italian", label: "🇮🇹 Italiano" },
+  { value: "english", label: "🇬🇧 English" },
+  { value: "spanish", label: "🇪🇸 Español" },
+  { value: "french", label: "🇫🇷 Français" },
+  { value: "german", label: "🇩🇪 Deutsch" },
+  { value: "portuguese", label: "🇵🇹 Português" },
+  { value: "dutch", label: "🇳🇱 Nederlands" },
+  { value: "auto", label: "🌐 Auto-detect" },
+];
+
+// AssemblyAI STT Models  
+const ASSEMBLYAI_MODELS = [
+  { value: "best", label: "Best", description: "⚡ Massima qualità", recommended: true },
+  { value: "nano", label: "Nano", description: "⚡ Ultra veloce, economico" },
+];
+
+// AssemblyAI Languages
+const ASSEMBLYAI_LANGUAGES = [
+  { value: "it", label: "🇮🇹 Italiano" },
+  { value: "en", label: "🇬🇧 English" },
+  { value: "en_us", label: "🇺🇸 English (US)" },
+  { value: "en_uk", label: "🇬🇧 English (UK)" },
+  { value: "es", label: "🇪🇸 Español" },
+  { value: "fr", label: "🇫🇷 Français" },
+  { value: "de", label: "🇩🇪 Deutsch" },
+  { value: "pt", label: "🇵🇹 Português" },
+  { value: "nl", label: "🇳🇱 Nederlands" },
+];
+
+// Azure STT Languages
+const AZURE_STT_LANGUAGES = [
+  { value: "it-IT", label: "🇮🇹 Italiano" },
+  { value: "en-US", label: "🇺🇸 English (US)" },
+  { value: "en-GB", label: "🇬🇧 English (UK)" },
+  { value: "es-ES", label: "🇪🇸 Español" },
+  { value: "fr-FR", label: "🇫🇷 Français" },
+  { value: "de-DE", label: "🇩🇪 Deutsch" },
+  { value: "pt-BR", label: "🇧🇷 Português" },
+  { value: "nl-NL", label: "🇳🇱 Nederlands" },
+  { value: "ja-JP", label: "🇯🇵 日本語" },
+  { value: "zh-CN", label: "🇨🇳 中文" },
 ];
 
 interface VapiSettings {
@@ -1459,7 +1567,7 @@ const AdminVoices = () => {
                       <Label>Provider</Label>
                       <Select 
                         value={vapiSettings.transcriberProvider} 
-                        onValueChange={(value) => setVapiSettings({ ...vapiSettings, transcriberProvider: value })}
+                        onValueChange={(value) => setVapiSettings({ ...vapiSettings, transcriberProvider: value, transcriberModel: value === 'deepgram' ? 'nova-2-phonecall' : value === 'google' ? 'telephony' : value === 'talkscriber' ? 'whisper' : value === 'gladia' ? 'fast' : value === 'assembly-ai' ? 'best' : '' })}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -1476,6 +1584,8 @@ const AdminVoices = () => {
                         </SelectContent>
                       </Select>
                     </div>
+                    
+                    {/* Deepgram Models */}
                     {vapiSettings.transcriberProvider === "deepgram" && (
                       <div className="space-y-2">
                         <Label>Modello</Label>
@@ -1499,6 +1609,108 @@ const AdminVoices = () => {
                         </Select>
                       </div>
                     )}
+                    
+                    {/* Google Models */}
+                    {vapiSettings.transcriberProvider === "google" && (
+                      <div className="space-y-2">
+                        <Label>Modello</Label>
+                        <Select 
+                          value={vapiSettings.transcriberModel} 
+                          onValueChange={(value) => setVapiSettings({ ...vapiSettings, transcriberModel: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {GOOGLE_STT_MODELS.map((model) => (
+                              <SelectItem key={model.value} value={model.value}>
+                                <div className="flex flex-col">
+                                  <span className={model.recommended ? "font-medium" : ""}>{model.label}</span>
+                                  <span className="text-xs text-muted-foreground">{model.description}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    
+                    {/* Talkscriber Models */}
+                    {vapiSettings.transcriberProvider === "talkscriber" && (
+                      <div className="space-y-2">
+                        <Label>Modello</Label>
+                        <Select 
+                          value={vapiSettings.transcriberModel} 
+                          onValueChange={(value) => setVapiSettings({ ...vapiSettings, transcriberModel: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {TALKSCRIBER_MODELS.map((model) => (
+                              <SelectItem key={model.value} value={model.value}>
+                                <div className="flex flex-col">
+                                  <span className={model.recommended ? "font-medium" : ""}>{model.label}</span>
+                                  <span className="text-xs text-muted-foreground">{model.description}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    
+                    {/* Gladia Models */}
+                    {vapiSettings.transcriberProvider === "gladia" && (
+                      <div className="space-y-2">
+                        <Label>Modello</Label>
+                        <Select 
+                          value={vapiSettings.transcriberModel} 
+                          onValueChange={(value) => setVapiSettings({ ...vapiSettings, transcriberModel: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {GLADIA_MODELS.map((model) => (
+                              <SelectItem key={model.value} value={model.value}>
+                                <div className="flex flex-col">
+                                  <span className={model.recommended ? "font-medium" : ""}>{model.label}</span>
+                                  <span className="text-xs text-muted-foreground">{model.description}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    
+                    {/* AssemblyAI Models */}
+                    {vapiSettings.transcriberProvider === "assembly-ai" && (
+                      <div className="space-y-2">
+                        <Label>Modello</Label>
+                        <Select 
+                          value={vapiSettings.transcriberModel} 
+                          onValueChange={(value) => setVapiSettings({ ...vapiSettings, transcriberModel: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ASSEMBLYAI_MODELS.map((model) => (
+                              <SelectItem key={model.value} value={model.value}>
+                                <div className="flex flex-col">
+                                  <span className={model.recommended ? "font-medium" : ""}>{model.label}</span>
+                                  <span className="text-xs text-muted-foreground">{model.description}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    
+                    {/* Language Selection - Provider specific */}
                     <div className="space-y-2">
                       <Label>Lingua</Label>
                       <Select 
@@ -1509,9 +1721,30 @@ const AdminVoices = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="it">Italiano</SelectItem>
-                          <SelectItem value="en">English</SelectItem>
-                          <SelectItem value="multi">Multi-lingua</SelectItem>
+                          {vapiSettings.transcriberProvider === "deepgram" && DEEPGRAM_LANGUAGES.map((lang) => (
+                            <SelectItem key={lang.value} value={lang.value}>{lang.label}</SelectItem>
+                          ))}
+                          {vapiSettings.transcriberProvider === "google" && GOOGLE_STT_LANGUAGES.map((lang) => (
+                            <SelectItem key={lang.value} value={lang.value}>{lang.label}</SelectItem>
+                          ))}
+                          {vapiSettings.transcriberProvider === "talkscriber" && TALKSCRIBER_LANGUAGES.map((lang) => (
+                            <SelectItem key={lang.value} value={lang.value}>{lang.label}</SelectItem>
+                          ))}
+                          {vapiSettings.transcriberProvider === "gladia" && GLADIA_LANGUAGES.map((lang) => (
+                            <SelectItem key={lang.value} value={lang.value}>{lang.label}</SelectItem>
+                          ))}
+                          {vapiSettings.transcriberProvider === "assembly-ai" && ASSEMBLYAI_LANGUAGES.map((lang) => (
+                            <SelectItem key={lang.value} value={lang.value}>{lang.label}</SelectItem>
+                          ))}
+                          {vapiSettings.transcriberProvider === "azure" && AZURE_STT_LANGUAGES.map((lang) => (
+                            <SelectItem key={lang.value} value={lang.value}>{lang.label}</SelectItem>
+                          ))}
+                          {vapiSettings.transcriberProvider === "custom-transcriber" && (
+                            <>
+                              <SelectItem value="it">🇮🇹 Italiano</SelectItem>
+                              <SelectItem value="en">🇬🇧 English</SelectItem>
+                            </>
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
