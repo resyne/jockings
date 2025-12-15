@@ -192,7 +192,7 @@ const Pricing = () => {
 
       {/* Upsell Modal */}
       <Dialog open={showUpsell} onOpenChange={setShowUpsell}>
-        <DialogContent className="max-w-sm mx-4">
+        <DialogContent className="w-[calc(100%-2rem)] max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-xl text-center text-foreground">
               <Zap className="w-8 h-8 mx-auto mb-2 text-primary" />
