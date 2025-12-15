@@ -437,7 +437,7 @@ const CreatePrank = () => {
       <main className="px-4 py-6 max-w-lg mx-auto">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Victim Info */}
-          <Card className="animate-slide-up">
+          <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-lg bg-primary/10">
@@ -517,7 +517,7 @@ const CreatePrank = () => {
           </Card>
 
           {/* Prank Theme */}
-          <Card className="animate-slide-up" style={{ animationDelay: "0.1s" }}>
+          <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-lg bg-secondary/10">
@@ -581,7 +581,7 @@ const CreatePrank = () => {
           </Card>
 
           {/* Voice Selection */}
-          <Card className="animate-slide-up" style={{ animationDelay: "0.15s" }}>
+          <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-lg bg-accent/10">
@@ -743,7 +743,7 @@ const CreatePrank = () => {
           </Card>
 
           {/* Options */}
-          <Card className="animate-slide-up" style={{ animationDelay: "0.2s" }}>
+          <Card>
             <CardContent className="pt-6 space-y-4">
               <div className="flex items-center gap-2 py-2 text-muted-foreground">
                 <Mic className="w-4 h-4" />
@@ -793,8 +793,7 @@ const CreatePrank = () => {
           {/* Submit */}
           <Button
             type="submit"
-            className="w-full h-14 text-lg gradient-primary shadow-glow animate-slide-up"
-            style={{ animationDelay: "0.25s" }}
+            className="w-full h-14 text-lg gradient-primary shadow-glow"
             disabled={loading}
           >
             {loading ? (
