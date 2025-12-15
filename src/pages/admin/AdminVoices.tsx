@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Mic, Save, Plus, Trash2, Shield, Play, Volume2, Loader2, Music, Brain, Phone, Zap } from "lucide-react";
+import { ArrowLeft, Mic, Save, Plus, Trash2, Shield, Play, Volume2, Loader2, Music, Brain, Phone, Zap, Star } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { VoiceTestDialog } from "@/components/VoiceTestDialog";
@@ -471,7 +471,7 @@ const AdminVoices = () => {
   };
 
   const handleSave = async (setting: VoiceSetting) => {
-    // Save voice ID, name, and notes
+    // Save voice ID, name, notes, and rating
     const { error } = await supabase
       .from("voice_settings")
       .update({
@@ -479,13 +479,14 @@ const AdminVoices = () => {
         is_active: setting.is_active,
         voice_name: setting.voice_name,
         notes: setting.notes,
+        rating: setting.rating || 0,
       })
       .eq("id", setting.id);
 
     if (error) {
       toast({ title: "Errore", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Salvato!", description: "Voice ID aggiornato" });
+      toast({ title: "Salvato!", description: "Voce aggiornata" });
       fetchVoiceSettings();
       setSelectedSetting(null);
     }
@@ -846,6 +847,19 @@ const AdminVoices = () => {
                               {setting.voice_name && (
                                 <span className="text-sm text-primary font-medium">- {setting.voice_name}</span>
                               )}
+                              {/* Star Rating Display */}
+                              <div className="flex items-center gap-0.5 ml-2">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star
+                                    key={star}
+                                    className={`w-3 h-3 ${
+                                      (setting.rating || 0) >= star 
+                                        ? "fill-yellow-400 text-yellow-400" 
+                                        : "text-muted-foreground/30"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
                             </div>
                             <div className="flex items-center gap-1">
                               <Button 
@@ -912,6 +926,33 @@ const AdminVoices = () => {
                                   placeholder="Annotazioni sulla voce, es. 'Ottima per tono serio', 'Accento napoletano'..."
                                   className="text-sm min-h-[60px]"
                                 />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-xs">Valutazione</Label>
+                                <div className="flex items-center gap-1">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <button
+                                      key={star}
+                                      type="button"
+                                      onClick={() => setSelectedSetting({ 
+                                        ...selectedSetting, 
+                                        rating: selectedSetting.rating === star ? 0 : star 
+                                      })}
+                                      className="p-1 hover:scale-110 transition-transform"
+                                    >
+                                      <Star
+                                        className={`w-5 h-5 ${
+                                          (selectedSetting.rating || 0) >= star 
+                                            ? "fill-yellow-400 text-yellow-400" 
+                                            : "text-muted-foreground hover:text-yellow-400"
+                                        }`}
+                                      />
+                                    </button>
+                                  ))}
+                                  {(selectedSetting.rating || 0) > 0 && (
+                                    <span className="text-xs text-muted-foreground ml-2">{selectedSetting.rating}/5</span>
+                                  )}
+                                </div>
                               </div>
                               <div className="flex gap-2">
                                 <Button 

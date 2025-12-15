@@ -417,6 +417,7 @@ export type Database = {
           language: string
           notes: string | null
           polly_voice_id: string | null
+          rating: number | null
           updated_at: string
           voice_name: string | null
           voice_provider: string
@@ -435,6 +436,7 @@ export type Database = {
           language: string
           notes?: string | null
           polly_voice_id?: string | null
+          rating?: number | null
           updated_at?: string
           voice_name?: string | null
           voice_provider?: string
@@ -453,6 +455,7 @@ export type Database = {
           language?: string
           notes?: string | null
           polly_voice_id?: string | null
+          rating?: number | null
           updated_at?: string
           voice_name?: string | null
           voice_provider?: string
