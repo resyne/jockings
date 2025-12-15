@@ -415,6 +415,39 @@ serve(async (req) => {
     // Build webhook URL for status updates - set at assistant.server.url level
     const webhookUrl = `${SUPABASE_URL}/functions/v1/vapi-webhook`;
     console.log('Webhook URL:', webhookUrl);
+
+    const parseOptionalFloat = (v: string | undefined): number | undefined => {
+      const n = Number.parseFloat((v ?? '').toString());
+      return Number.isFinite(n) ? n : undefined;
+    };
+
+    const clampNumber = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+    const voiceStability =
+      parseOptionalFloat(settings['vapi_voice_stability']) ??
+      (typeof voiceSettings?.elevenlabs_stability === 'number' ? voiceSettings.elevenlabs_stability : undefined) ??
+      0.5;
+
+    const voiceSimilarityBoost =
+      parseOptionalFloat(settings['vapi_voice_similarity_boost']) ??
+      (typeof voiceSettings?.elevenlabs_similarity === 'number' ? voiceSettings.elevenlabs_similarity : undefined) ??
+      0.75;
+
+    const voiceStyle =
+      parseOptionalFloat(settings['vapi_voice_style']) ??
+      (typeof voiceSettings?.elevenlabs_style === 'number' ? voiceSettings.elevenlabs_style : undefined) ??
+      0;
+
+    // VAPI validation (observed): assistant.voice.speed must be <= 1.2
+    const desiredVoiceSpeed =
+      parseOptionalFloat(settings['vapi_voice_speed']) ??
+      (typeof voiceSettings?.elevenlabs_speed === 'number' ? voiceSettings.elevenlabs_speed : undefined) ??
+      1.0;
+
+    const voiceSpeed = clampNumber(desiredVoiceSpeed, 0.7, 1.2);
+    if (voiceSpeed !== desiredVoiceSpeed) {
+      console.log('Clamped voice speed:', desiredVoiceSpeed, '->', voiceSpeed);
+    }
     
     // NOTE: Webhooks must be configured in VAPI Dashboard, not in API call
     // Set webhook URL to: https://vtsankkghplkfhrlxefs.supabase.co/functions/v1/vapi-webhook
@@ -447,11 +480,10 @@ serve(async (req) => {
           provider: voiceProvider,
           voiceId: voiceId,
           model: settings['elevenlabs_model'],
-          // Use admin panel settings with voice_settings fallback
-          stability: parseFloat(settings['vapi_voice_stability']) || voiceSettings?.elevenlabs_stability || 0.5,
-          similarityBoost: parseFloat(settings['vapi_voice_similarity_boost']) || voiceSettings?.elevenlabs_similarity || 0.75,
-          style: parseFloat(settings['vapi_voice_style']) || voiceSettings?.elevenlabs_style || 0,
-          speed: parseFloat(settings['vapi_voice_speed']) || voiceSettings?.elevenlabs_speed || 1.0,
+          stability: voiceStability,
+          similarityBoost: voiceSimilarityBoost,
+          style: voiceStyle,
+          speed: voiceSpeed,
           useSpeakerBoost: settings['vapi_voice_speaker_boost'] === 'true',
           fillerInjectionEnabled: settings['vapi_filler_injection_enabled'] === 'true',
         },
@@ -476,15 +508,12 @@ serve(async (req) => {
       },
     };
 
-    // Add background sound if enabled - VAPI only supports 'off' or 'office' as preset values
-    // Any other value must be a valid URL
-    const bgSound = settings['vapi_background_sound'];
-    if (bgSound && bgSound !== 'off') {
-      // Only use if it's 'office' or a valid URL (starts with http)
-      if (bgSound === 'office' || bgSound.startsWith('http')) {
-        vapiCallBody.assistant.backgroundSound = bgSound;
-      }
-      // Otherwise, skip background sound entirely (don't send invalid values like 'convention')
+    // Background sound: explicitly send 'off' to avoid any provider defaults
+    const bgSound = (settings['vapi_background_sound'] || 'off').trim();
+    if (bgSound === 'off') {
+      vapiCallBody.assistant.backgroundSound = 'off';
+    } else if (bgSound === 'office' || bgSound.startsWith('http')) {
+      vapiCallBody.assistant.backgroundSound = bgSound;
     }
 
     // Add backchanneling if enabled (natural "mhm", "ok" responses)
