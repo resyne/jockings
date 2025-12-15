@@ -225,6 +225,7 @@ serve(async (req) => {
         'vapi_custom_voice_id',
         'vapi_transcriber_provider',
         'vapi_transcriber_model',
+        'vapi_transcriber_language',
         'vapi_silence_timeout',
         'vapi_max_duration',
         'vapi_background_sound',
@@ -295,7 +296,33 @@ serve(async (req) => {
     const firstMessageTemplateEN = settings['vapi_first_message_en'] || null;
     const systemPrompt = buildSystemPrompt(prank, systemPromptTemplateIT, systemPromptTemplateEN);
     const firstMessage = buildFirstMessage(prank, greeting, firstMessageTemplateIT, firstMessageTemplateEN);
-    const transcriberLanguage = prank.language === 'Italiano' ? 'it' : 'en';
+
+    // VAPI expects language names (e.g., "Italian", "English", "Multilingual"), not locale codes.
+    const normalizeVapiTranscriberLanguage = (value?: string, fallback?: string): string => {
+      const v = (value || fallback || '').trim();
+      const lower = v.toLowerCase();
+
+      if (!lower) return 'Multilingual';
+      if (['multi', 'multilingual', 'auto'].includes(lower)) return 'Multilingual';
+      if (lower === 'italiano' || lower === 'italian' || lower.startsWith('it')) return 'Italian';
+      if (lower === 'english' || lower.startsWith('en')) return 'English';
+      if (lower.startsWith('es')) return 'Spanish';
+      if (lower.startsWith('fr')) return 'French';
+      if (lower.startsWith('de')) return 'German';
+      if (lower.startsWith('pt')) return 'Portuguese';
+      if (lower.startsWith('nl')) return 'Dutch';
+      if (lower.startsWith('ja')) return 'Japanese';
+      if (lower.startsWith('zh')) return 'Chinese';
+
+      // If already a valid VAPI language string (e.g., "Italian"), keep it.
+      return v;
+    };
+
+    const transcriberLanguage = normalizeVapiTranscriberLanguage(
+      settings['vapi_transcriber_language'],
+      prank.language === 'Italiano' ? 'Italian' : 'English'
+    );
+
     const endCallMessage = prank.language === 'Italiano' ? 'Arrivederci!' : 'Goodbye!';
 
     // Get voice settings - PRIORITY: prank.elevenlabs_voice_id > voice_settings table > defaults
