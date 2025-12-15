@@ -216,9 +216,8 @@ const CreatePrank = () => {
 
       if (error) throw error;
 
-      if (data?.audioContent) {
-        const audioUrl = `data:audio/mpeg;base64,${data.audioContent}`;
-        const audio = new Audio(audioUrl);
+      if (data?.audioUrl) {
+        const audio = new Audio(data.audioUrl);
         audioRef.current = audio;
         
         audio.onended = () => {
@@ -234,6 +233,8 @@ const CreatePrank = () => {
 
         await audio.play();
         setPlayingVoiceId(voice.id);
+      } else {
+        throw new Error("Nessun audio ricevuto");
       }
     } catch (error: any) {
       console.error("Voice preview error:", error);
