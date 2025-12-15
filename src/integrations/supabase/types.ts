@@ -242,27 +242,27 @@ export type Database = {
       }
       profiles: {
         Row: {
+          available_pranks: number | null
           avatar_url: string | null
           created_at: string
-          credits: number | null
           id: string
           updated_at: string
           user_id: string
           username: string | null
         }
         Insert: {
+          available_pranks?: number | null
           avatar_url?: string | null
           created_at?: string
-          credits?: number | null
           id?: string
           updated_at?: string
           user_id: string
           username?: string | null
         }
         Update: {
+          available_pranks?: number | null
           avatar_url?: string | null
           created_at?: string
-          credits?: number | null
           id?: string
           updated_at?: string
           user_id?: string

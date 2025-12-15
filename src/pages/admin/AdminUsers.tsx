@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Users, Shield, ShieldCheck, ShieldOff, Coins } from "lucide-react";
+import { ArrowLeft, Users, Shield, ShieldCheck, ShieldOff, Phone } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 
@@ -14,7 +14,7 @@ interface UserProfile {
   id: string;
   user_id: string;
   username: string | null;
-  credits: number | null;
+  available_pranks: number | null;
   created_at: string;
   isAdmin?: boolean;
 }
@@ -103,16 +103,16 @@ const AdminUsers = () => {
     }
   };
 
-  const updateCredits = async (userId: string, newCredits: number) => {
+  const updatePranks = async (userId: string, newPranks: number) => {
     const { error } = await supabase
       .from("profiles")
-      .update({ credits: newCredits })
+      .update({ available_pranks: newPranks })
       .eq("user_id", userId);
 
     if (error) {
       toast({ title: "Errore", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Crediti aggiornati" });
+      toast({ title: "Prank aggiornati" });
       fetchUsers();
     }
   };
@@ -176,11 +176,11 @@ const AdminUsers = () => {
 
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-2">
-                        <Coins className="w-4 h-4 text-yellow-500" />
+                        <Phone className="w-4 h-4 text-primary" />
                         <input
                           type="number"
-                          value={user.credits || 0}
-                          onChange={(e) => updateCredits(user.user_id, parseInt(e.target.value) || 0)}
+                          value={user.available_pranks || 0}
+                          onChange={(e) => updatePranks(user.user_id, parseInt(e.target.value) || 0)}
                           className="w-16 text-center bg-muted rounded px-2 py-1 text-sm"
                         />
                       </div>

@@ -14,6 +14,8 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const CreatePrank = lazy(() => import("./pages/CreatePrank"));
 const History = lazy(() => import("./pages/History"));
 const Settings = lazy(() => import("./pages/Settings"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminVoices = lazy(() => import("./pages/admin/AdminVoices"));
@@ -47,6 +49,8 @@ const App = () => (
             <Route path="/create-prank" element={<CreatePrank />} />
             <Route path="/history" element={<History />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/voices" element={<AdminVoices />} />
             <Route path="/admin/presets" element={<AdminPresets />} />
