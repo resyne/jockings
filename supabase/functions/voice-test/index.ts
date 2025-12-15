@@ -38,14 +38,24 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { data: aiModelSetting } = await supabase
+    const { data: settingsData, error: settingsError } = await supabase
       .from('app_settings')
-      .select('value')
-      .eq('key', 'ai_model')
-      .single();
-    
-    const aiModel = aiModelSetting?.value || 'google/gemini-2.5-flash-lite';
+      .select('key, value')
+      .in('key', ['ai_model', 'elevenlabs_model']);
+
+    if (settingsError) {
+      console.warn('Settings fetch error:', settingsError);
+    }
+
+    const settings: Record<string, string> = {};
+    settingsData?.forEach((s: { key: string; value: string }) => {
+      if (s.value) settings[s.key] = s.value;
+    });
+
+    const aiModel = settings['ai_model'] || 'google/gemini-2.5-flash-lite';
+    const elevenlabsModel = settings['elevenlabs_model'] || 'eleven_turbo_v2_5';
     console.log('Using AI model:', aiModel);
+    console.log('Using ElevenLabs model:', elevenlabsModel);
 
     // Determine API endpoint and key based on model
     // Lovable AI handles: google/* models and openai/gpt-5*
@@ -137,7 +147,7 @@ Usa le forme grammaticali appropriate per il genere ${gender === 'male' ? 'masch
         },
         body: JSON.stringify({
           text: aiText,
-          model_id: 'eleven_turbo_v2_5',
+          model_id: elevenlabsModel,
           voice_settings: {
             stability,
             similarity_boost: similarityBoost,
