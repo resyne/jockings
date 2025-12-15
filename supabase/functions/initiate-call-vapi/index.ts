@@ -22,15 +22,27 @@ const getTimeBasedGreeting = (language: string): string => {
 };
 
 // Build dynamic first message - CRITICAL for prank effectiveness
-const buildFirstMessage = (prank: any, greeting: string): string => {
+// Now uses configurable template from settings
+const buildFirstMessage = (prank: any, greeting: string, templateIT: string | null, templateEN: string | null): string => {
   const isItalian = prank.language === 'Italiano';
+  const victimName = `${prank.victim_first_name} ${prank.victim_last_name}`;
   
-  // The first message must be immediate and personalized
-  if (isItalian) {
-    return `${greeting}! Parlo con ${prank.victim_first_name}?`;
-  } else {
-    return `${greeting}! Am I speaking with ${prank.victim_first_name}?`;
+  // Use template from settings if available, otherwise use default
+  let template = isItalian ? templateIT : templateEN;
+  
+  // Default templates if not configured
+  if (!template) {
+    template = isItalian 
+      ? `{{GREETING}}! Parlo con {{VICTIM_NAME}}?`
+      : `{{GREETING}}! Am I speaking with {{VICTIM_NAME}}?`;
   }
+  
+  // Replace placeholders
+  return template
+    .replace(/\{\{GREETING\}\}/g, greeting)
+    .replace(/\{\{VICTIM_NAME\}\}/g, victimName)
+    .replace(/\{\{VICTIM_FIRST_NAME\}\}/g, prank.victim_first_name)
+    .replace(/\{\{PRANK_THEME\}\}/g, prank.prank_theme);
 };
 
 // Build system prompt for VAPI transient assistant - uses template from settings
@@ -220,6 +232,8 @@ serve(async (req) => {
         'vapi_end_call_message',
         'vapi_system_prompt_it',
         'vapi_system_prompt_en',
+        'vapi_first_message_it',
+        'vapi_first_message_en',
         'elevenlabs_model', // ElevenLabs TTS model selection
       ]),
       voiceSettingsQuery,
@@ -277,8 +291,10 @@ serve(async (req) => {
     const greeting = getTimeBasedGreeting(prank.language);
     const systemPromptTemplateIT = settings['vapi_system_prompt_it'] || null;
     const systemPromptTemplateEN = settings['vapi_system_prompt_en'] || null;
+    const firstMessageTemplateIT = settings['vapi_first_message_it'] || null;
+    const firstMessageTemplateEN = settings['vapi_first_message_en'] || null;
     const systemPrompt = buildSystemPrompt(prank, systemPromptTemplateIT, systemPromptTemplateEN);
-    const firstMessage = buildFirstMessage(prank, greeting);
+    const firstMessage = buildFirstMessage(prank, greeting, firstMessageTemplateIT, firstMessageTemplateEN);
     const transcriberLanguage = prank.language === 'Italiano' ? 'it' : 'en';
     const endCallMessage = prank.language === 'Italiano' ? 'Arrivederci!' : 'Goodbye!';
 
