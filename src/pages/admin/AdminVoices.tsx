@@ -159,6 +159,7 @@ interface VapiSettings {
   voiceProvider: string;
   voiceId: string;
   customVoiceId: string;
+  voiceSpeed: number; // Voice playback speed (0.25-2.0)
   // Transcriber
   transcriberProvider: string;
   transcriberModel: string;
@@ -247,6 +248,7 @@ const DEFAULT_VAPI_SETTINGS: VapiSettings = {
   voiceProvider: "elevenlabs",
   voiceId: "21m00Tcm4TlvDq8ikWAM",
   customVoiceId: "",
+  voiceSpeed: 1.0,
   transcriberProvider: "deepgram",
   transcriberModel: "nova-2",
   transcriberLanguage: "it",
@@ -572,6 +574,7 @@ const AdminVoices = () => {
         "vapi_temperature",
         "vapi_max_tokens",
         "vapi_voice_provider",
+        "vapi_voice_speed",
         "vapi_transcriber_provider",
         "vapi_transcriber_model",
         "vapi_transcriber_language",
@@ -598,6 +601,7 @@ const AdminVoices = () => {
         if (key === "vapi_temperature") newSettings.temperature = parseFloat(value);
         if (key === "vapi_max_tokens") newSettings.maxTokens = parseInt(value);
         if (key === "vapi_voice_provider") newSettings.voiceProvider = value;
+        if (key === "vapi_voice_speed") newSettings.voiceSpeed = parseFloat(value);
         if (key === "vapi_transcriber_provider") newSettings.transcriberProvider = value;
         if (key === "vapi_transcriber_model") newSettings.transcriberModel = value;
         if (key === "vapi_transcriber_language") newSettings.transcriberLanguage = value;
@@ -635,6 +639,7 @@ const AdminVoices = () => {
         { key: "vapi_temperature", value: vapiSettings.temperature.toString() },
         { key: "vapi_max_tokens", value: vapiSettings.maxTokens.toString() },
         { key: "vapi_voice_provider", value: vapiSettings.voiceProvider },
+        { key: "vapi_voice_speed", value: vapiSettings.voiceSpeed.toString() },
         { key: "vapi_transcriber_provider", value: vapiSettings.transcriberProvider },
         { key: "vapi_transcriber_model", value: vapiSettings.transcriberModel },
         { key: "vapi_transcriber_language", value: vapiSettings.transcriberLanguage },
@@ -1436,6 +1441,19 @@ const AdminVoices = () => {
                     Impostazioni Chiamata
                   </h4>
                   <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Velocità Voce: {vapiSettings.voiceSpeed.toFixed(2)}x</Label>
+                      <Slider
+                        value={[vapiSettings.voiceSpeed * 100]}
+                        onValueChange={([v]) => setVapiSettings({ ...vapiSettings, voiceSpeed: v / 100 })}
+                        min={25}
+                        max={200}
+                        step={5}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        0.25x = molto lento, 1.0x = normale, 2.0x = molto veloce
+                      </p>
+                    </div>
                     <div className="space-y-2">
                       <Label>Messaggio Fine Chiamata (Timeout)</Label>
                       <Input
