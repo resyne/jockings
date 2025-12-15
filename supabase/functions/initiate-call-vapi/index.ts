@@ -37,6 +37,7 @@ const buildFirstMessage = (prank: any, greeting: string): string => {
 const buildSystemPrompt = (prank: any, templateIT: string | null, templateEN: string | null): string => {
   const isItalian = prank.language === 'Italiano';
   const isMale = prank.voice_gender === 'male';
+  const isVictimMale = prank.victim_gender === 'male';
 
   // Personality tone descriptions
   const toneMapIT: Record<string, string> = {
@@ -62,7 +63,11 @@ const buildSystemPrompt = (prank: any, templateIT: string | null, templateEN: st
   const genderDesc = isItalian 
     ? (isMale ? 'un uomo' : 'una donna')
     : (isMale ? 'a man' : 'a woman');
+  const victimGenderDesc = isItalian
+    ? (isVictimMale ? 'maschio' : 'femmina')
+    : (isVictimMale ? 'male' : 'female');
   const victimName = `${prank.victim_first_name} ${prank.victim_last_name}`;
+  const realDetail = prank.real_detail || '';
 
   // Use template from settings if available, otherwise use default
   let template = isItalian ? templateIT : templateEN;
@@ -70,10 +75,12 @@ const buildSystemPrompt = (prank: any, templateIT: string | null, templateEN: st
   // Default templates if not configured
   if (!template) {
     if (isItalian) {
-      template = `Sei {{GENDER}} che sta facendo uno scherzo telefonico a {{VICTIM_NAME}}.
+      template = `Sei {{GENDER}} che sta facendo uno scherzo telefonico a {{VICTIM_NAME}} ({{VICTIM_GENDER}}).
 
 SCENARIO DELLO SCHERZO:
 {{PRANK_THEME}}
+
+{{REAL_DETAIL_SECTION}}
 
 PERSONALITÀ E TONO:
 {{PERSONALITY_TONE}}
@@ -88,14 +95,17 @@ REGOLE FONDAMENTALI:
 7. Se si arrabbiano, mantieni la calma ma resta nel ruolo
 8. Reagisci naturalmente a quello che dice, non seguire uno script rigido
 9. Usa espressioni e modi di dire italiani autentici
-10. La priorità è mantenere la conversazione credibile e divertente
+10. IMPORTANTE: Usa la grammatica corretta per il sesso della vittima (es. se è maschio: "caro", "gentile signore"; se è femmina: "cara", "gentile signora")
+11. La priorità è mantenere la conversazione credibile e divertente
 
 IMPORTANTE: I primi 3 secondi sono cruciali. La prima impressione determina il successo dello scherzo.`;
     } else {
-      template = `You are {{GENDER}} making a prank phone call to {{VICTIM_NAME}}.
+      template = `You are {{GENDER}} making a prank phone call to {{VICTIM_NAME}} ({{VICTIM_GENDER}}).
 
 PRANK SCENARIO:
 {{PRANK_THEME}}
+
+{{REAL_DETAIL_SECTION}}
 
 PERSONALITY AND TONE:
 {{PERSONALITY_TONE}}
@@ -116,11 +126,21 @@ IMPORTANT: The first 3 seconds are crucial. First impression determines the succ
     }
   }
 
+  // Build real detail section if provided
+  const realDetailSection = realDetail 
+    ? (isItalian 
+        ? `DETTAGLIO REALE SULLA VITTIMA (usa questo per rendere lo scherzo più credibile):\n${realDetail}`
+        : `REAL DETAIL ABOUT THE VICTIM (use this to make the prank more believable):\n${realDetail}`)
+    : '';
+
   // Replace placeholders
   return template
     .replace(/\{\{GENDER\}\}/g, genderDesc)
     .replace(/\{\{VICTIM_NAME\}\}/g, victimName)
+    .replace(/\{\{VICTIM_GENDER\}\}/g, victimGenderDesc)
     .replace(/\{\{PRANK_THEME\}\}/g, prank.prank_theme)
+    .replace(/\{\{REAL_DETAIL\}\}/g, realDetail)
+    .replace(/\{\{REAL_DETAIL_SECTION\}\}/g, realDetailSection)
     .replace(/\{\{PERSONALITY_TONE\}\}/g, tone);
 };
 
