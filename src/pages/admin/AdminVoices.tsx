@@ -30,13 +30,7 @@ interface VoiceSetting {
   notes: string | null;
 }
 
-interface GlobalVoiceSettings {
-  stability: number;
-  similarity: number;
-  style: number;
-  speed: number;
-  use_speaker_boost: boolean;
-}
+// GlobalVoiceSettings removed - using VapiSettings for all ElevenLabs params
 
 const LANGUAGES = ["Italiano", "English"];
 
@@ -303,13 +297,7 @@ const DEFAULT_VAPI_SETTINGS: VapiSettings = {
   systemPromptTemplateEN: DEFAULT_SYSTEM_PROMPT_EN,
 };
 
-const DEFAULT_GLOBAL_SETTINGS: GlobalVoiceSettings = {
-  stability: 0.5,
-  similarity: 0.75,
-  style: 0,
-  speed: 1,
-  use_speaker_boost: false,
-};
+// DEFAULT_GLOBAL_SETTINGS removed - using DEFAULT_VAPI_SETTINGS
 
 const AdminVoices = () => {
   const navigate = useNavigate();
@@ -329,10 +317,8 @@ const AdminVoices = () => {
   const [savingAiModel, setSavingAiModel] = useState(false);
   const [voiceTestOpen, setVoiceTestOpen] = useState(false);
   
-  // Global ElevenLabs settings
-  const [globalSettings, setGlobalSettings] = useState<GlobalVoiceSettings>(DEFAULT_GLOBAL_SETTINGS);
+  // ElevenLabs model (managed separately for VAPI voice config)
   const [elevenlabsModel, setElevenlabsModel] = useState("eleven_turbo_v2_5");
-  const [savingGlobalSettings, setSavingGlobalSettings] = useState(false);
   
   // Call Provider selection
   const [callProvider, setCallProvider] = useState<"twilio" | "vapi">("twilio");
@@ -376,7 +362,6 @@ const AdminVoices = () => {
     if (isAdmin) {
       fetchVoiceSettings();
       fetchAiModel();
-      fetchGlobalVoiceSettings();
       fetchCallProvider();
       fetchVapiPhoneNumbers();
       fetchVerifiedCallerIds();
@@ -549,57 +534,7 @@ const AdminVoices = () => {
     }
   };
 
-  const fetchGlobalVoiceSettings = async () => {
-    // Fetch global voice settings from app_settings
-    const { data: settingsData } = await supabase
-      .from("app_settings")
-      .select("key, value")
-      .in("key", ["elevenlabs_stability", "elevenlabs_similarity", "elevenlabs_style", "elevenlabs_speed", "elevenlabs_speaker_boost", "elevenlabs_model"]);
-    
-    if (settingsData && settingsData.length > 0) {
-      const settings: Partial<GlobalVoiceSettings> = {};
-      let model = "eleven_turbo_v2_5";
-      
-      settingsData.forEach(({ key, value }) => {
-        if (key === "elevenlabs_stability") settings.stability = parseFloat(value);
-        if (key === "elevenlabs_similarity") settings.similarity = parseFloat(value);
-        if (key === "elevenlabs_style") settings.style = parseFloat(value);
-        if (key === "elevenlabs_speed") settings.speed = parseFloat(value);
-        if (key === "elevenlabs_speaker_boost") settings.use_speaker_boost = value === "true";
-        if (key === "elevenlabs_model") model = value;
-      });
-      
-      setGlobalSettings({ ...DEFAULT_GLOBAL_SETTINGS, ...settings });
-      setElevenlabsModel(model);
-    }
-  };
-
-  const handleSaveGlobalSettings = async () => {
-    setSavingGlobalSettings(true);
-    try {
-      const settingsToSave = [
-        { key: "elevenlabs_stability", value: globalSettings.stability.toString() },
-        { key: "elevenlabs_similarity", value: globalSettings.similarity.toString() },
-        { key: "elevenlabs_style", value: globalSettings.style.toString() },
-        { key: "elevenlabs_speed", value: globalSettings.speed.toString() },
-        { key: "elevenlabs_speaker_boost", value: globalSettings.use_speaker_boost.toString() },
-        { key: "elevenlabs_model", value: elevenlabsModel },
-      ];
-
-      for (const setting of settingsToSave) {
-        const { error } = await supabase
-          .from("app_settings")
-          .upsert({ key: setting.key, value: setting.value }, { onConflict: "key" });
-        if (error) throw error;
-      }
-
-      toast({ title: "Salvato!", description: "Setup globale ElevenLabs aggiornato" });
-    } catch (error: any) {
-      toast({ title: "Errore", description: error.message, variant: "destructive" });
-    } finally {
-      setSavingGlobalSettings(false);
-    }
-  };
+  // ElevenLabs model is fetched as part of fetchCallProvider via vapi settings
 
   const fetchCallProvider = async () => {
     const { data } = await supabase
@@ -863,14 +798,14 @@ const AdminVoices = () => {
     setTestAudioUrl(null);
 
     try {
-      // Use global settings for test
+      // Use VAPI settings for test (single source of truth)
       const { data, error } = await supabase.functions.invoke("test-voice", {
         body: {
           voiceId: setting.elevenlabs_voice_id,
-          stability: globalSettings.stability,
-          similarity: globalSettings.similarity,
-          style: globalSettings.style,
-          speed: globalSettings.speed,
+          stability: vapiSettings.voiceStability,
+          similarity: vapiSettings.voiceSimilarityBoost,
+          style: vapiSettings.voiceStyle,
+          speed: vapiSettings.voiceSpeed,
           language: setting.language,
         },
       });
