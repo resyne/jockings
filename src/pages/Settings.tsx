@@ -7,13 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, Mail, Coins, LogOut, Save } from "lucide-react";
+import { ArrowLeft, User, Mail, Phone, LogOut, Save } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import saranoIcon from "@/assets/sarano-icon.png";
 
 interface Profile {
   username: string | null;
-  credits: number;
+  available_pranks: number;
   avatar_url: string | null;
 }
 
@@ -39,7 +39,7 @@ const Settings = () => {
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from("profiles")
-      .select("username, credits, avatar_url")
+      .select("username, available_pranks, avatar_url")
       .eq("user_id", userId)
       .single();
 
@@ -107,10 +107,10 @@ const Settings = () => {
             <CardDescription>{user?.email}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-center gap-2 p-4 rounded-lg bg-primary/10">
-              <Coins className="w-5 h-5 text-primary" />
-              <span className="font-bold text-lg">{profile?.credits || 0}</span>
-              <span className="text-sm text-muted-foreground">crediti disponibili</span>
+            <div className="flex items-center justify-center gap-2 p-4 rounded-lg bg-primary/10 cursor-pointer" onClick={() => navigate("/pricing")}>
+              <Phone className="w-5 h-5 text-primary" />
+              <span className="font-bold text-lg">{profile?.available_pranks || 0}</span>
+              <span className="text-sm text-muted-foreground">prank disponibili</span>
             </div>
           </CardContent>
         </Card>

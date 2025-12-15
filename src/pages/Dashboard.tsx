@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Phone, Plus, History, Settings, LogOut, Coins, User, Users } from "lucide-react";
+import { Phone, Plus, History, Settings, LogOut, User } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import PrankCard from "@/components/PrankCard";
 import saranoWordmarkIcon from "@/assets/sarano-wordmark-icon.png";
@@ -14,7 +14,7 @@ import saranoIcon from "@/assets/sarano-icon.png";
 
 interface Profile {
   username: string | null;
-  credits: number;
+  available_pranks: number;
   avatar_url: string | null;
 }
 
@@ -107,7 +107,7 @@ const Dashboard = () => {
     if (!user) return;
     const { data, error } = await supabase
       .from("profiles")
-      .select("username, credits, avatar_url")
+      .select("username, available_pranks, avatar_url")
       .eq("user_id", user.id)
       .single();
     
@@ -264,10 +264,10 @@ const Dashboard = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="relative z-10">
-            <div className="flex items-center gap-2">
-              <Coins className="w-5 h-5" />
-              <span className="font-bold text-lg">{profile?.credits || 0}</span>
-              <span className="text-sm opacity-80">crediti disponibili</span>
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/pricing")}>
+              <Phone className="w-5 h-5" />
+              <span className="font-bold text-lg">{profile?.available_pranks || 0}</span>
+              <span className="text-sm opacity-80">prank disponibili</span>
             </div>
           </CardContent>
         </Card>
