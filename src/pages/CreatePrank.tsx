@@ -67,6 +67,7 @@ const CreatePrank = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [loadingPrank, setLoadingPrank] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [presets, setPresets] = useState<PrankPreset[]>([]);
   const [allVoices, setAllVoices] = useState<VoiceOption[]>([]);
@@ -115,8 +116,9 @@ const CreatePrank = () => {
     const themeParam = searchParams.get("theme");
     const addThemeParam = searchParams.get("addTheme");
     
-    if (repeatId && user) {
-      loadPrankData(repeatId);
+    if (repeatId && user?.id) {
+      setLoadingPrank(true);
+      loadPrankData(repeatId).finally(() => setLoadingPrank(false));
     } else if (phoneParam) {
       // Pre-fill from recent victim or quick call
       if (firstNameParam) setVictimFirstName(firstNameParam);
@@ -140,7 +142,7 @@ const CreatePrank = () => {
         setVictimPhone(phoneParam);
       }
     }
-  }, [searchParams, user]);
+  }, [searchParams, user?.id]);
 
   // Cleanup audio on unmount
   useEffect(() => {
@@ -255,41 +257,54 @@ const CreatePrank = () => {
   };
 
   const loadPrankData = async (prankId: string) => {
-    const { data, error } = await supabase
-      .from("pranks")
-      .select("*")
-      .eq("id", prankId)
-      .eq("user_id", user.id)
-      .single();
-
-    if (data && !error) {
-      setVictimFirstName(data.victim_first_name);
-      setVictimLastName(data.victim_last_name);
-      // Parse phone number to extract country code and number
-      const phone = data.victim_phone;
-      const matchedCountry = COUNTRY_CODES.find(c => phone.startsWith(c.code));
-      if (matchedCountry) {
-        setPhoneCountryCode(matchedCountry.code);
-        setVictimPhone(phone.replace(matchedCountry.code, "").trim());
-      } else {
-        setVictimPhone(phone);
-      }
-      setPrankTheme(data.prank_theme);
-      setPersonalityTone(data.personality_tone);
+    try {
+      if (!user?.id) return;
       
-      // Find and set the voice based on elevenlabs_voice_id
-      if (data.elevenlabs_voice_id) {
-        const { data: voiceData } = await supabase
-          .from("voice_settings")
-          .select("id")
-          .eq("elevenlabs_voice_id", data.elevenlabs_voice_id)
-          .eq("is_active", true)
-          .maybeSingle();
+      const { data, error } = await supabase
+        .from("pranks")
+        .select("*")
+        .eq("id", prankId)
+        .eq("user_id", user.id)
+        .single();
+
+      if (error) {
+        console.error("Error loading prank:", error);
+        toast({ title: "Errore", description: "Impossibile caricare lo scherzo", variant: "destructive" });
+        return;
+      }
+
+      if (data) {
+        setVictimFirstName(data.victim_first_name);
+        setVictimLastName(data.victim_last_name);
+        // Parse phone number to extract country code and number
+        const phone = data.victim_phone;
+        const matchedCountry = COUNTRY_CODES.find(c => phone.startsWith(c.code));
+        if (matchedCountry) {
+          setPhoneCountryCode(matchedCountry.code);
+          setVictimPhone(phone.replace(matchedCountry.code, "").trim());
+        } else {
+          setVictimPhone(phone);
+        }
+        setPrankTheme(data.prank_theme);
+        setPersonalityTone(data.personality_tone);
         
-        if (voiceData) {
-          setSelectedVoiceId(voiceData.id);
+        // Find and set the voice based on elevenlabs_voice_id
+        if (data.elevenlabs_voice_id) {
+          const { data: voiceData } = await supabase
+            .from("voice_settings")
+            .select("id")
+            .eq("elevenlabs_voice_id", data.elevenlabs_voice_id)
+            .eq("is_active", true)
+            .maybeSingle();
+          
+          if (voiceData) {
+            setSelectedVoiceId(voiceData.id);
+          }
         }
       }
+    } catch (err) {
+      console.error("Error in loadPrankData:", err);
+      toast({ title: "Errore", description: "Errore nel caricamento", variant: "destructive" });
     }
   };
 
@@ -413,6 +428,17 @@ const CreatePrank = () => {
       setLoading(false);
     }
   };
+
+  if (loadingPrank) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 mx-auto animate-spin text-primary" />
+          <p className="mt-4 text-muted-foreground">Caricamento scherzo...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-8">
