@@ -24,6 +24,7 @@ const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
 const AdminCalls = lazy(() => import("./pages/admin/AdminCalls"));
 const AdminPhoneNumbers = lazy(() => import("./pages/admin/AdminPhoneNumbers"));
 const AdminCallerIds = lazy(() => import("./pages/admin/AdminCallerIds"));
+const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 
 const queryClient = new QueryClient();
 
@@ -58,6 +59,7 @@ const App = () => (
             <Route path="/admin/calls" element={<AdminCalls />} />
             <Route path="/admin/phone-numbers" element={<AdminPhoneNumbers />} />
             <Route path="/admin/caller-ids" element={<AdminCallerIds />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
