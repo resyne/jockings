@@ -17,6 +17,7 @@ const Settings = lazy(() => import("./pages/Settings"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const VerifyPhone = lazy(() => import("./pages/VerifyPhone"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminVoices = lazy(() => import("./pages/admin/AdminVoices"));
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/settings" element={<Settings />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/verify-phone" element={<VerifyPhone />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/voices" element={<AdminVoices />} />
