@@ -684,6 +684,20 @@ const CreatePrank = () => {
                 <span className="font-medium text-foreground">Italiano</span>
                 <span className="text-xs text-muted-foreground">(predefinito)</span>
               </div>
+
+              <div className="space-y-2">
+                <Label>Tono Personalità</Label>
+                <Select value={personalityTone} onValueChange={setPersonalityTone}>
+                  <SelectTrigger className="h-12">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TONES.map((tone) => (
+                      <SelectItem key={tone.value} value={tone.value}>{tone.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               
               {maleVoices.length > 0 && (
                 <div className="space-y-3">
@@ -814,20 +828,6 @@ const CreatePrank = () => {
                   Nessuna voce configurata
                 </p>
               )}
-
-              <div className="space-y-2 pt-2 border-t">
-                <Label>Tono Personalità</Label>
-                <Select value={personalityTone} onValueChange={setPersonalityTone}>
-                  <SelectTrigger className="h-12">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TONES.map((tone) => (
-                      <SelectItem key={tone.value} value={tone.value}>{tone.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
             </CardContent>
           </Card>
         )}
