@@ -237,6 +237,7 @@ const Auth = () => {
             </Button>
           </form>
 
+          {/* Google OAuth temporaneamente nascosto - richiede custom domain Supabase Pro
           {mode !== "forgot" && (
             <>
               <div className="relative">
@@ -276,6 +277,7 @@ const Auth = () => {
               </Button>
             </>
           )}
+          */}
 
           <div className="text-center text-sm space-y-2">
             {mode === "login" && (
