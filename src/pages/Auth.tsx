@@ -128,10 +128,12 @@ const Auth = () => {
           description: "Ora verifica il tuo numero di telefono",
         });
       } else {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/auth`,
+        // Use custom password reset with branded email
+        const { data, error } = await supabase.functions.invoke("request-password-reset", {
+          body: { email },
         });
         if (error) throw error;
+        if (data?.error) throw new Error(data.error);
         toast({
           title: "Email inviata! 📧",
           description: "Controlla la tua casella per resettare la password",
