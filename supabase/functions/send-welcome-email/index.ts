@@ -26,7 +26,7 @@ const handler = async (req: Request): Promise<Response> => {
     const firstName = name || email.split('@')[0];
 
     const emailResponse = await resend.emails.send({
-      from: "sarano.ai <noreply@sarano.ai>",
+      from: "sarano.ai <welcome@sarano.ai>",
       to: [email],
       subject: "Benvenuto nella famiglia degli scherzi! 🎭",
       html: `
