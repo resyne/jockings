@@ -246,6 +246,11 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           id: string
+          phone_number: string | null
+          phone_verification_code: string | null
+          phone_verification_expires_at: string | null
+          phone_verified: boolean | null
+          trial_prank_used: boolean | null
           updated_at: string
           user_id: string
           username: string | null
@@ -255,6 +260,11 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           id?: string
+          phone_number?: string | null
+          phone_verification_code?: string | null
+          phone_verification_expires_at?: string | null
+          phone_verified?: boolean | null
+          trial_prank_used?: boolean | null
           updated_at?: string
           user_id: string
           username?: string | null
@@ -264,6 +274,11 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           id?: string
+          phone_number?: string | null
+          phone_verification_code?: string | null
+          phone_verification_expires_at?: string | null
+          phone_verified?: boolean | null
+          trial_prank_used?: boolean | null
           updated_at?: string
           user_id?: string
           username?: string | null
