@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Phone, User, Mic, Globe, Send, CalendarClock, Play, Square, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Phone, User, Mic, Globe, Send, CalendarClock, Play, Square, Loader2, Check } from "lucide-react";
 import saranoIcon from "@/assets/sarano-icon.png";
 import { z } from "zod";
 import { format } from "date-fns";
@@ -42,6 +42,13 @@ const TONES = [
   { value: "sexy", label: "Sexy 😏" },
 ];
 
+const STEPS = [
+  { id: 1, title: "Vittima", icon: User },
+  { id: 2, title: "Tema", icon: Mic },
+  { id: 3, title: "Voce", icon: Globe },
+  { id: 4, title: "Riepilogo", icon: Check },
+];
+
 interface PrankPreset {
   id: string;
   title: string;
@@ -66,6 +73,7 @@ const CreatePrank = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [loadingPrank, setLoadingPrank] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -79,16 +87,16 @@ const CreatePrank = () => {
   // Form state
   const [victimFirstName, setVictimFirstName] = useState("");
   const [victimLastName, setVictimLastName] = useState("");
-  const [victimGender, setVictimGender] = useState("male"); // Gender of the VICTIM (for Italian grammar)
+  const [victimGender, setVictimGender] = useState("male");
   const [phoneCountryCode, setPhoneCountryCode] = useState("+39");
   const [victimPhone, setVictimPhone] = useState("");
   const [selectedPreset, setSelectedPreset] = useState("custom");
   const [prankTheme, setPrankTheme] = useState("");
-  const [realDetail, setRealDetail] = useState(""); // Optional real detail about the victim
+  const [realDetail, setRealDetail] = useState("");
   const [personalityTone, setPersonalityTone] = useState("enthusiastic");
-  const [maxDuration] = useState(120); // Default 120 seconds, managed from admin
-  const [creativityLevel] = useState([50]); // Default 50%, managed from admin
-  const sendRecording = true; // Recording always enabled
+  const [maxDuration] = useState(120);
+  const [creativityLevel] = useState([50]);
+  const sendRecording = true;
   const [scheduleCall, setScheduleCall] = useState(false);
   const [scheduledDate, setScheduledDate] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
@@ -120,11 +128,9 @@ const CreatePrank = () => {
       setLoadingPrank(true);
       loadPrankData(repeatId).finally(() => setLoadingPrank(false));
     } else if (phoneParam) {
-      // Pre-fill from recent victim or quick call
       if (firstNameParam) setVictimFirstName(firstNameParam);
       if (lastNameParam) setVictimLastName(lastNameParam);
       
-      // Handle theme: if addTheme exists, append it to existing theme
       if (themeParam && addThemeParam) {
         setPrankTheme(`${themeParam}. ${addThemeParam}`);
         setSelectedPreset("custom");
@@ -133,7 +139,6 @@ const CreatePrank = () => {
         setSelectedPreset("custom");
       }
       
-      // Parse phone number to extract country code
       const matchedCountry = COUNTRY_CODES.find(c => phoneParam.startsWith(c.code));
       if (matchedCountry) {
         setPhoneCountryCode(matchedCountry.code);
@@ -144,7 +149,6 @@ const CreatePrank = () => {
     }
   }, [searchParams, user?.id]);
 
-  // Cleanup audio on unmount
   useEffect(() => {
     return () => {
       if (audioRef.current) {
@@ -175,7 +179,6 @@ const CreatePrank = () => {
 
     if (data && data.length > 0) {
       setAllVoices(data);
-      // Auto-select first voice if none selected
       if (!selectedVoiceId) {
         setSelectedVoiceId(data[0].id);
       }
@@ -186,7 +189,6 @@ const CreatePrank = () => {
   const femaleVoices = allVoices.filter(v => v.gender === "female");
 
   const playVoicePreview = async (voice: VoiceOption) => {
-    // If already playing this voice, stop it
     if (playingVoiceId === voice.id) {
       if (audioRef.current) {
         audioRef.current.pause();
@@ -196,7 +198,6 @@ const CreatePrank = () => {
       return;
     }
 
-    // Stop any currently playing audio
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
@@ -276,7 +277,6 @@ const CreatePrank = () => {
       if (data) {
         setVictimFirstName(data.victim_first_name);
         setVictimLastName(data.victim_last_name);
-        // Parse phone number to extract country code and number
         const phone = data.victim_phone;
         const matchedCountry = COUNTRY_CODES.find(c => phone.startsWith(c.code));
         if (matchedCountry) {
@@ -288,7 +288,6 @@ const CreatePrank = () => {
         setPrankTheme(data.prank_theme);
         setPersonalityTone(data.personality_tone);
         
-        // Find and set the voice based on elevenlabs_voice_id
         if (data.elevenlabs_voice_id) {
           const { data: voiceData } = await supabase
             .from("voice_settings")
@@ -308,29 +307,50 @@ const CreatePrank = () => {
     }
   };
 
-  const validateForm = () => {
-    if (!victimFirstName.trim() || !victimLastName.trim()) {
-      toast({ title: "Errore", description: "Inserisci nome e cognome della vittima", variant: "destructive" });
-      return false;
+  const validateStep = (step: number): boolean => {
+    switch (step) {
+      case 1:
+        if (!victimFirstName.trim() || !victimLastName.trim()) {
+          toast({ title: "Errore", description: "Inserisci nome e cognome della vittima", variant: "destructive" });
+          return false;
+        }
+        try {
+          phoneSchema.parse(victimPhone.replace(/\s/g, ""));
+        } catch {
+          toast({ title: "Errore", description: "Numero di telefono non valido", variant: "destructive" });
+          return false;
+        }
+        return true;
+      case 2:
+        if (!prankTheme.trim()) {
+          toast({ title: "Errore", description: "Descrivi il tema dello scherzo", variant: "destructive" });
+          return false;
+        }
+        return true;
+      case 3:
+        if (!selectedVoiceId) {
+          toast({ title: "Errore", description: "Seleziona una voce", variant: "destructive" });
+          return false;
+        }
+        return true;
+      default:
+        return true;
     }
-    try {
-      phoneSchema.parse(victimPhone.replace(/\s/g, ""));
-    } catch {
-      toast({ title: "Errore", description: "Numero di telefono non valido", variant: "destructive" });
-      return false;
-    }
-    if (!prankTheme.trim()) {
-      toast({ title: "Errore", description: "Descrivi il tema dello scherzo", variant: "destructive" });
-      return false;
-    }
-    return true;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateForm() || !user) return;
+  const handleNext = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep(prev => Math.min(prev + 1, 4));
+    }
+  };
 
-    // Validate schedule if enabled
+  const handleBack = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 1));
+  };
+
+  const handleSubmit = async () => {
+    if (!user) return;
+
     if (scheduleCall) {
       if (!scheduledDate || !scheduledTime) {
         toast({ title: "Errore", description: "Seleziona data e ora per la schedulazione", variant: "destructive" });
@@ -346,10 +366,8 @@ const CreatePrank = () => {
     setLoading(true);
 
     try {
-      // Get selected voice settings
       const selectedVoice = allVoices.find(v => v.id === selectedVoiceId);
       
-      // Fetch full voice settings for the selected voice
       const { data: voiceSettings } = selectedVoiceId && selectedVoiceId.length > 0
         ? await supabase
             .from("voice_settings")
@@ -402,7 +420,6 @@ const CreatePrank = () => {
           description: "Avvio della chiamata in corso...",
         });
 
-        // Always use VAPI
         const { error: callError } = await supabase.functions.invoke("initiate-call-vapi", {
           body: { prankId: prank.id }
         });
@@ -428,6 +445,9 @@ const CreatePrank = () => {
       setLoading(false);
     }
   };
+
+  const selectedVoice = allVoices.find(v => v.id === selectedVoiceId);
+  const selectedCountry = COUNTRY_CODES.find(c => c.code === phoneCountryCode);
 
   if (loadingPrank) {
     return (
@@ -455,23 +475,58 @@ const CreatePrank = () => {
           />
           <div>
             <h1 className="font-bold">Crea Scherzo</h1>
-            <p className="text-xs text-muted-foreground">Configura la tua chiamata AI</p>
+            <p className="text-xs text-muted-foreground">Step {currentStep} di 4</p>
           </div>
         </div>
       </header>
 
-      <main className="px-4 py-6 max-w-lg mx-auto">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Victim Info */}
-          <Card>
+      {/* Progress Bar */}
+      <div className="px-4 py-4 max-w-lg mx-auto">
+        <div className="flex items-center justify-between mb-2">
+          {STEPS.map((step, index) => (
+            <div key={step.id} className="flex items-center flex-1">
+              <div className="flex flex-col items-center">
+                <div 
+                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                    currentStep >= step.id 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {currentStep > step.id ? (
+                    <Check className="w-5 h-5" />
+                  ) : (
+                    <step.icon className="w-5 h-5" />
+                  )}
+                </div>
+                <span className={`text-xs mt-1 font-medium ${
+                  currentStep >= step.id ? "text-foreground" : "text-muted-foreground"
+                }`}>
+                  {step.title}
+                </span>
+              </div>
+              {index < STEPS.length - 1 && (
+                <div className={`flex-1 h-1 mx-2 rounded-full transition-all duration-300 ${
+                  currentStep > step.id ? "bg-primary" : "bg-muted"
+                }`} />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <main className="px-4 max-w-lg mx-auto">
+        {/* Step 1: Victim Info */}
+        {currentStep === 1 && (
+          <Card className="animate-fade-in">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-lg bg-primary/10">
                   <User className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">Dati della Vittima</CardTitle>
-                  <CardDescription>Chi vuoi chiamare?</CardDescription>
+                  <CardTitle className="text-lg">Chi vuoi chiamare?</CardTitle>
+                  <CardDescription>Inserisci i dati della vittima</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -541,17 +596,19 @@ const CreatePrank = () => {
               </div>
             </CardContent>
           </Card>
+        )}
 
-          {/* Prank Theme */}
-          <Card>
+        {/* Step 2: Prank Theme */}
+        {currentStep === 2 && (
+          <Card className="animate-fade-in">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-lg bg-secondary/10">
                   <Mic className="w-5 h-5 text-secondary" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">Tema dello Scherzo</CardTitle>
-                  <CardDescription>Cosa vuoi far dire all'AI?</CardDescription>
+                  <CardTitle className="text-lg">Cosa vuoi far dire all'AI?</CardTitle>
+                  <CardDescription>Descrivi il tema dello scherzo</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -590,7 +647,7 @@ const CreatePrank = () => {
                       setSelectedPreset("custom");
                     }
                   }}
-                  className="min-h-[100px]"
+                  className="min-h-[120px]"
                 />
               </div>
               <div className="space-y-2">
@@ -599,35 +656,35 @@ const CreatePrank = () => {
                   placeholder="Es: lavora come idraulico, ha appena comprato una macchina nuova, suo figlio si chiama Luca..."
                   value={realDetail}
                   onChange={(e) => setRealDetail(e.target.value)}
-                  className="min-h-[60px]"
+                  className="min-h-[80px]"
                 />
                 <p className="text-xs text-muted-foreground">Un dettaglio vero sulla vittima rende lo scherzo molto più credibile!</p>
               </div>
             </CardContent>
           </Card>
+        )}
 
-          {/* Voice Selection */}
-          <Card>
+        {/* Step 3: Voice Selection */}
+        {currentStep === 3 && (
+          <Card className="animate-fade-in">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-lg bg-accent/10">
                   <Globe className="w-5 h-5 text-accent" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">Voce</CardTitle>
-                  <CardDescription>Scegli chi farà la chiamata</CardDescription>
+                  <CardTitle className="text-lg">Scegli la voce</CardTitle>
+                  <CardDescription>Chi farà la chiamata?</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Language indicator */}
               <div className="flex items-center gap-2 pb-2 border-b border-border">
                 <span className="text-lg">🇮🇹</span>
                 <span className="font-medium text-foreground">Italiano</span>
                 <span className="text-xs text-muted-foreground">(predefinito)</span>
               </div>
               
-              {/* Male Voices */}
               {maleVoices.length > 0 && (
                 <div className="space-y-3">
                   <Label className="text-muted-foreground">👨 Voci Maschili</Label>
@@ -690,7 +747,6 @@ const CreatePrank = () => {
                 </div>
               )}
 
-              {/* Female Voices */}
               {femaleVoices.length > 0 && (
                 <div className="space-y-3">
                   <Label className="text-muted-foreground">👩 Voci Femminili</Label>
@@ -774,74 +830,152 @@ const CreatePrank = () => {
               </div>
             </CardContent>
           </Card>
+        )}
 
-          {/* Options */}
-          <Card>
-            <CardContent className="pt-6 space-y-4">
-              <div className="flex items-center gap-2 py-2 text-muted-foreground">
-                <Mic className="w-4 h-4" />
-                <p className="text-sm">A termine della chiamata sarà disponibile la registrazione</p>
-              </div>
-
-              <div className="flex items-center justify-between py-2 border-t pt-4">
+        {/* Step 4: Summary */}
+        {currentStep === 4 && (
+          <div className="space-y-4 animate-fade-in">
+            <Card>
+              <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
-                  <CalendarClock className="w-5 h-5 text-orange-500" />
+                  <div className="p-2 rounded-lg bg-green-500/10">
+                    <Check className="w-5 h-5 text-green-500" />
+                  </div>
                   <div>
-                    <Label>Programma Chiamata</Label>
-                    <p className="text-xs text-muted-foreground">Imposta data e ora</p>
+                    <CardTitle className="text-lg">Riepilogo</CardTitle>
+                    <CardDescription>Controlla prima di avviare</CardDescription>
                   </div>
                 </div>
-                <Switch
-                  checked={scheduleCall}
-                  onCheckedChange={setScheduleCall}
-                />
-              </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between py-2 border-b border-border">
+                    <span className="text-muted-foreground">Vittima</span>
+                    <span className="font-medium">{victimFirstName} {victimLastName}</span>
+                  </div>
+                  <div className="flex items-center justify-between py-2 border-b border-border">
+                    <span className="text-muted-foreground">Telefono</span>
+                    <span className="font-medium font-mono">{selectedCountry?.flag} {phoneCountryCode} {victimPhone}</span>
+                  </div>
+                  <div className="flex items-center justify-between py-2 border-b border-border">
+                    <span className="text-muted-foreground">Sesso</span>
+                    <span className="font-medium">{victimGender === "male" ? "👨 Maschio" : "👩 Femmina"}</span>
+                  </div>
+                  <div className="py-2 border-b border-border">
+                    <span className="text-muted-foreground">Tema</span>
+                    <p className="font-medium mt-1 text-sm">{prankTheme}</p>
+                  </div>
+                  {realDetail && (
+                    <div className="py-2 border-b border-border">
+                      <span className="text-muted-foreground">Dettaglio reale</span>
+                      <p className="font-medium mt-1 text-sm">{realDetail}</p>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between py-2 border-b border-border">
+                    <span className="text-muted-foreground">Voce</span>
+                    <span className="font-medium">{selectedVoice?.voice_name || "Non selezionata"}</span>
+                  </div>
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-muted-foreground">Tono</span>
+                    <span className="font-medium">{TONES.find(t => t.value === personalityTone)?.label}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-              {scheduleCall && (
-                <div className="grid grid-cols-2 gap-3 pt-2">
-                  <div className="space-y-2">
-                    <Label>Data</Label>
-                    <Input
-                      type="date"
-                      value={scheduledDate}
-                      onChange={(e) => setScheduledDate(e.target.value)}
-                      min={new Date().toISOString().split('T')[0]}
-                      className="h-12"
-                    />
+            <Card>
+              <CardContent className="pt-6 space-y-4">
+                <div className="flex items-center gap-2 py-2 text-muted-foreground">
+                  <Mic className="w-4 h-4" />
+                  <p className="text-sm">A termine della chiamata sarà disponibile la registrazione</p>
+                </div>
+
+                <div className="flex items-center justify-between py-2 border-t pt-4">
+                  <div className="flex items-center gap-2">
+                    <CalendarClock className="w-5 h-5 text-orange-500" />
+                    <div>
+                      <Label>Programma Chiamata</Label>
+                      <p className="text-xs text-muted-foreground">Imposta data e ora</p>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Ora</Label>
-                    <Input
-                      type="time"
-                      value={scheduledTime}
-                      onChange={(e) => setScheduledTime(e.target.value)}
-                      className="h-12"
-                    />
+                  <Switch
+                    checked={scheduleCall}
+                    onCheckedChange={setScheduleCall}
+                  />
+                </div>
+
+                {scheduleCall && (
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                    <div className="space-y-2">
+                      <Label>Data</Label>
+                      <Input
+                        type="date"
+                        value={scheduledDate}
+                        onChange={(e) => setScheduledDate(e.target.value)}
+                        min={new Date().toISOString().split('T')[0]}
+                        className="h-12"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Ora</Label>
+                      <Input
+                        type="time"
+                        value={scheduledTime}
+                        onChange={(e) => setScheduledTime(e.target.value)}
+                        className="h-12"
+                      />
+                    </div>
                   </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Navigation Buttons */}
+        <div className="flex gap-3 mt-6">
+          {currentStep > 1 && (
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 h-14"
+              onClick={handleBack}
+            >
+              <ArrowLeft className="w-5 h-5 mr-2" />
+              Indietro
+            </Button>
+          )}
+          
+          {currentStep < 4 ? (
+            <Button
+              type="button"
+              className="flex-1 h-14 gradient-primary"
+              onClick={handleNext}
+            >
+              Avanti
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              className="flex-1 h-14 gradient-primary shadow-glow"
+              onClick={handleSubmit}
+              disabled={loading}
+            >
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  {scheduleCall ? "Schedulando..." : "Avviando..."}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Send className="w-5 h-5" />
+                  {scheduleCall ? "Programma Scherzo" : "Avvia Scherzo"}
                 </div>
               )}
-            </CardContent>
-          </Card>
-
-          {/* Submit */}
-          <Button
-            type="submit"
-            className="w-full h-14 text-lg gradient-primary shadow-glow"
-            disabled={loading}
-          >
-            {loading ? (
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                {scheduleCall ? "Schedulando..." : "Avviando..."}
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Send className="w-5 h-5" />
-                {scheduleCall ? "Programma Scherzo" : "Avvia Scherzo"}
-              </div>
-            )}
-          </Button>
-        </form>
+            </Button>
+          )}
+        </div>
       </main>
     </div>
   );
