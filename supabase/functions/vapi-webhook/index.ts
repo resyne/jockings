@@ -177,9 +177,38 @@ serve(async (req) => {
         }
         break;
         
+      case "conversation-update":
+        // Handle real-time conversation updates
+        console.log("=== CONVERSATION UPDATE EVENT ===");
+        const messages = body.message?.messages || body.message?.artifact?.messages;
+        
+        if (messages && Array.isArray(messages) && callId) {
+          // Filter out system messages and format for display
+          const conversationHistory = messages
+            .filter((msg: any) => msg.role !== "system")
+            .map((msg: any) => ({
+              role: msg.role === "bot" ? "assistant" : msg.role,
+              content: msg.message || msg.content || "",
+              timestamp: msg.time ? new Date(msg.time).toISOString() : new Date().toISOString()
+            }));
+          
+          console.log("Updating conversation history with", conversationHistory.length, "messages");
+          
+          const { error: convError } = await supabase
+            .from("pranks")
+            .update({ conversation_history: conversationHistory })
+            .eq("twilio_call_sid", callId);
+          
+          if (convError) {
+            console.error("Error updating conversation:", convError);
+          } else {
+            console.log("Conversation updated successfully");
+          }
+        }
+        break;
+
       case "speech-update":
       case "function-call":
-      case "conversation-update":
       case "tool-calls":
         // These are informational, don't update status
         console.log("Informational event, no status update");
