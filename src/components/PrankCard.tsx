@@ -128,7 +128,7 @@ const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, onQuickCal
   };
 
   const isScheduled = prank.call_status === "scheduled";
-  const isCallActive = prank.call_status === "in_progress" || prank.call_status === "ringing" || prank.call_status === "initiated";
+  const isCallActive = ["initiated", "pending", "queued", "ringing", "in_progress"].includes(prank.call_status);
   const isCallCompleted = prank.call_status === "completed" || prank.call_status === "recording_available" || prank.call_status === "no_answer" || prank.call_status === "busy" || prank.call_status === "failed";
 
   // Show LiveCallView for active calls
