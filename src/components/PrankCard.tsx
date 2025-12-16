@@ -1,12 +1,13 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, RotateCcw, Calendar, Clock, X, CalendarClock, Download, Loader2, PhoneCall } from "lucide-react";
+import { Play, Pause, RotateCcw, Calendar, Clock, X, CalendarClock, Download, Loader2 } from "lucide-react";
 import { useState, useRef } from "react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import LiveCallView from "./LiveCallView";
 
 interface Prank {
   id: string;
@@ -126,6 +127,18 @@ const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, onQuickCal
   };
 
   const isScheduled = prank.call_status === "scheduled";
+  const isCallActive = prank.call_status === "in_progress" || prank.call_status === "ringing" || prank.call_status === "initiated";
+
+  // Show LiveCallView for active calls
+  if (isCallActive) {
+    return (
+      <LiveCallView
+        prankId={prank.id}
+        victimName={`${prank.victim_first_name} ${prank.victim_last_name}`}
+        callStatus={prank.call_status}
+      />
+    );
+  }
 
   return (
     <Card className="shadow-soft hover:shadow-glow/20 transition-all">
