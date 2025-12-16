@@ -51,7 +51,7 @@ const Inizia = () => {
           <Button 
             size="lg"
             className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6 rounded-full font-semibold shadow-lg"
-            onClick={() => navigate("/auth")}
+            onClick={() => navigate("/auth?mode=signup")}
           >
             Prova uno scherzo
           </Button>
@@ -61,6 +61,14 @@ const Inizia = () => {
             <Headphones className="w-3.5 h-3.5" />
             Prima lo provi su di te. Gratis.
           </p>
+
+          {/* Login link */}
+          <button
+            onClick={() => navigate("/auth?mode=login")}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4"
+          >
+            Hai già un account? Accedi
+          </button>
         </div>
       </main>
 
