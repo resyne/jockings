@@ -13,8 +13,7 @@ import saranoWordmark from "@/assets/sarano-wordmark.png";
 
 const emailSchema = z.string().email("Email non valida");
 const passwordSchema = z.string()
-  .min(8, "La password deve avere almeno 8 caratteri")
-  .regex(/[!@#$%^&*(),.?":{}|<>]/, "La password deve contenere almeno un carattere speciale (!@#$%^&*)");
+  .min(8, "La password deve avere almeno 8 caratteri");
 
 type AuthMode = "login" | "signup" | "forgot";
 
@@ -246,7 +245,7 @@ const Auth = () => {
                   </button>
                 </div>
                 {mode === "signup" && (
-                  <p className="text-xs text-muted-foreground">Min. 8 caratteri con almeno un simbolo (!@#$%^&*)</p>
+                  <p className="text-xs text-muted-foreground">Min. 8 caratteri</p>
                 )}
               </div>
             )}
