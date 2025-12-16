@@ -35,9 +35,25 @@ const Auth = () => {
   const hasCheckedSession = useRef(false);
 
   useEffect(() => {
+    const checkUserAndRedirect = async (userId: string) => {
+      // Check if phone is verified
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("phone_verified")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (profile?.phone_verified) {
+        navigate("/dashboard", { replace: true });
+      } else {
+        navigate("/verify-phone", { replace: true });
+      }
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
-        navigate("/dashboard", { replace: true });
+        // Defer to avoid deadlock
+        setTimeout(() => checkUserAndRedirect(session.user.id), 0);
       }
     });
 
@@ -46,7 +62,7 @@ const Auth = () => {
       hasCheckedSession.current = true;
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session?.user) {
-          navigate("/dashboard", { replace: true });
+          checkUserAndRedirect(session.user.id);
         }
       });
     }
@@ -92,7 +108,7 @@ const Auth = () => {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       } else if (mode === "signup") {
-        const redirectUrl = `${window.location.origin}/dashboard`;
+        const redirectUrl = `${window.location.origin}/verify-phone`;
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -110,7 +126,7 @@ const Auth = () => {
         
         toast({
           title: "Registrazione completata! 🎊",
-          description: "Benvenuto nella famiglia degli scherzi!",
+          description: "Ora verifica il tuo numero di telefono",
         });
       } else {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
