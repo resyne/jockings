@@ -139,6 +139,44 @@ serve(async (req) => {
         break;
 
       case "transcript":
+        // Handle transcript updates for live display
+        console.log("=== TRANSCRIPT EVENT ===");
+        const transcriptRole = body.message?.role; // "user" or "assistant"
+        const transcriptText = body.message?.transcript;
+        
+        if (transcriptRole && transcriptText && callId) {
+          console.log(`Transcript from ${transcriptRole}: ${transcriptText}`);
+          
+          // Fetch current conversation history
+          const { data: prankData } = await supabase
+            .from("pranks")
+            .select("conversation_history")
+            .eq("twilio_call_sid", callId)
+            .single();
+          
+          const currentHistory = (prankData?.conversation_history as any[]) || [];
+          const newMessage = {
+            role: transcriptRole === "bot" ? "assistant" : transcriptRole,
+            content: transcriptText,
+            timestamp: new Date().toISOString()
+          };
+          
+          // Append new message to history
+          const updatedHistory = [...currentHistory, newMessage];
+          
+          const { error: updateError } = await supabase
+            .from("pranks")
+            .update({ conversation_history: updatedHistory })
+            .eq("twilio_call_sid", callId);
+          
+          if (updateError) {
+            console.error("Error updating transcript:", updateError);
+          } else {
+            console.log("Transcript updated successfully");
+          }
+        }
+        break;
+        
       case "speech-update":
       case "function-call":
       case "conversation-update":
