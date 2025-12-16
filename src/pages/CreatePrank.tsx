@@ -187,20 +187,26 @@ const CreatePrank = () => {
     const lastNameParam = searchParams.get("lastName");
     const themeParam = searchParams.get("theme");
     const addThemeParam = searchParams.get("addTheme");
+    const stepParam = searchParams.get("step");
     
     if (repeatId && user?.id) {
       setLoadingPrank(true);
-      loadPrankData(repeatId).finally(() => setLoadingPrank(false));
+      loadPrankData(repeatId).then(() => {
+        // Skip directly to summary step when repeating
+        setCurrentStep(4);
+      }).finally(() => setLoadingPrank(false));
     } else if (phoneParam) {
       if (firstNameParam) setVictimFirstName(firstNameParam);
       if (lastNameParam) setVictimLastName(lastNameParam);
       
-      if (themeParam && addThemeParam) {
-        setPrankTheme(`${themeParam}. ${addThemeParam}`);
-        setSelectedPreset("custom");
-      } else if (themeParam) {
+      if (themeParam) {
         setPrankTheme(themeParam);
         setSelectedPreset("custom");
+      }
+      
+      // Set addTheme as realDetail (personalized text for quick calls)
+      if (addThemeParam) {
+        setRealDetail(addThemeParam);
       }
       
       const matchedCountry = COUNTRY_CODES.find(c => phoneParam.startsWith(c.code));
@@ -209,6 +215,11 @@ const CreatePrank = () => {
         setVictimPhone(phoneParam.replace(matchedCountry.code, "").trim());
       } else {
         setVictimPhone(phoneParam);
+      }
+      
+      // Skip to specified step (for quick calls)
+      if (stepParam) {
+        setCurrentStep(parseInt(stepParam, 10));
       }
     }
   }, [searchParams, user?.id]);
