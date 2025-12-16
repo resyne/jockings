@@ -28,7 +28,7 @@ serve(async (req) => {
     const messageType = body.message?.type;
     const callId = body.message?.call?.id;
 
-    // Handle end-of-call-report which contains recording URL
+    // Handle end-of-call-report which contains recording URL and call duration
     if (messageType === "end-of-call-report") {
       console.log("=== END OF CALL REPORT ===");
       const reportCallId = body.message?.call?.id;
@@ -39,9 +39,26 @@ serve(async (req) => {
         || body.message?.call?.recordingUrl;
       const endedReason = body.message?.endedReason || body.message?.call?.endedReason;
       
+      // Get call duration in seconds
+      const durationSeconds = body.message?.durationSeconds 
+        || body.message?.call?.duration
+        || body.message?.artifact?.duration
+        || 0;
+      
+      // Check if call was answered (customer picked up)
+      const wasAnswered = endedReason !== "customer-did-not-answer" 
+        && endedReason !== "no-answer"
+        && endedReason !== "customer-busy"
+        && endedReason !== "busy";
+      
+      const isFailed = endedReason?.includes("error") || endedReason?.includes("failed");
+      
       console.log("Report Call ID:", reportCallId);
       console.log("Recording URL:", recordingUrl);
       console.log("Ended Reason:", endedReason);
+      console.log("Duration (seconds):", durationSeconds);
+      console.log("Was Answered:", wasAnswered);
+      console.log("Is Failed:", isFailed);
       
       if (reportCallId) {
         let newStatus = "completed";
@@ -51,7 +68,7 @@ serve(async (req) => {
           newStatus = "no_answer";
         } else if (endedReason === "customer-busy" || endedReason === "busy") {
           newStatus = "busy";
-        } else if (endedReason?.includes("error") || endedReason?.includes("failed")) {
+        } else if (isFailed) {
           newStatus = "failed";
         }
         
@@ -72,6 +89,83 @@ serve(async (req) => {
           console.error("Error updating prank from end-of-call-report:", error);
         } else {
           console.log("Prank updated from end-of-call-report:", newStatus);
+        }
+        
+        // === PRANK CONSUMPTION LOGIC ===
+        // Fetch prank to get user_id
+        const { data: prankData } = await supabase
+          .from("pranks")
+          .select("user_id")
+          .eq("twilio_call_sid", reportCallId)
+          .maybeSingle();
+        
+        if (prankData?.user_id) {
+          // Fetch consumption settings
+          const { data: settings } = await supabase
+            .from("app_settings")
+            .select("key, value")
+            .in("key", ["prank_min_duration", "prank_require_answered", "prank_count_failed"]);
+          
+          // Parse settings with defaults
+          let minDuration = 30;
+          let requireAnswered = true;
+          let countFailed = false;
+          
+          settings?.forEach((s: { key: string; value: string }) => {
+            if (s.key === "prank_min_duration") minDuration = parseInt(s.value) || 30;
+            if (s.key === "prank_require_answered") requireAnswered = s.value === "true";
+            if (s.key === "prank_count_failed") countFailed = s.value === "true";
+          });
+          
+          console.log("=== CONSUMPTION RULES ===");
+          console.log("Min Duration:", minDuration, "| Require Answered:", requireAnswered, "| Count Failed:", countFailed);
+          
+          // Determine if prank should be consumed
+          let shouldConsume = true;
+          
+          // Check if call was answered (if required)
+          if (requireAnswered && !wasAnswered) {
+            console.log("Prank NOT consumed: call was not answered");
+            shouldConsume = false;
+          }
+          
+          // Check duration
+          if (shouldConsume && minDuration > 0 && durationSeconds < minDuration) {
+            console.log(`Prank NOT consumed: duration ${durationSeconds}s < minimum ${minDuration}s`);
+            shouldConsume = false;
+          }
+          
+          // Check if failed calls should be excluded
+          if (shouldConsume && isFailed && !countFailed) {
+            console.log("Prank NOT consumed: call failed and countFailed is disabled");
+            shouldConsume = false;
+          }
+          
+          // Decrement available_pranks if rules are satisfied
+          if (shouldConsume) {
+            console.log("=== CONSUMING PRANK ===");
+            const { data: profile, error: profileError } = await supabase
+              .from("profiles")
+              .select("available_pranks")
+              .eq("user_id", prankData.user_id)
+              .maybeSingle();
+            
+            if (profile && !profileError) {
+              const currentPranks = profile.available_pranks || 0;
+              const newPranks = Math.max(0, currentPranks - 1);
+              
+              const { error: updateError } = await supabase
+                .from("profiles")
+                .update({ available_pranks: newPranks })
+                .eq("user_id", prankData.user_id);
+              
+              if (updateError) {
+                console.error("Error decrementing pranks:", updateError);
+              } else {
+                console.log(`Pranks decremented: ${currentPranks} -> ${newPranks}`);
+              }
+            }
+          }
         }
       }
       
