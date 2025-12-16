@@ -76,7 +76,7 @@ const LiveCallView = ({ prankId, victimName, callStatus, onClose }: LiveCallView
     };
   }, [prankId]);
 
-  const isCallActive = callStatus === "in_progress" || callStatus === "ringing";
+  const isCallActive = ["initiated", "pending", "queued", "ringing", "in_progress"].includes(callStatus);
 
   const handleEndCall = async () => {
     setIsEndingCall(true);
@@ -118,7 +118,8 @@ const LiveCallView = ({ prankId, victimName, callStatus, onClose }: LiveCallView
                 variant="outline" 
                 className={`text-xs ${isCallActive ? 'border-green-500/50 text-green-500' : 'border-muted-foreground/50'}`}
               >
-                {callStatus === "ringing" ? "Squillando..." : 
+                {callStatus === "initiated" || callStatus === "pending" || callStatus === "queued" ? "Avviando..." :
+                 callStatus === "ringing" ? "Squillando..." : 
                  callStatus === "in_progress" ? "In corso" : 
                  "Chiamata terminata"}
               </Badge>
