@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, RotateCcw, Calendar, Clock, X, CalendarClock, Download, Loader2 } from "lucide-react";
+import { Play, Pause, RotateCcw, Calendar, Clock, X, CalendarClock, Download, Loader2, MessageSquare, ChevronUp } from "lucide-react";
 import { useState, useRef } from "react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -40,6 +40,7 @@ const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, onQuickCal
   const [isPlaying, setIsPlaying] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
+  const [showTranscript, setShowTranscript] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const fetchRecording = async () => {
@@ -128,6 +129,7 @@ const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, onQuickCal
 
   const isScheduled = prank.call_status === "scheduled";
   const isCallActive = prank.call_status === "in_progress" || prank.call_status === "ringing" || prank.call_status === "initiated";
+  const isCallCompleted = prank.call_status === "completed" || prank.call_status === "recording_available" || prank.call_status === "no_answer" || prank.call_status === "busy" || prank.call_status === "failed";
 
   // Show LiveCallView for active calls
   if (isCallActive) {
@@ -253,8 +255,42 @@ const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, onQuickCal
           </div>
         )}
 
+        {/* View Transcript Button for completed calls */}
+        {isCallCompleted && (
+          <div className="mt-3 pt-3 border-t border-border">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => setShowTranscript(!showTranscript)}
+            >
+              {showTranscript ? (
+                <>
+                  <ChevronUp className="w-4 h-4 mr-1" />
+                  Nascondi conversazione
+                </>
+              ) : (
+                <>
+                  <MessageSquare className="w-4 h-4 mr-1" />
+                  Vedi conversazione
+                </>
+              )}
+            </Button>
+            
+            {showTranscript && (
+              <div className="mt-3">
+                <LiveCallView
+                  prankId={prank.id}
+                  victimName={`${prank.victim_first_name} ${prank.victim_last_name}`}
+                  callStatus={prank.call_status}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Quick Call Buttons */}
-        {onQuickCall && !isScheduled && (prank.call_status === "completed" || prank.call_status === "recording_available" || prank.call_status === "no_answer" || prank.call_status === "busy" || prank.call_status === "failed") && (
+        {onQuickCall && !isScheduled && isCallCompleted && (
           <div className="mt-3 pt-3 border-t border-border">
             <p className="text-xs text-muted-foreground mb-2">Richiama veloce:</p>
             <div className="flex flex-wrap gap-2">
