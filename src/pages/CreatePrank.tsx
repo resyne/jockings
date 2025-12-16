@@ -620,6 +620,13 @@ const CreatePrank = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Language indicator */}
+              <div className="flex items-center gap-2 pb-2 border-b border-border">
+                <span className="text-lg">🇮🇹</span>
+                <span className="font-medium text-foreground">Italiano</span>
+                <span className="text-xs text-muted-foreground">(predefinito)</span>
+              </div>
+              
               {/* Male Voices */}
               {maleVoices.length > 0 && (
                 <div className="space-y-3">
