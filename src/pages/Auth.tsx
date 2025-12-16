@@ -79,7 +79,6 @@ const Auth = () => {
       if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        toast({ title: "Benvenuto! 🎉", description: "Login effettuato con successo" });
       } else if (mode === "signup") {
         const redirectUrl = `${window.location.origin}/dashboard`;
         const { data, error } = await supabase.auth.signUp({
