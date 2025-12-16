@@ -69,6 +69,13 @@ interface VoiceOption {
   language: string;
 }
 
+interface UserProfile {
+  available_pranks: number;
+  trial_prank_used: boolean;
+  phone_verified: boolean;
+  phone_number: string | null;
+}
+
 const CreatePrank = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -77,6 +84,7 @@ const CreatePrank = () => {
   const [loading, setLoading] = useState(false);
   const [loadingPrank, setLoadingPrank] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [presets, setPresets] = useState<PrankPreset[]>([]);
   const [allVoices, setAllVoices] = useState<VoiceOption[]>([]);
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>("");
@@ -107,9 +115,65 @@ const CreatePrank = () => {
         navigate("/auth");
       } else {
         setUser(session.user);
+        fetchProfile(session.user.id);
       }
     });
   }, [navigate]);
+
+  const fetchProfile = async (userId: string) => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("available_pranks, trial_prank_used, phone_verified, phone_number")
+      .eq("user_id", userId)
+      .single();
+    
+    if (data) {
+      setProfile({
+        available_pranks: data.available_pranks || 0,
+        trial_prank_used: data.trial_prank_used || false,
+        phone_verified: data.phone_verified || false,
+        phone_number: data.phone_number,
+      });
+    }
+  };
+
+  // Check if user can make a prank call
+  const canMakePrank = (): { allowed: boolean; isTrialCall: boolean; reason?: string } => {
+    if (!profile) return { allowed: false, isTrialCall: false, reason: "Caricamento profilo..." };
+    
+    // Has paid pranks available
+    if (profile.available_pranks > 0) {
+      return { allowed: true, isTrialCall: false };
+    }
+    
+    // Can use free trial (only to own verified number)
+    if (!profile.trial_prank_used && profile.phone_verified && profile.phone_number) {
+      const fullVictimPhone = `${phoneCountryCode}${victimPhone.replace(/\s/g, "")}`;
+      const normalizedUserPhone = profile.phone_number.replace(/\s/g, "");
+      
+      if (fullVictimPhone === normalizedUserPhone) {
+        return { allowed: true, isTrialCall: true };
+      } else {
+        return { 
+          allowed: false, 
+          isTrialCall: false, 
+          reason: `Il prank gratuito può essere fatto solo al tuo numero verificato (${profile.phone_number})` 
+        };
+      }
+    }
+    
+    // No pranks and trial used
+    if (profile.trial_prank_used) {
+      return { allowed: false, isTrialCall: false, reason: "Hai esaurito i prank disponibili. Acquista un pacchetto per continuare!" };
+    }
+    
+    // Phone not verified
+    if (!profile.phone_verified) {
+      return { allowed: false, isTrialCall: false, reason: "Verifica il tuo numero di telefono per ottenere un prank gratuito!" };
+    }
+    
+    return { allowed: false, isTrialCall: false, reason: "Nessun prank disponibile" };
+  };
 
   useEffect(() => {
     fetchPresets();
@@ -349,7 +413,23 @@ const CreatePrank = () => {
   };
 
   const handleSubmit = async () => {
-    if (!user) return;
+    if (!user || !profile) return;
+
+    // Check if user can make this prank
+    const prankCheck = canMakePrank();
+    if (!prankCheck.allowed) {
+      toast({ 
+        title: "Non puoi fare questo scherzo", 
+        description: prankCheck.reason, 
+        variant: "destructive" 
+      });
+      if (prankCheck.reason?.includes("Acquista")) {
+        navigate("/pricing");
+      } else if (prankCheck.reason?.includes("Verifica")) {
+        navigate("/verify-phone");
+      }
+      return;
+    }
 
     if (scheduleCall) {
       if (!scheduledDate || !scheduledTime) {
@@ -364,6 +444,7 @@ const CreatePrank = () => {
     }
 
     setLoading(true);
+    const isTrialCall = prankCheck.isTrialCall;
 
     try {
       const selectedVoice = allVoices.find(v => v.id === selectedVoiceId);
@@ -432,6 +513,19 @@ const CreatePrank = () => {
             variant: "destructive",
           });
         } else {
+          // Update profile based on call type
+          if (isTrialCall) {
+            await supabase
+              .from("profiles")
+              .update({ trial_prank_used: true })
+              .eq("user_id", user.id);
+          } else {
+            await supabase
+              .from("profiles")
+              .update({ available_pranks: profile.available_pranks - 1 })
+              .eq("user_id", user.id);
+          }
+          
           toast({
             title: "Chiamata avviata! 📞",
             description: `Stiamo chiamando ${victimFirstName}...`,
@@ -594,6 +688,28 @@ const CreatePrank = () => {
                   </div>
                 </div>
               </div>
+              {/* Trial call warning */}
+              {profile && profile.available_pranks === 0 && !profile.trial_prank_used && profile.phone_verified && (
+                <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/30">
+                  <p className="text-sm text-orange-500 font-medium">
+                    🎁 Hai 1 prank gratuito! Puoi usarlo solo sul tuo numero: {profile.phone_number}
+                  </p>
+                </div>
+              )}
+              {profile && profile.available_pranks === 0 && !profile.trial_prank_used && !profile.phone_verified && (
+                <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                  <p className="text-sm text-blue-500 font-medium">
+                    📱 Verifica il tuo numero per ottenere 1 prank gratuito!
+                  </p>
+                  <Button 
+                    variant="link" 
+                    className="text-blue-500 p-0 h-auto text-sm"
+                    onClick={() => navigate("/verify-phone")}
+                  >
+                    Verifica ora →
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
@@ -835,6 +951,59 @@ const CreatePrank = () => {
         {/* Step 4: Summary */}
         {currentStep === 4 && (
           <div className="space-y-4 animate-fade-in">
+            {/* Prank availability indicator */}
+            {profile && (
+              <Card className={`border-2 ${
+                canMakePrank().allowed 
+                  ? canMakePrank().isTrialCall 
+                    ? "border-orange-500/50 bg-orange-500/5" 
+                    : "border-green-500/50 bg-green-500/5"
+                  : "border-destructive/50 bg-destructive/5"
+              }`}>
+                <CardContent className="pt-4 pb-4">
+                  {canMakePrank().allowed ? (
+                    canMakePrank().isTrialCall ? (
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-orange-500/20">
+                          <Phone className="w-5 h-5 text-orange-500" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-orange-500">Prank Gratuito</p>
+                          <p className="text-xs text-muted-foreground">
+                            Puoi fare un prank gratuito solo al tuo numero verificato
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-green-500/20">
+                          <Phone className="w-5 h-5 text-green-500" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-green-500">Prank Disponibili: {profile.available_pranks}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Dopo questo scherzo ne avrai {profile.available_pranks - 1}
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-destructive/20">
+                        <Phone className="w-5 h-5 text-destructive" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-destructive">Nessun Prank Disponibile</p>
+                        <p className="text-xs text-muted-foreground">
+                          {canMakePrank().reason}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             <Card>
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
