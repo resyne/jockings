@@ -82,7 +82,7 @@ serve(async (req) => {
       const { error: updateError } = await supabase
         .from('pranks')
         .update({
-          call_status: 'ended_by_user',
+          call_status: 'completed',
         })
         .eq('id', prankId);
 
