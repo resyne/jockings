@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Phone, PhoneOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AudioWaveAnimation from "./AudioWaveAnimation";
+import { toast } from "sonner";
 
 interface TranscriptMessage {
   role: "user" | "assistant";
@@ -21,6 +23,7 @@ interface LiveCallViewProps {
 const LiveCallView = ({ prankId, victimName, callStatus, onClose }: LiveCallViewProps) => {
   const [transcript, setTranscript] = useState<TranscriptMessage[]>([]);
   const [isAISpeaking, setIsAISpeaking] = useState(false);
+  const [isEndingCall, setIsEndingCall] = useState(false);
 
   useEffect(() => {
     // Initial fetch of conversation history
@@ -74,6 +77,27 @@ const LiveCallView = ({ prankId, victimName, callStatus, onClose }: LiveCallView
   }, [prankId]);
 
   const isCallActive = callStatus === "in_progress" || callStatus === "ringing";
+
+  const handleEndCall = async () => {
+    setIsEndingCall(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('end-call-vapi', {
+        body: { prankId }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast.success("Chiamata terminata");
+      onClose?.();
+    } catch (error: any) {
+      console.error('Error ending call:', error);
+      toast.error("Errore nel terminare la chiamata");
+    } finally {
+      setIsEndingCall(false);
+    }
+  };
 
   return (
     <Card className="shadow-glow border-primary/30 bg-background-level-1 overflow-hidden">
@@ -145,11 +169,23 @@ const LiveCallView = ({ prankId, victimName, callStatus, onClose }: LiveCallView
           )}
         </div>
 
-        {/* Active call indicator */}
+        {/* Active call indicator and End Call button */}
         {isCallActive && (
-          <div className="mt-3 flex items-center justify-center gap-2 text-xs text-green-500">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            Chiamata attiva
+          <div className="mt-3 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs text-green-500">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              Chiamata attiva
+            </div>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleEndCall}
+              disabled={isEndingCall}
+              className="gap-2"
+            >
+              <PhoneOff className="w-4 h-4" />
+              {isEndingCall ? "Terminando..." : "Termina"}
+            </Button>
           </div>
         )}
       </CardContent>
