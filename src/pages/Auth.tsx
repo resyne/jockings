@@ -138,14 +138,8 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
-      {/* Background decoration */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-secondary/5 blur-3xl" />
-      </div>
-
       {/* Logo */}
-      <div className="mb-4 sm:mb-8 text-center animate-slide-up">
+      <div className="mb-4 sm:mb-8 text-center">
         <div className="inline-flex items-center justify-center w-14 h-14 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl shadow-card mb-2 sm:mb-4 overflow-hidden bg-card">
           <img src={saranoIcon} alt="sarano.ai" className="w-10 h-10 sm:w-16 sm:h-16 object-contain" />
         </div>
@@ -153,7 +147,7 @@ const Auth = () => {
         <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">Scherzi telefonici con AI</p>
       </div>
 
-      <Card className="w-full max-w-md shadow-card animate-slide-up" style={{ animationDelay: "0.1s" }}>
+      <Card className="w-full max-w-md shadow-card">
         <CardHeader className="text-center pb-2 sm:pb-4 pt-4 sm:pt-6">
           <CardTitle className="text-xl sm:text-2xl">
             {mode === "login" && "Bentornato! 👋"}

@@ -13,7 +13,7 @@ const Inizia = () => {
         <img 
           src={saranoWordmarkIcon} 
           alt="sarano.ai" 
-          className="h-8 animate-bounce-in"
+          className="h-8"
         />
       </header>
 
