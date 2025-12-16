@@ -182,17 +182,29 @@ const CreatePrank = () => {
 
   useEffect(() => {
     const repeatId = searchParams.get("repeat");
+    const quickCallId = searchParams.get("quickCall");
+    const addThemeParam = searchParams.get("addTheme");
     const phoneParam = searchParams.get("phone");
     const firstNameParam = searchParams.get("firstName");
     const lastNameParam = searchParams.get("lastName");
     const themeParam = searchParams.get("theme");
-    const addThemeParam = searchParams.get("addTheme");
     const stepParam = searchParams.get("step");
     
     if (repeatId && user?.id) {
       setLoadingPrank(true);
       loadPrankData(repeatId).then(() => {
         // Skip directly to summary step when repeating
+        setCurrentStep(4);
+      }).finally(() => setLoadingPrank(false));
+    } else if (quickCallId && user?.id) {
+      // Quick call: load prank data but override theme with addTheme
+      setLoadingPrank(true);
+      loadPrankData(quickCallId).then(() => {
+        // Override the theme with the quick call text
+        if (addThemeParam) {
+          setRealDetail(addThemeParam);
+        }
+        // Skip directly to summary step
         setCurrentStep(4);
       }).finally(() => setLoadingPrank(false));
     } else if (phoneParam) {
@@ -204,7 +216,6 @@ const CreatePrank = () => {
         setSelectedPreset("custom");
       }
       
-      // Set addTheme as realDetail (personalized text for quick calls)
       if (addThemeParam) {
         setRealDetail(addThemeParam);
       }
@@ -217,7 +228,6 @@ const CreatePrank = () => {
         setVictimPhone(phoneParam);
       }
       
-      // Skip to specified step (for quick calls)
       if (stepParam) {
         setCurrentStep(parseInt(stepParam, 10));
       }
