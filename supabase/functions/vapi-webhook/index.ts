@@ -45,6 +45,9 @@ serve(async (req) => {
         || body.message?.artifact?.duration
         || 0;
       
+      // Get conversation transcript from artifact
+      const artifactMessages = body.message?.artifact?.messages;
+      
       // Check if call was answered (customer picked up)
       const wasAnswered = endedReason !== "customer-did-not-answer" 
         && endedReason !== "no-answer"
@@ -59,6 +62,7 @@ serve(async (req) => {
       console.log("Duration (seconds):", durationSeconds);
       console.log("Was Answered:", wasAnswered);
       console.log("Is Failed:", isFailed);
+      console.log("Artifact Messages:", artifactMessages?.length || 0);
       
       if (reportCallId) {
         let newStatus = "completed";
@@ -72,12 +76,28 @@ serve(async (req) => {
           newStatus = "failed";
         }
         
-        const updateData: { call_status: string; recording_url?: string } = {
+        const updateData: { call_status: string; recording_url?: string; conversation_history?: unknown[] } = {
           call_status: newStatus,
         };
         
         if (recordingUrl) {
           updateData.recording_url = recordingUrl;
+        }
+        
+        // Save conversation history from artifact messages if available
+        if (artifactMessages && Array.isArray(artifactMessages) && artifactMessages.length > 0) {
+          const conversationHistory = artifactMessages
+            .filter((msg: any) => msg.role !== "system")
+            .map((msg: any) => ({
+              role: msg.role === "bot" ? "assistant" : (msg.role === "user" ? "user" : msg.role),
+              content: msg.message || msg.content || "",
+              timestamp: msg.time ? new Date(msg.time * 1000).toISOString() : new Date().toISOString()
+            }));
+          
+          if (conversationHistory.length > 0) {
+            updateData.conversation_history = conversationHistory;
+            console.log("Saving conversation history with", conversationHistory.length, "messages");
+          }
         }
         
         const { error } = await supabase
