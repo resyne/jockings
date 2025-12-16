@@ -374,8 +374,8 @@ const CreatePrank = () => {
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
-        if (!victimFirstName.trim() || !victimLastName.trim()) {
-          toast({ title: "Errore", description: "Inserisci nome e cognome della vittima", variant: "destructive" });
+        if (!victimFirstName.trim()) {
+          toast({ title: "Errore", description: "Inserisci il nome della vittima", variant: "destructive" });
           return false;
         }
         try {
@@ -637,7 +637,7 @@ const CreatePrank = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Cognome</Label>
+                  <Label htmlFor="lastName">Cognome <span className="text-muted-foreground text-xs font-normal">(opzionale)</span></Label>
                   <Input
                     id="lastName"
                     placeholder="Rossi"
