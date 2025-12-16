@@ -12,7 +12,9 @@ import saranoIcon from "@/assets/sarano-icon.png";
 import saranoWordmark from "@/assets/sarano-wordmark.png";
 
 const emailSchema = z.string().email("Email non valida");
-const passwordSchema = z.string().min(6, "La password deve avere almeno 6 caratteri");
+const passwordSchema = z.string()
+  .min(8, "La password deve avere almeno 8 caratteri")
+  .regex(/[!@#$%^&*(),.?":{}|<>]/, "La password deve contenere almeno un carattere speciale (!@#$%^&*)");
 
 type AuthMode = "login" | "signup" | "forgot";
 
@@ -23,8 +25,10 @@ const Auth = () => {
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [username, setUsername] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -55,6 +59,14 @@ const Auth = () => {
       emailSchema.parse(email);
       if (mode !== "forgot") {
         passwordSchema.parse(password);
+        if (mode === "signup" && password !== confirmPassword) {
+          toast({
+            title: "Errore di validazione",
+            description: "Le password non coincidono",
+            variant: "destructive",
+          });
+          return false;
+        }
       }
       return true;
     } catch (error) {
@@ -215,6 +227,34 @@ const Auth = () => {
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                {mode === "signup" && (
+                  <p className="text-xs text-muted-foreground">Min. 8 caratteri con almeno un simbolo (!@#$%^&*)</p>
+                )}
+              </div>
+            )}
+
+            {mode === "signup" && (
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Conferma Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="pl-10 pr-10 h-10 sm:h-12"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
               </div>
