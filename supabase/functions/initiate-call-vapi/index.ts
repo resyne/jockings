@@ -472,6 +472,14 @@ serve(async (req) => {
         // Dynamic first message - CRITICAL for prank success
         firstMessage: firstMessage,
         
+        // CRITICAL: First message mode - assistant speaks first without waiting
+        // This ensures the call starts immediately with the greeting
+        firstMessageMode: 'assistant-speaks-first',
+        
+        // CRITICAL: Disable waiting for user response after first message
+        // This prevents the call from getting stuck waiting for the victim to respond
+        firstMessageInterruptionsEnabled: false,
+        
         // AI Model configuration - use provider from settings
         // VAPI requires model name WITHOUT provider prefix (e.g., "gpt-4o-mini" not "openai/gpt-4o-mini")
         model: {
@@ -485,16 +493,23 @@ serve(async (req) => {
         },
         
         // Voice configuration - use admin panel settings first, then voice_settings table as fallback
+        // CRITICAL: Use highest quality ElevenLabs model for best audio
         voice: {
           provider: voiceProvider,
           voiceId: voiceId,
-          model: settings['elevenlabs_model'],
+          model: settings['elevenlabs_model'] || 'eleven_turbo_v2_5',
           stability: voiceStability,
           similarityBoost: voiceSimilarityBoost,
           style: voiceStyle,
           speed: voiceSpeed,
           useSpeakerBoost: settings['vapi_voice_speaker_boost'] === 'true',
           fillerInjectionEnabled: settings['vapi_filler_injection_enabled'] === 'true',
+          // CRITICAL: Optimize for quality - use highest available settings
+          chunkPlan: {
+            enabled: true,
+            minCharacters: 30, // Larger chunks = better quality audio
+            punctuationBoundaries: [".", "!", "?", ",", ";"],
+          },
         },
         
         // Transcriber configuration - use settings from admin panel
@@ -503,6 +518,24 @@ serve(async (req) => {
           provider: settings['vapi_transcriber_provider'],
           model: transcriberModel,
           language: transcriberLanguage,
+        },
+        
+        // CRITICAL: Start speaking plan - control timing after user speaks
+        startSpeakingPlan: {
+          waitSeconds: 0.4, // Wait briefly before responding
+          smartEndpointingEnabled: true, // Better detection of when user stops talking
+          transcriptionEndpointingPlan: {
+            onPunctuationSeconds: 0.1,
+            onNoPunctuationSeconds: 0.8,
+            onNumberSeconds: 0.5,
+          },
+        },
+        
+        // CRITICAL: Stop speaking plan - handle interruptions gracefully
+        stopSpeakingPlan: {
+          numWords: 0, // Don't require words to interrupt
+          voiceSeconds: 0.2, // Quick detection of user speaking
+          backoffSeconds: 1.0, // Time before AI resumes after interruption
         },
         
         // Call behavior settings
@@ -514,6 +547,17 @@ serve(async (req) => {
         endCallMessage: endCallMessage,
         endCallFunctionEnabled: true,
         recordingEnabled: recordingEnabled,
+        
+        // CRITICAL: Artifact plan for quality recordings
+        artifactPlan: {
+          recordingEnabled: recordingEnabled,
+          videoRecordingEnabled: false,
+          transcriptPlan: {
+            enabled: true,
+            assistantName: 'AI',
+            userTranscriptsEnabled: true,
+          },
+        },
       },
     };
 
