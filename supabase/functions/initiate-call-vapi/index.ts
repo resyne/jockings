@@ -555,7 +555,6 @@ serve(async (req) => {
           transcriptPlan: {
             enabled: true,
             assistantName: 'AI',
-            userTranscriptsEnabled: true,
           },
         },
       },
