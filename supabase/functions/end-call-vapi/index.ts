@@ -47,7 +47,23 @@ serve(async (req) => {
     }
 
     if (!vapiCallId) {
-      throw new Error('No VAPI call ID found for this prank');
+      // If no call ID exists, the call never started - just update status and return success
+      console.log('No VAPI call ID found - call never started, updating status to cancelled');
+      
+      if (prankId) {
+        await supabase
+          .from('pranks')
+          .update({ call_status: 'cancelled' })
+          .eq('id', prankId);
+      }
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Prank cancelled (call never started)'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log('=== ENDING VAPI CALL ===');
