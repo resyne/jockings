@@ -159,9 +159,9 @@ FUNDAMENTAL RULES:
 
 IMPORTANT: The first 3 seconds are crucial. First impression determines the success of the prank.`;
 
-export const DEFAULT_FIRST_MESSAGE_IT = `{{GREETING}}! Parlo con {{VICTIM_NAME}}?`;
+export const DEFAULT_FIRST_MESSAGE_IT = `{{GREETING}}! Parlo con {{VICTIM_FIRST_NAME}}?`;
 
-export const DEFAULT_FIRST_MESSAGE_EN = `{{GREETING}}! Am I speaking with {{VICTIM_NAME}}?`;
+export const DEFAULT_FIRST_MESSAGE_EN = `{{GREETING}}! Am I speaking with {{VICTIM_FIRST_NAME}}?`;
 
 // Default VAPI settings
 export const DEFAULT_VAPI_SETTINGS: VapiSettings = {

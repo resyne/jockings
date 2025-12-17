@@ -33,8 +33,8 @@ const buildFirstMessage = (prank: any, greeting: string, templateIT: string | nu
   // Default templates if not configured
   if (!template) {
     template = isItalian 
-      ? `{{GREETING}}! Parlo con {{VICTIM_NAME}}?`
-      : `{{GREETING}}! Am I speaking with {{VICTIM_NAME}}?`;
+      ? `{{GREETING}}! Parlo con {{VICTIM_FIRST_NAME}}?`
+      : `{{GREETING}}! Am I speaking with {{VICTIM_FIRST_NAME}}?`;
   }
   
   // Replace placeholders
