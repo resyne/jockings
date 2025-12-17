@@ -507,6 +507,39 @@ export type Database = {
         }
         Relationships: []
       }
+      voice_settings_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          id: string
+          new_value: string | null
+          old_value: string | null
+          setting_key: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          setting_key: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          setting_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       pranks_decrypted: {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
@@ -13,6 +13,7 @@ import { ArrowLeft, Mic, Save, Plus, Trash2, Shield, Play, Volume2, Loader2, Mus
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { VoiceTestDialog } from "@/components/VoiceTestDialog";
+import { VoiceSettingsAuditLog, logBatchChanges, logVoiceSettingChange } from "@/components/admin/VoiceSettingsAuditLog";
 
 // Centralized types
 import type { VapiSettings, VoiceSetting, VapiPhoneNumber, VerifiedCallerId, VapiVoicePreset } from "@/types/vapiSettings";
@@ -73,6 +74,9 @@ const AdminVoices = () => {
     description: "",
     notes: ""
   });
+  
+  // Store previous settings for change detection
+  const previousSettingsRef = useRef<Record<string, string>>({});
 
   useEffect(() => {
     if (!loading && !isAdmin) {
@@ -362,6 +366,9 @@ const AdminVoices = () => {
         if (key === "vapi_background_denoising") newSettings.backgroundDenoisingEnabled = value === "true";
         if (key === "vapi_model_output_in_messages") newSettings.modelOutputInMessagesEnabled = value === "true";
         if (key === "elevenlabs_model") setElevenlabsModel(value);
+        
+        // Store initial values for change tracking
+        previousSettingsRef.current[key] = value;
       });
       
       // Auto-sync provider from model if provider is not explicitly set or mismatched
@@ -435,12 +442,30 @@ const AdminVoices = () => {
         console.log(`  ${s.key}: ${s.value}`);
       });
 
+      // Track changes for audit log
+      const changes: Array<{ key: string; oldValue: string | null; newValue: string | null }> = [];
+
       for (const setting of settingsToSave) {
+        const oldValue = previousSettingsRef.current[setting.key] || null;
+        if (oldValue !== setting.value) {
+          changes.push({ key: setting.key, oldValue, newValue: setting.value });
+        }
+        
         const { error } = await supabase
           .from("app_settings")
           .upsert({ key: setting.key, value: setting.value }, { onConflict: "key" });
         if (error) throw error;
       }
+
+      // Log changes to audit table
+      if (changes.length > 0) {
+        await logBatchChanges(changes);
+      }
+
+      // Update previous settings reference
+      settingsToSave.forEach(s => {
+        previousSettingsRef.current[s.key] = s.value;
+      });
 
       console.log("=== SAVE COMPLETE ===");
       toast({ title: "Salvato!", description: `Provider chiamate: ${callProvider === "vapi" ? "VAPI" : "Twilio/ElevenLabs"}` });
@@ -481,6 +506,9 @@ const AdminVoices = () => {
   };
 
   const handleSave = async (setting: VoiceSetting) => {
+    // Get original setting for change tracking
+    const originalSetting = voiceSettings.find(v => v.id === setting.id);
+    
     // Log voice setting being saved
     console.log("=== VOICE SETTING SAVE ===");
     console.log("Timestamp:", new Date().toISOString());
@@ -509,6 +537,26 @@ const AdminVoices = () => {
       toast({ title: "Errore", description: error.message, variant: "destructive" });
     } else {
       console.log("=== VOICE SETTING SAVE COMPLETE ===");
+      
+      // Log changes to audit table
+      const details = { language: setting.language, gender: setting.gender };
+      
+      if (originalSetting?.elevenlabs_voice_id !== setting.elevenlabs_voice_id) {
+        await logVoiceSettingChange("update", "voice_setting_voice_id", originalSetting?.elevenlabs_voice_id || null, setting.elevenlabs_voice_id || null, details);
+      }
+      if (originalSetting?.voice_name !== setting.voice_name) {
+        await logVoiceSettingChange("update", "voice_setting_voice_name", originalSetting?.voice_name || null, setting.voice_name || null, details);
+      }
+      if (originalSetting?.rating !== setting.rating) {
+        await logVoiceSettingChange("update", "voice_setting_rating", String(originalSetting?.rating || 0), String(setting.rating || 0), details);
+      }
+      if (originalSetting?.notes !== setting.notes) {
+        await logVoiceSettingChange("update", "voice_setting_notes", originalSetting?.notes || null, setting.notes || null, details);
+      }
+      if (originalSetting?.is_active !== setting.is_active) {
+        await logVoiceSettingChange("update", "voice_setting_is_active", String(originalSetting?.is_active), String(setting.is_active), details);
+      }
+      
       toast({ title: "Salvato!", description: "Voce aggiornata" });
       fetchVoiceSettings();
       setSelectedSetting(null);
@@ -627,23 +675,25 @@ const AdminVoices = () => {
         </div>
       </header>
 
-      <main className="px-4 py-6 max-w-4xl mx-auto space-y-6">
-        {/* Call Provider Selection */}
-        <Card className="border-2 border-purple-500/30 bg-gradient-to-br from-purple-500/5 to-transparent">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Zap className="w-5 h-5 text-purple-500" />
-              Configurazione VAPI
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30 text-sm text-green-700 dark:text-green-400">
-              VAPI è il provider esclusivo per le chiamate. Twilio+ElevenLabs è disabilitato ma mantenuto come backup nel codice.
-            </div>
+      <main className="px-4 py-6 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr,320px] gap-6">
+          <div className="space-y-6">
+            {/* Call Provider Selection */}
+            <Card className="border-2 border-purple-500/30 bg-gradient-to-br from-purple-500/5 to-transparent">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-purple-500" />
+                  Configurazione VAPI
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30 text-sm text-green-700 dark:text-green-400">
+                  VAPI è il provider esclusivo per le chiamate. Twilio+ElevenLabs è disabilitato ma mantenuto come backup nel codice.
+                </div>
 
-            <div className="space-y-6 pt-4">
-                {/* VAPI Phone Numbers Management */}
-                <div className="p-4 rounded-lg bg-indigo-500/5 border border-indigo-500/20 space-y-4">
+                <div className="space-y-6 pt-4">
+                    {/* VAPI Phone Numbers Management */}
+                    <div className="p-4 rounded-lg bg-indigo-500/5 border border-indigo-500/20 space-y-4">
                   <div className="flex items-center justify-between">
                     <h4 className="font-medium flex items-center gap-2 text-indigo-600">
                       <Phone className="w-4 h-4" />
@@ -1754,6 +1804,13 @@ const AdminVoices = () => {
 
         {/* Note: Twilio+ElevenLabs sections removed - VAPI is the exclusive provider */}
         {/* Twilio code is kept in edge functions as backup but UI is disabled */}
+          </div>
+          
+          {/* Audit Log Sidebar */}
+          <div className="hidden lg:block sticky top-20 h-fit">
+            <VoiceSettingsAuditLog />
+          </div>
+        </div>
       </main>
 
       {/* Voice Test Dialog */}
