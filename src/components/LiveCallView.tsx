@@ -86,14 +86,26 @@ const LiveCallView = ({ prankId, victimName, callStatus, onClose }: LiveCallView
       });
 
       if (error) {
+        // Check if it's a JSON error response
+        const errorBody = error.context?.body;
+        if (errorBody) {
+          try {
+            const parsed = JSON.parse(errorBody);
+            throw new Error(parsed.error || 'Errore sconosciuto');
+          } catch {
+            throw error;
+          }
+        }
         throw error;
       }
 
-      toast.success("Chiamata terminata");
+      toast.success(data?.message === 'Prank cancelled (call never started)' 
+        ? "Scherzo annullato" 
+        : "Chiamata terminata");
       onClose?.();
     } catch (error: any) {
       console.error('Error ending call:', error);
-      toast.error("Errore nel terminare la chiamata");
+      toast.error(error.message || "Errore nel terminare la chiamata");
     } finally {
       setIsEndingCall(false);
     }
