@@ -73,27 +73,35 @@ const AdminCalls = () => {
     setLoadingCalls(false);
   };
 
-  const playRecording = async (prankId: string) => {
-    setLoadingAudio(prankId);
+  const playRecording = async (call: PrankCall) => {
+    if (!call.recording_url) return;
+    
+    setLoadingAudio(call.id);
     try {
-      const { data, error } = await supabase.functions.invoke("get-recording", {
-        body: { prankId },
-      });
-
-      if (error) throw error;
+      // VAPI recordings are direct URLs, Twilio URLs contain api.twilio.com
+      const isTwilioRecording = call.recording_url.includes('api.twilio.com');
       
-      // Handle base64 audio response
-      if (data?.audio) {
-        const binaryString = atob(data.audio);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
+      if (isTwilioRecording) {
+        // Twilio recordings need authentication via edge function
+        const { data, error } = await supabase.functions.invoke("get-recording", {
+          body: { recordingUrl: call.recording_url },
+        });
+
+        if (error) throw error;
+        
+        if (data?.audioBase64) {
+          const binaryString = atob(data.audioBase64);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          const blob = new Blob([bytes], { type: 'audio/wav' });
+          const url = URL.createObjectURL(blob);
+          setAudioUrl(url);
         }
-        const blob = new Blob([bytes], { type: 'audio/wav' });
-        const url = URL.createObjectURL(blob);
-        setAudioUrl(url);
-      } else if (data?.audioUrl) {
-        setAudioUrl(data.audioUrl);
+      } else {
+        // VAPI and other recordings are directly accessible
+        setAudioUrl(call.recording_url);
       }
     } catch (error) {
       console.error("Error loading recording:", error);
@@ -261,7 +269,7 @@ const AdminCalls = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => playRecording(call.id)}
+                            onClick={() => playRecording(call)}
                             disabled={loadingAudio === call.id}
                           >
                             {loadingAudio === call.id ? (
