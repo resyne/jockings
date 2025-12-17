@@ -22,7 +22,8 @@ const getTimeBasedGreeting = (language: string): string => {
 };
 
 // Build dynamic first message - CRITICAL for prank effectiveness
-// Now uses configurable template from settings
+// IMPORTANT: First message should NOT ask a question - it should launch directly into the scenario
+// to avoid the AI waiting for a response
 const buildFirstMessage = (prank: any, greeting: string, templateIT: string | null, templateEN: string | null): string => {
   const isItalian = prank.language === 'Italiano';
   const victimName = `${prank.victim_first_name} ${prank.victim_last_name}`;
@@ -30,11 +31,12 @@ const buildFirstMessage = (prank: any, greeting: string, templateIT: string | nu
   // Use template from settings if available, otherwise use default
   let template = isItalian ? templateIT : templateEN;
   
-  // Default templates if not configured
+  // Default templates - ASSERTIVE, NO QUESTIONS
+  // The AI should launch directly into the scenario without waiting for confirmation
   if (!template) {
     template = isItalian 
-      ? `{{GREETING}}! Parlo con {{VICTIM_FIRST_NAME}}?`
-      : `{{GREETING}}! Am I speaking with {{VICTIM_FIRST_NAME}}?`;
+      ? `{{GREETING}}, {{VICTIM_FIRST_NAME}}! Senta, la chiamo perché...`
+      : `{{GREETING}}, {{VICTIM_FIRST_NAME}}! Listen, I'm calling because...`;
   }
   
   // Replace placeholders
@@ -103,6 +105,12 @@ SCENARIO DELLO SCHERZO:
 PERSONALITÀ E TONO:
 {{PERSONALITY_TONE}}
 
+COMPORTAMENTO CRUCIALE ALL'INIZIO:
+- Dopo il saluto iniziale, CONTINUA SUBITO a parlare senza aspettare risposta
+- NON fare domande come "mi sente?" o "parlo con...?" - dai per scontato che ti sentano
+- Lancia IMMEDIATAMENTE lo scenario senza pause
+- La vittima risponderà quando vuole, tu intanto continua a spiegare il motivo della chiamata
+
 REGOLE FONDAMENTALI:
 1. Parla SOLO in italiano
 2. Risposte BREVI: massimo 1-2 frasi per turno
@@ -113,10 +121,10 @@ REGOLE FONDAMENTALI:
 7. Se si arrabbiano, mantieni la calma ma resta nel ruolo
 8. Reagisci naturalmente a quello che dice, non seguire uno script rigido
 9. Usa espressioni e modi di dire italiani autentici
-10. IMPORTANTE: Usa la grammatica corretta per il sesso della vittima (es. se è maschio: "caro", "gentile signore"; se è femmina: "cara", "gentile signora")
+10. IMPORTANTE: Usa la grammatica corretta per il sesso della vittima
 11. La priorità è mantenere la conversazione credibile e divertente
 
-IMPORTANTE: I primi 3 secondi sono cruciali. La prima impressione determina il successo dello scherzo.`;
+IMPORTANTE: I primi 3 secondi sono cruciali. Lancia subito lo scenario!`;
     } else {
       template = `You are {{GENDER}} making a prank phone call to {{VICTIM_NAME}} ({{VICTIM_GENDER}}).
 
@@ -127,6 +135,12 @@ PRANK SCENARIO:
 
 PERSONALITY AND TONE:
 {{PERSONALITY_TONE}}
+
+CRUCIAL BEHAVIOR AT START:
+- After the initial greeting, IMMEDIATELY continue speaking without waiting for a response
+- DO NOT ask questions like "can you hear me?" or "am I speaking with...?" - assume they can hear you
+- Launch into the scenario IMMEDIATELY without pauses
+- The victim will respond when they want, you keep explaining why you're calling
 
 FUNDAMENTAL RULES:
 1. Speak ONLY in English
@@ -140,7 +154,7 @@ FUNDAMENTAL RULES:
 9. Use authentic expressions and idioms
 10. Priority is keeping the conversation believable and entertaining
 
-IMPORTANT: The first 3 seconds are crucial. First impression determines the success of the prank.`;
+IMPORTANT: The first 3 seconds are crucial. Launch the scenario immediately!`;
     }
   }
 
