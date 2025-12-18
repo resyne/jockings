@@ -45,17 +45,47 @@ serve(async (req) => {
       );
     }
 
+    // Create admin client
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    console.log(`[send-otp] Checking if phone ${phoneNumber} is already used by another user`);
+
+    // Check if this phone number is already verified by ANOTHER user
+    const { data: existingProfile, error: checkError } = await supabaseAdmin
+      .from('profiles')
+      .select('user_id, phone_verified')
+      .eq('phone_number', phoneNumber)
+      .eq('phone_verified', true)
+      .neq('user_id', user.id)
+      .maybeSingle();
+
+    if (checkError) {
+      console.error('[send-otp] Error checking existing phone:', checkError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to verify phone availability' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (existingProfile) {
+      console.log(`[send-otp] Phone ${phoneNumber} already verified by user ${existingProfile.user_id}`);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Questo numero è già associato a un altro account. Effettua il login con l\'account esistente.',
+          code: 'PHONE_ALREADY_USED'
+        }),
+        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     console.log(`[send-otp] Generating OTP for user ${user.id}, phone: ${phoneNumber}`);
-
-    // Store OTP in profiles using service role
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
 
     const { error: updateError } = await supabaseAdmin
       .from('profiles')

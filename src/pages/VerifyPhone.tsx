@@ -87,6 +87,19 @@ const VerifyPhone = () => {
       });
 
       if (error) throw error;
+      
+      // Check for phone already used error
+      if (data?.error) {
+        if (data.code === 'PHONE_ALREADY_USED') {
+          toast({
+            title: "Numero già registrato",
+            description: "Questo numero è già associato a un altro account. Effettua il login con l'account esistente.",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw new Error(data.error);
+      }
 
       toast({
         title: "Codice inviato! 📱",
