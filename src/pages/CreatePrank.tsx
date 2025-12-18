@@ -528,9 +528,15 @@ const CreatePrank = () => {
 
         if (callError) {
           console.error('Error initiating call:', callError);
+          // Update prank status to failed so LiveCallView doesn't show
+          await supabase
+            .from("pranks")
+            .update({ call_status: "failed" })
+            .eq("id", prank.id);
+          
           toast({
             title: "Errore chiamata",
-            description: "Lo scherzo è stato salvato ma la chiamata non è partita. Riprova dalla cronologia.",
+            description: callError.message || "Nessun numero attivo configurato. Contatta l'amministratore.",
             variant: "destructive",
           });
         } else {
