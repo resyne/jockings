@@ -494,10 +494,36 @@ serve(async (req) => {
 
     // === BUILD VAPI TRANSIENT ASSISTANT REQUEST ===
     // We ALWAYS use transient assistant (no assistantId) for dynamic prank generation
-    
-    // Build webhook URL for status updates - set at assistant.server.url level
+
+    // Webhook endpoint for VAPI events (status updates, transcript, end-of-call-report)
     const webhookUrl = `${SUPABASE_URL}/functions/v1/vapi-webhook`;
     console.log('Webhook URL:', webhookUrl);
+
+    // Ensure the VAPI phone number is configured to send webhooks to our endpoint.
+    // If this is not configured, calls may stay stuck in "Avviando..." because we never receive status updates.
+    try {
+      const patchPhoneRes = await fetch(`https://api.vapi.ai/phone-number/${vapiPhoneNumberId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${VAPI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          server: {
+            url: webhookUrl,
+          },
+        }),
+      });
+
+      if (!patchPhoneRes.ok) {
+        const patchBody = await patchPhoneRes.text();
+        console.warn('Could not patch VAPI phone-number webhook config:', patchBody);
+      } else {
+        console.log('VAPI phone-number webhook configured (server.url).');
+      }
+    } catch (e) {
+      console.warn('Error configuring VAPI phone-number webhook:', e);
+    }
 
     const parseOptionalFloat = (v: string | undefined): number | undefined => {
       const n = Number.parseFloat((v ?? '').toString());
@@ -531,9 +557,7 @@ serve(async (req) => {
     if (voiceSpeed !== desiredVoiceSpeed) {
       console.log('Clamped voice speed:', desiredVoiceSpeed, '->', voiceSpeed);
     }
-    
-    // NOTE: Webhooks must be configured in VAPI Dashboard, not in API call
-    // Set webhook URL to: https://vtsankkghplkfhrlxefs.supabase.co/functions/v1/vapi-webhook
+
     const vapiCallBody: any = {
       phoneNumberId: vapiPhoneNumberId,
       customer: {
