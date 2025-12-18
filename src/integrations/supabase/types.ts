@@ -270,6 +270,30 @@ export type Database = {
         }
         Relationships: []
       }
+      processed_payments: {
+        Row: {
+          created_at: string
+          id: string
+          pranks_added: number
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          pranks_added: number
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          pranks_added?: number
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           available_pranks: number | null

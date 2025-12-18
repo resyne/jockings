@@ -42,6 +42,37 @@ serve(async (req) => {
       apiVersion: "2025-08-27.basil",
     });
 
+    // Check if this session was already processed
+    const { data: existingPayment, error: checkError } = await supabaseClient
+      .from("processed_payments")
+      .select("id, pranks_added")
+      .eq("session_id", sessionId)
+      .maybeSingle();
+
+    if (checkError) {
+      console.error("Error checking existing payment:", checkError);
+    }
+
+    if (existingPayment) {
+      console.log("=== SESSION ALREADY PROCESSED ===", existingPayment);
+      // Get current total pranks for the user
+      const { data: profile } = await supabaseClient
+        .from("profiles")
+        .select("available_pranks")
+        .eq("user_id", user.id)
+        .single();
+      
+      return new Response(JSON.stringify({ 
+        success: true, 
+        pranks_added: existingPayment.pranks_added,
+        total_pranks: profile?.available_pranks || 0,
+        already_processed: true
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     // Retrieve the checkout session
     const session = await stripe.checkout.sessions.retrieve(sessionId);
     console.log("Session status:", session.payment_status);
@@ -91,6 +122,20 @@ serve(async (req) => {
     if (updateError) {
       console.error("Error updating profile:", updateError);
       throw new Error("Failed to update pranks count");
+    }
+
+    // Record this payment as processed to prevent duplicates
+    const { error: insertError } = await supabaseClient
+      .from("processed_payments")
+      .insert({
+        session_id: sessionId,
+        user_id: user.id,
+        pranks_added: pranksToAdd,
+      });
+
+    if (insertError) {
+      console.error("Error recording processed payment:", insertError);
+      // Don't throw - the pranks were already added
     }
 
     console.log("=== PAYMENT VERIFIED - PRANKS ADDED ===");
