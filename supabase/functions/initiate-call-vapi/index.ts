@@ -303,7 +303,7 @@ serve(async (req) => {
     });
 
     // Get VAPI Phone Number ID from verified_caller_ids
-    // Priority: first active caller ID with vapi_phone_number_id set, prefer default
+    // Priority: first active caller ID with vapi_phone_number_id set AND has capacity, prefer default
     const activeCallerIds = vapiPhonesResult.data || [];
     console.log('Active Caller IDs with VAPI configured:', activeCallerIds.length);
     
@@ -311,11 +311,71 @@ serve(async (req) => {
       throw new Error('No active Caller IDs with VAPI phone number configured. Go to Admin > Caller IDs and add the VAPI Phone Number ID.');
     }
 
-    // Select the first active caller ID (already ordered by is_default desc)
-    const selectedCallerId = activeCallerIds[0];
+    // Find a caller ID with available capacity (current_calls < max_concurrent_calls)
+    const availableCallerId = activeCallerIds.find((cid: any) => 
+      (cid.current_calls || 0) < (cid.max_concurrent_calls || 1)
+    );
+    
+    if (!availableCallerId) {
+      // All caller IDs are at capacity - add to queue
+      console.log('=== ALL CALLER IDS AT CAPACITY - ADDING TO QUEUE ===');
+      
+      // Get the next position in queue
+      const { data: queueData } = await supabase
+        .from('call_queue')
+        .select('position')
+        .order('position', { ascending: false })
+        .limit(1);
+      
+      const nextPosition = (queueData?.[0]?.position || 0) + 1;
+      
+      // Add to queue
+      const { error: queueError } = await supabase
+        .from('call_queue')
+        .insert({
+          prank_id: prankId,
+          status: 'queued',
+          position: nextPosition,
+        });
+      
+      if (queueError) {
+        console.error('Error adding to queue:', queueError);
+        throw new Error('Tutti i numeri sono occupati e non è stato possibile aggiungere alla coda.');
+      }
+      
+      // Update prank status to queued
+      await supabase
+        .from('pranks')
+        .update({ call_status: 'queued' })
+        .eq('id', prankId);
+      
+      console.log('Prank added to queue at position:', nextPosition);
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          queued: true,
+          position: nextPosition,
+          message: 'Tutti i numeri sono occupati. Lo scherzo è stato aggiunto alla coda.'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const selectedCallerId = availableCallerId;
     const vapiPhoneNumberId = selectedCallerId.vapi_phone_number_id;
     
-    console.log('Selected Caller ID:', selectedCallerId.phone_number, 'VAPI ID:', vapiPhoneNumberId);
+    // Increment current_calls for the selected caller ID
+    const { error: incrementError } = await supabase
+      .from('verified_caller_ids')
+      .update({ current_calls: (selectedCallerId.current_calls || 0) + 1 })
+      .eq('id', selectedCallerId.id);
+    
+    if (incrementError) {
+      console.error('Error incrementing current_calls:', incrementError);
+    }
+    
+    console.log('Selected Caller ID:', selectedCallerId.phone_number, 'VAPI ID:', vapiPhoneNumberId, 'Current calls:', (selectedCallerId.current_calls || 0) + 1);
 
     console.log('Prank ID:', prank.id);
     console.log('Victim:', prank.victim_first_name, prank.victim_last_name);
