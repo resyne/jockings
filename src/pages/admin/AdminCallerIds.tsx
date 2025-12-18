@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Trash2, Star, Phone, RotateCcw } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Star, Phone, RotateCcw, Pencil } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -42,8 +42,13 @@ const AdminCallerIds = () => {
   const [callerIds, setCallerIds] = useState<VerifiedCallerId[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingCallerId, setEditingCallerId] = useState<VerifiedCallerId | null>(null);
   const [newPhoneNumber, setNewPhoneNumber] = useState("");
   const [newFriendlyName, setNewFriendlyName] = useState("");
+  const [editPhoneNumber, setEditPhoneNumber] = useState("");
+  const [editFriendlyName, setEditFriendlyName] = useState("");
+  const [editMaxConcurrentCalls, setEditMaxConcurrentCalls] = useState(1);
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
@@ -157,6 +162,42 @@ const AdminCallerIds = () => {
     }
   };
 
+  const handleEditClick = (callerId: VerifiedCallerId) => {
+    setEditingCallerId(callerId);
+    setEditPhoneNumber(callerId.phone_number);
+    setEditFriendlyName(callerId.friendly_name || "");
+    setEditMaxConcurrentCalls(callerId.max_concurrent_calls);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditCallerId = async () => {
+    if (!editingCallerId) return;
+    
+    if (!editPhoneNumber.trim()) {
+      toast.error("Inserisci un numero di telefono");
+      return;
+    }
+
+    const { error } = await supabase
+      .from("verified_caller_ids")
+      .update({
+        phone_number: editPhoneNumber.trim(),
+        friendly_name: editFriendlyName.trim() || null,
+        max_concurrent_calls: editMaxConcurrentCalls,
+      })
+      .eq("id", editingCallerId.id);
+
+    if (error) {
+      toast.error("Errore nella modifica del Caller ID");
+      console.error(error);
+    } else {
+      toast.success("Caller ID modificato con successo");
+      setIsEditDialogOpen(false);
+      setEditingCallerId(null);
+      fetchCallerIds();
+    }
+  };
+
   if (adminLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -216,6 +257,45 @@ const AdminCallerIds = () => {
                   </div>
                   <Button onClick={handleAddCallerId} className="w-full">
                     Aggiungi Caller ID
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+            
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Modifica Caller ID</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <Label>Numero di telefono</Label>
+                    <Input
+                      placeholder="+39..."
+                      value={editPhoneNumber}
+                      onChange={(e) => setEditPhoneNumber(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Nome descrittivo (opzionale)</Label>
+                    <Input
+                      placeholder="es. Numero principale"
+                      value={editFriendlyName}
+                      onChange={(e) => setEditFriendlyName(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Chiamate simultanee massime</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={10}
+                      value={editMaxConcurrentCalls}
+                      onChange={(e) => setEditMaxConcurrentCalls(parseInt(e.target.value) || 1)}
+                    />
+                  </div>
+                  <Button onClick={handleEditCallerId} className="w-full">
+                    Salva modifiche
                   </Button>
                 </div>
               </DialogContent>
@@ -287,14 +367,23 @@ const AdminCallerIds = () => {
                         />
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(callerId.id)}
-                          disabled={callerId.is_default}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEditClick(callerId)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(callerId.id)}
+                            disabled={callerId.is_default}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
