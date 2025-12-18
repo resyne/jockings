@@ -272,8 +272,8 @@ serve(async (req) => {
         'vapi_background_denoising',
       ]),
       voiceSettingsQuery,
-      // Fetch ALL active VAPI phone numbers, ordered by default first
-      supabase.from('vapi_phone_numbers').select('*').eq('is_active', true).order('is_default', { ascending: false })
+      // Fetch active caller IDs that have VAPI phone number configured, ordered by default first
+      supabase.from('verified_caller_ids').select('*').eq('is_active', true).not('vapi_phone_number_id', 'is', null).order('is_default', { ascending: false })
     ]);
 
     // Parse settings with defaults optimized for prank calls
@@ -302,29 +302,20 @@ serve(async (req) => {
       if (s.value) settings[s.key] = s.value;
     });
 
-    // Get VAPI Phone Number ID - select from active phones
-    // Priority: first active phone that's available, prefer default
-    const activeVapiPhones = vapiPhonesResult.data || [];
-    console.log('Active VAPI phones:', activeVapiPhones.length);
+    // Get VAPI Phone Number ID from verified_caller_ids
+    // Priority: first active caller ID with vapi_phone_number_id set, prefer default
+    const activeCallerIds = vapiPhonesResult.data || [];
+    console.log('Active Caller IDs with VAPI configured:', activeCallerIds.length);
     
-    if (activeVapiPhones.length === 0) {
-      throw new Error('No active VAPI phone numbers configured. Go to Admin > VAPI Phones to set them up.');
+    if (activeCallerIds.length === 0) {
+      throw new Error('No active Caller IDs with VAPI phone number configured. Go to Admin > Caller IDs and add the VAPI Phone Number ID.');
     }
 
-    // Select the first active phone (already ordered by is_default desc)
-    const selectedVapiPhone = activeVapiPhones[0];
-    const vapiPhoneNumberId = selectedVapiPhone.phone_number_id;
+    // Select the first active caller ID (already ordered by is_default desc)
+    const selectedCallerId = activeCallerIds[0];
+    const vapiPhoneNumberId = selectedCallerId.vapi_phone_number_id;
     
-    console.log('Selected VAPI phone:', selectedVapiPhone.phone_number, 'ID:', vapiPhoneNumberId);
-    
-    // If no phone_number_id in table, fall back to app_settings (legacy)
-    if (!vapiPhoneNumberId) {
-      const legacyId = settings['vapi_phone_number_id'];
-      if (!legacyId) {
-        throw new Error('VAPI Phone Number ID not configured. Go to Admin > VAPI Phones to set it up.');
-      }
-      console.log('Using legacy phone ID from settings:', legacyId);
-    }
+    console.log('Selected Caller ID:', selectedCallerId.phone_number, 'VAPI ID:', vapiPhoneNumberId);
 
     console.log('Prank ID:', prank.id);
     console.log('Victim:', prank.victim_first_name, prank.victim_last_name);

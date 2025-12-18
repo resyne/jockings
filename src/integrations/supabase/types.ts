@@ -446,6 +446,7 @@ export type Database = {
           max_concurrent_calls: number | null
           phone_number: string
           updated_at: string
+          vapi_phone_number_id: string | null
         }
         Insert: {
           created_at?: string
@@ -457,6 +458,7 @@ export type Database = {
           max_concurrent_calls?: number | null
           phone_number: string
           updated_at?: string
+          vapi_phone_number_id?: string | null
         }
         Update: {
           created_at?: string
@@ -468,6 +470,7 @@ export type Database = {
           max_concurrent_calls?: number | null
           phone_number?: string
           updated_at?: string
+          vapi_phone_number_id?: string | null
         }
         Relationships: []
       }

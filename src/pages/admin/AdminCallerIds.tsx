@@ -33,6 +33,7 @@ interface VerifiedCallerId {
   is_active: boolean;
   current_calls: number;
   max_concurrent_calls: number;
+  vapi_phone_number_id: string | null;
   created_at: string;
 }
 
@@ -46,9 +47,11 @@ const AdminCallerIds = () => {
   const [editingCallerId, setEditingCallerId] = useState<VerifiedCallerId | null>(null);
   const [newPhoneNumber, setNewPhoneNumber] = useState("");
   const [newFriendlyName, setNewFriendlyName] = useState("");
+  const [newVapiPhoneNumberId, setNewVapiPhoneNumberId] = useState("");
   const [editPhoneNumber, setEditPhoneNumber] = useState("");
   const [editFriendlyName, setEditFriendlyName] = useState("");
   const [editMaxConcurrentCalls, setEditMaxConcurrentCalls] = useState(1);
+  const [editVapiPhoneNumberId, setEditVapiPhoneNumberId] = useState("");
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
@@ -85,6 +88,7 @@ const AdminCallerIds = () => {
     const { error } = await supabase.from("verified_caller_ids").insert({
       phone_number: newPhoneNumber.trim(),
       friendly_name: newFriendlyName.trim() || null,
+      vapi_phone_number_id: newVapiPhoneNumberId.trim() || null,
       is_default: callerIds.length === 0, // First one is default
     });
 
@@ -95,6 +99,7 @@ const AdminCallerIds = () => {
       toast.success("Caller ID aggiunto con successo");
       setNewPhoneNumber("");
       setNewFriendlyName("");
+      setNewVapiPhoneNumberId("");
       setIsDialogOpen(false);
       fetchCallerIds();
     }
@@ -167,6 +172,7 @@ const AdminCallerIds = () => {
     setEditPhoneNumber(callerId.phone_number);
     setEditFriendlyName(callerId.friendly_name || "");
     setEditMaxConcurrentCalls(callerId.max_concurrent_calls);
+    setEditVapiPhoneNumberId(callerId.vapi_phone_number_id || "");
     setIsEditDialogOpen(true);
   };
 
@@ -184,6 +190,7 @@ const AdminCallerIds = () => {
         phone_number: editPhoneNumber.trim(),
         friendly_name: editFriendlyName.trim() || null,
         max_concurrent_calls: editMaxConcurrentCalls,
+        vapi_phone_number_id: editVapiPhoneNumberId.trim() || null,
       })
       .eq("id", editingCallerId.id);
 
@@ -255,6 +262,17 @@ const AdminCallerIds = () => {
                       onChange={(e) => setNewFriendlyName(e.target.value)}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label>VAPI Phone Number ID (opzionale)</Label>
+                    <Input
+                      placeholder="PN..."
+                      value={newVapiPhoneNumberId}
+                      onChange={(e) => setNewVapiPhoneNumberId(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      ID dal VAPI Dashboard (formato: PN...). Richiesto per chiamate VAPI.
+                    </p>
+                  </div>
                   <Button onClick={handleAddCallerId} className="w-full">
                     Aggiungi Caller ID
                   </Button>
@@ -294,6 +312,17 @@ const AdminCallerIds = () => {
                       onChange={(e) => setEditMaxConcurrentCalls(parseInt(e.target.value) || 1)}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label>VAPI Phone Number ID (opzionale)</Label>
+                    <Input
+                      placeholder="PN..."
+                      value={editVapiPhoneNumberId}
+                      onChange={(e) => setEditVapiPhoneNumberId(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      ID dal VAPI Dashboard (formato: PN...). Richiesto per chiamate VAPI.
+                    </p>
+                  </div>
                   <Button onClick={handleEditCallerId} className="w-full">
                     Salva modifiche
                   </Button>
@@ -309,9 +338,10 @@ const AdminCallerIds = () => {
             ) : (
               <Table>
                 <TableHeader>
-                  <TableRow>
+                <TableRow>
                     <TableHead>Numero</TableHead>
                     <TableHead>Nome</TableHead>
+                    <TableHead>VAPI ID</TableHead>
                     <TableHead>Chiamate</TableHead>
                     <TableHead>Predefinito</TableHead>
                     <TableHead>Attivo</TableHead>
@@ -326,6 +356,13 @@ const AdminCallerIds = () => {
                       </TableCell>
                       <TableCell>
                         {callerId.friendly_name || "-"}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {callerId.vapi_phone_number_id ? (
+                          <span className="text-green-600">{callerId.vapi_phone_number_id}</span>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -401,6 +438,10 @@ const AdminCallerIds = () => {
             <p>
               I Caller ID verificati sono numeri che hai verificato nel tuo account Twilio.
               Questi numeri possono essere usati come identificativo chiamante per le chiamate in uscita.
+            </p>
+            <p>
+              <strong>Per chiamate VAPI:</strong> Devi aggiungere il VAPI Phone Number ID (formato: PN...) 
+              dal VAPI Dashboard. Solo i Caller ID con VAPI ID configurato verranno usati per le chiamate VAPI.
             </p>
             <p>
               <strong>Nota:</strong> Per verificare un nuovo Caller ID, vai nella console Twilio:
