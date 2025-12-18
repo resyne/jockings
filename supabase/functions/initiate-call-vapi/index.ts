@@ -236,7 +236,7 @@ serve(async (req) => {
           .limit(1)
           .maybeSingle();
 
-    const [settingsResult, voiceSettingsResult, vapiPhoneResult] = await Promise.all([
+    const [settingsResult, voiceSettingsResult, vapiPhonesResult] = await Promise.all([
       supabase.from('app_settings').select('key, value').in('key', [
         'vapi_phone_number_id',
         'vapi_ai_provider',
@@ -272,7 +272,8 @@ serve(async (req) => {
         'vapi_background_denoising',
       ]),
       voiceSettingsQuery,
-      supabase.from('vapi_phone_numbers').select('*').eq('is_default', true).eq('is_active', true).single()
+      // Fetch ALL active VAPI phone numbers, ordered by default first
+      supabase.from('vapi_phone_numbers').select('*').eq('is_active', true).order('is_default', { ascending: false })
     ]);
 
     // Parse settings with defaults optimized for prank calls
@@ -301,20 +302,28 @@ serve(async (req) => {
       if (s.value) settings[s.key] = s.value;
     });
 
-    // Get VAPI Phone Number ID - VAPI API requires the actual phone_number_id from VAPI Dashboard
-    // This is the "PN..." format ID that VAPI provides, NOT a UUID
-    // Despite the VAPI error message saying "must be a UUID", VAPI actually expects their phone number ID
-    let vapiPhoneNumberId = vapiPhoneResult.data?.phone_number_id;
+    // Get VAPI Phone Number ID - select from active phones
+    // Priority: first active phone that's available, prefer default
+    const activeVapiPhones = vapiPhonesResult.data || [];
+    console.log('Active VAPI phones:', activeVapiPhones.length);
     
-    console.log('Phone from table:', vapiPhoneResult.data?.phone_number);
-    
-    // If no default phone found in table, fall back to app_settings (legacy)
-    if (!vapiPhoneNumberId) {
-      vapiPhoneNumberId = settings['vapi_phone_number_id'];
+    if (activeVapiPhones.length === 0) {
+      throw new Error('No active VAPI phone numbers configured. Go to Admin > VAPI Phones to set them up.');
     }
 
+    // Select the first active phone (already ordered by is_default desc)
+    const selectedVapiPhone = activeVapiPhones[0];
+    const vapiPhoneNumberId = selectedVapiPhone.phone_number_id;
+    
+    console.log('Selected VAPI phone:', selectedVapiPhone.phone_number, 'ID:', vapiPhoneNumberId);
+    
+    // If no phone_number_id in table, fall back to app_settings (legacy)
     if (!vapiPhoneNumberId) {
-      throw new Error('VAPI Phone Number ID not configured. Go to Admin > Voices to set it up.');
+      const legacyId = settings['vapi_phone_number_id'];
+      if (!legacyId) {
+        throw new Error('VAPI Phone Number ID not configured. Go to Admin > VAPI Phones to set it up.');
+      }
+      console.log('Using legacy phone ID from settings:', legacyId);
     }
 
     console.log('Prank ID:', prank.id);
