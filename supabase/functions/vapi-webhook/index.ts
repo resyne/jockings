@@ -1,10 +1,96 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Helper function to decrement current_calls and process queue
+async function decrementCallerIdAndProcessQueue(supabase: SupabaseClient) {
+  console.log("=== DECREMENTING CALLER ID AND PROCESSING QUEUE ===");
+  
+  // Find all caller IDs with current_calls > 0 and decrement one
+  // We decrement based on which ones have active calls
+  const { data: activeCallerIds } = await supabase
+    .from("verified_caller_ids")
+    .select("*")
+    .gt("current_calls", 0)
+    .order("current_calls", { ascending: false })
+    .limit(1);
+  
+  if (activeCallerIds && activeCallerIds.length > 0) {
+    const callerId = activeCallerIds[0];
+    const newCount = Math.max(0, (callerId.current_calls || 1) - 1);
+    
+    await supabase
+      .from("verified_caller_ids")
+      .update({ current_calls: newCount })
+      .eq("id", callerId.id);
+    
+    console.log(`Decremented caller ID ${callerId.phone_number}: ${callerId.current_calls} -> ${newCount}`);
+  }
+  
+  // Check if there are queued calls to process
+  const { data: queuedCalls } = await supabase
+    .from("call_queue")
+    .select("*")
+    .eq("status", "queued")
+    .order("position", { ascending: true })
+    .limit(1);
+  
+  if (queuedCalls && queuedCalls.length > 0) {
+    const nextCall = queuedCalls[0];
+    console.log("Found queued call to process:", nextCall.prank_id);
+    
+    // Check if there's now capacity
+    const { data: availableCallerIds } = await supabase
+      .from("verified_caller_ids")
+      .select("*")
+      .eq("is_active", true)
+      .not("vapi_phone_number_id", "is", null);
+    
+    const hasCapacity = availableCallerIds?.some(
+      (cid: any) => (cid.current_calls || 0) < (cid.max_concurrent_calls || 1)
+    );
+    
+    if (hasCapacity) {
+      console.log("Capacity available, triggering call for queued prank:", nextCall.prank_id);
+      
+      // Update queue status to processing
+      await supabase
+        .from("call_queue")
+        .update({ status: "processing", started_at: new Date().toISOString() })
+        .eq("id", nextCall.id);
+      
+      // Trigger the call via edge function
+      try {
+        await supabase.functions.invoke("initiate-call-vapi", {
+          body: { prankId: nextCall.prank_id }
+        });
+        
+        // Mark queue entry as completed
+        await supabase
+          .from("call_queue")
+          .update({ status: "completed", completed_at: new Date().toISOString() })
+          .eq("id", nextCall.id);
+        
+        console.log("Queued call initiated successfully");
+      } catch (error) {
+        console.error("Error initiating queued call:", error);
+        // Revert to queued status on error
+        await supabase
+          .from("call_queue")
+          .update({ status: "queued" })
+          .eq("id", nextCall.id);
+      }
+    } else {
+      console.log("No capacity available yet for queued calls");
+    }
+  } else {
+    console.log("No queued calls to process");
+  }
+}
 
 serve(async (req) => {
   // Handle CORS
@@ -110,6 +196,9 @@ serve(async (req) => {
         } else {
           console.log("Prank updated from end-of-call-report:", newStatus);
         }
+        
+        // === DECREMENT CURRENT_CALLS AND PROCESS QUEUE ===
+        await decrementCallerIdAndProcessQueue(supabase);
         
         // === PRANK CONSUMPTION LOGIC ===
         // Fetch prank to get user_id
