@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { it } from "date-fns/locale";
 
 const phoneSchema = z.string().regex(/^\d{6,15}$/, "Numero di telefono non valido");
+const normalizePhoneDigits = (value: string) => value.replace(/\D/g, "");
 
 const COUNTRY_CODES = [
   { code: "+39", country: "IT", flag: "🇮🇹", name: "Italia" },
@@ -148,9 +149,9 @@ const CreatePrank = () => {
     
     // Can use free trial (only to own verified number)
     if (!profile.trial_prank_used && profile.phone_verified && profile.phone_number) {
-      const fullVictimPhone = `${phoneCountryCode}${victimPhone.replace(/\s/g, "")}`;
-      const normalizedUserPhone = profile.phone_number.replace(/\s/g, "");
-      
+      const fullVictimPhone = normalizePhoneDigits(`${phoneCountryCode}${victimPhone}`);
+      const normalizedUserPhone = normalizePhoneDigits(profile.phone_number);
+
       if (fullVictimPhone === normalizedUserPhone) {
         return { allowed: true, isTrialCall: true };
       } else {
@@ -400,7 +401,7 @@ const CreatePrank = () => {
           return false;
         }
         try {
-          phoneSchema.parse(victimPhone.replace(/[\s\-\+\(\)]/g, ""));
+          phoneSchema.parse(normalizePhoneDigits(victimPhone));
         } catch {
           toast({ title: "Errore", description: "Numero di telefono non valido", variant: "destructive" });
           return false;
@@ -487,7 +488,7 @@ const CreatePrank = () => {
           victim_first_name: victimFirstName.trim(),
           victim_last_name: victimLastName.trim(),
           victim_gender: victimGender,
-          victim_phone: `${phoneCountryCode}${victimPhone.replace(/\s/g, "")}`,
+          victim_phone: `${phoneCountryCode}${normalizePhoneDigits(victimPhone)}`,
           prank_theme: prankTheme.trim(),
           real_detail: realDetail.trim() || null,
           voice_gender: voiceSettings?.gender || "male",
