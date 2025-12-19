@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Trash2, Star, Phone, RotateCcw, Pencil } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Phone, RotateCcw, Pencil } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -29,7 +29,6 @@ interface VerifiedCallerId {
   id: string;
   phone_number: string;
   friendly_name: string | null;
-  is_default: boolean;
   is_active: boolean;
   current_calls: number;
   max_concurrent_calls: number;
@@ -89,7 +88,6 @@ const AdminCallerIds = () => {
       phone_number: newPhoneNumber.trim(),
       friendly_name: newFriendlyName.trim() || null,
       vapi_phone_number_id: newVapiPhoneNumberId.trim() || null,
-      is_default: callerIds.length === 0, // First one is default
     });
 
     if (error) {
@@ -101,21 +99,6 @@ const AdminCallerIds = () => {
       setNewFriendlyName("");
       setNewVapiPhoneNumberId("");
       setIsDialogOpen(false);
-      fetchCallerIds();
-    }
-  };
-
-  const handleSetDefault = async (id: string) => {
-    const { error } = await supabase
-      .from("verified_caller_ids")
-      .update({ is_default: true })
-      .eq("id", id);
-
-    if (error) {
-      toast.error("Errore nell'impostazione del Caller ID predefinito");
-      console.error(error);
-    } else {
-      toast.success("Caller ID predefinito aggiornato");
       fetchCallerIds();
     }
   };
@@ -343,7 +326,6 @@ const AdminCallerIds = () => {
                     <TableHead>Nome</TableHead>
                     <TableHead>VAPI ID</TableHead>
                     <TableHead>Chiamate</TableHead>
-                    <TableHead>Predefinito</TableHead>
                     <TableHead>Attivo</TableHead>
                     <TableHead className="text-right">Azioni</TableHead>
                   </TableRow>
@@ -383,19 +365,6 @@ const AdminCallerIds = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {callerId.is_default ? (
-                          <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleSetDefault(callerId.id)}
-                          >
-                            <Star className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </TableCell>
-                      <TableCell>
                         <Switch
                           checked={callerId.is_active}
                           onCheckedChange={() =>
@@ -416,7 +385,6 @@ const AdminCallerIds = () => {
                             variant="ghost"
                             size="icon"
                             onClick={() => handleDelete(callerId.id)}
-                            disabled={callerId.is_default}
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
