@@ -303,7 +303,7 @@ serve(async (req) => {
     });
 
     // Get VAPI Phone Number ID from verified_caller_ids
-    // Priority: first active caller ID with vapi_phone_number_id set AND has capacity, prefer default
+    // Priority: random selection among available caller IDs with capacity
     const activeCallerIds = vapiPhonesResult.data || [];
     console.log('Active Caller IDs with VAPI configured:', activeCallerIds.length);
     
@@ -311,10 +311,20 @@ serve(async (req) => {
       throw new Error('No active Caller IDs with VAPI phone number configured. Go to Admin > Caller IDs and add the VAPI Phone Number ID.');
     }
 
-    // Find a caller ID with available capacity (current_calls < max_concurrent_calls)
-    const availableCallerId = activeCallerIds.find((cid: any) => 
+    // Find ALL caller IDs with available capacity (current_calls < max_concurrent_calls)
+    const availableCallerIds = activeCallerIds.filter((cid: any) => 
       (cid.current_calls || 0) < (cid.max_concurrent_calls || 1)
     );
+    
+    console.log('Available Caller IDs (with capacity):', availableCallerIds.length);
+    availableCallerIds.forEach((cid: any) => {
+      console.log(`  - ${cid.phone_number} (${cid.friendly_name}): ${cid.current_calls || 0}/${cid.max_concurrent_calls || 1} calls`);
+    });
+    
+    // Select randomly among available caller IDs for better distribution
+    const availableCallerId = availableCallerIds.length > 0 
+      ? availableCallerIds[Math.floor(Math.random() * availableCallerIds.length)]
+      : null;
     
     if (!availableCallerId) {
       // All caller IDs are at capacity - add to queue
