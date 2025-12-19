@@ -7,12 +7,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Price IDs from Stripe
+// Price IDs from Stripe (LIVE)
 const PRICES = {
-  pack_10: "price_1SekVmBG90OlMQuV86NSD7yz", // €24.99 - 10 pranks
-  pack_3: "price_1SekWJBG90OlMQuVthD2sRIm",  // €9.99 - 3 pranks
-  pack_1: "price_1SekY7BG90OlMQuVFlAhPr2k",  // €3.99 - 1 prank
-  subscription: "price_1SekYXBG90OlMQuVJuuEJG9t", // €9.99/month - 5 pranks
+  pack_10: "price_1Sg65pB6NXLO6CywoqK0Elxv", // €24.99 - 10 pranks
+  pack_3: "price_1Sg69SB6NXLO6CywE0CR8XQb",  // €9.99 - 3 pranks
+  pack_1: "price_1Sg6AjB6NXLO6CywA3CNRbCu",  // €3.99 - 1 prank
+  subscription: "price_1Sg6BUB6NXLO6CywSCZFn66D", // €9.99/month - 5 pranks
 };
 
 // Pranks per package
