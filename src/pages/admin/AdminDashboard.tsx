@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Settings, Users, Phone, Mic, FileText, Shield, ArrowLeft } from "lucide-react";
+import { Settings, Users, Phone, Mic, FileText, Shield, ArrowLeft, Ticket } from "lucide-react";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -223,6 +223,23 @@ const AdminDashboard = () => {
                 <div>
                   <CardTitle className="text-lg">Impostazioni Business</CardTitle>
                   <CardDescription>Regole consumo prank e monetizzazione</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+
+          <Card 
+            className="cursor-pointer hover:border-primary transition-colors"
+            onClick={() => navigate("/admin/promo-codes")}
+          >
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-lg bg-pink-500/10">
+                  <Ticket className="w-6 h-6 text-pink-500" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Codici Promo</CardTitle>
+                  <CardDescription>Gestisci codici sconto e promozioni</CardDescription>
                 </div>
               </div>
             </CardHeader>

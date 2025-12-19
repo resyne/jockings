@@ -138,6 +138,26 @@ serve(async (req) => {
       // Don't throw - the pranks were already added
     }
 
+    // Record promo code usage if one was used
+    const promoCodeId = session.metadata?.promo_code_id;
+    if (promoCodeId) {
+      console.log("Recording promo code usage:", promoCodeId);
+      const { error: promoError } = await supabaseClient
+        .from("promo_code_uses")
+        .insert({
+          promo_code_id: promoCodeId,
+          user_id: user.id,
+          session_id: sessionId,
+        });
+
+      if (promoError) {
+        console.error("Error recording promo code use:", promoError);
+        // Don't throw - the payment was already processed
+      } else {
+        console.log("Promo code usage recorded successfully");
+      }
+    }
+
     console.log("=== PAYMENT VERIFIED - PRANKS ADDED ===");
 
     return new Response(JSON.stringify({ 

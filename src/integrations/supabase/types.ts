@@ -339,6 +339,74 @@ export type Database = {
         }
         Relationships: []
       }
+      promo_code_uses: {
+        Row: {
+          id: string
+          promo_code_id: string
+          session_id: string | null
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          promo_code_id: string
+          session_id?: string | null
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          promo_code_id?: string
+          session_id?: string | null
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_code_uses_promo_code_id_fkey"
+            columns: ["promo_code_id"]
+            isOneToOne: false
+            referencedRelation: "promo_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promo_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          description: string | null
+          discount_percentage: number
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          max_uses: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          description?: string | null
+          discount_percentage: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          description?: string | null
+          discount_percentage?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       twilio_phone_numbers: {
         Row: {
           caller_id_anonymous: boolean | null
