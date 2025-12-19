@@ -15,7 +15,7 @@ import { z } from "zod";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 
-const phoneSchema = z.string().regex(/^\d{6,14}$/, "Numero di telefono non valido");
+const phoneSchema = z.string().regex(/^\d{6,15}$/, "Numero di telefono non valido");
 
 const COUNTRY_CODES = [
   { code: "+39", country: "IT", flag: "🇮🇹", name: "Italia" },
@@ -400,7 +400,7 @@ const CreatePrank = () => {
           return false;
         }
         try {
-          phoneSchema.parse(victimPhone.replace(/\s/g, ""));
+          phoneSchema.parse(victimPhone.replace(/[\s\-\+\(\)]/g, ""));
         } catch {
           toast({ title: "Errore", description: "Numero di telefono non valido", variant: "destructive" });
           return false;
