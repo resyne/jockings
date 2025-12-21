@@ -132,6 +132,36 @@ export type Database = {
         }
         Relationships: []
       }
+      prank_content_rules: {
+        Row: {
+          block_message: string
+          category: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          keywords: string[]
+          updated_at: string
+        }
+        Insert: {
+          block_message: string
+          category: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          keywords?: string[]
+          updated_at?: string
+        }
+        Update: {
+          block_message?: string
+          category?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          keywords?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       prank_disclaimer_acceptances: {
         Row: {
           accepted_at: string

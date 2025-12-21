@@ -1,40 +1,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const BLOCKED_CATEGORIES = {
-  TRAUMA: {
-    keywords: ['morte', 'morto', 'morta', 'decesso', 'incidente', 'ospedale', 'ricovero', 'arresto', 'arrestato', 'suicidio', 'rapimento', 'rapito', 'malattia grave', 'cancro', 'tumore', 'incendio', 'esplosione', 'bomba'],
-    message: 'Questo scherzo simula eventi traumatici o gravi che potrebbero causare forte stress psicologico. Non è consentito.'
-  },
-  SCAM: {
-    keywords: ['pagamento', 'bonifico', 'iban', 'carta di credito', 'otp', 'codice', 'password', 'pin', 'documenti', 'documento', 'soldi urgenti', 'versamento'],
-    message: 'Questo scherzo potrebbe essere interpretato come una truffa. Richieste di denaro o dati personali non sono consentite.'
-  },
-  THREATS: {
-    keywords: ['minaccia', 'minaccio', 'conseguenze', 'ti faccio', 'ti succede', 'ti ammazzo', 'ti uccido', 'ti picchio', 'te la faccio pagare'],
-    message: 'Questo scherzo contiene minacce o intimidazioni. Non è consentito.'
-  },
-  SENSITIVE: {
-    keywords: ['sangue', 'droga', 'violenza', 'stupro', 'abuso'],
-    message: 'Questo scherzo contiene contenuti sensibili o potenzialmente traumatici. Non è consentito.'
-  }
-};
-
-function checkKeywords(text: string): { blocked: boolean; category: string; message: string } | null {
-  const lowerText = text.toLowerCase();
-  
-  for (const [category, data] of Object.entries(BLOCKED_CATEGORIES)) {
-    for (const keyword of data.keywords) {
-      if (lowerText.includes(keyword)) {
-        return { blocked: true, category, message: data.message };
-      }
-    }
-  }
-  return null;
+interface ContentRule {
+  category: string;
+  keywords: string[];
+  block_message: string;
+  is_active: boolean;
 }
 
 serve(async (req) => {
@@ -57,21 +33,80 @@ serve(async (req) => {
       });
     }
 
-    // First, quick keyword check
-    const keywordResult = checkKeywords(contentToCheck);
-    if (keywordResult) {
-      console.log('Blocked by keyword check:', keywordResult.category);
+    // Create Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Fetch settings
+    const { data: settings } = await supabase
+      .from('app_settings')
+      .select('key, value')
+      .in('key', ['ai_content_checker_enabled', 'ai_content_checker_use_ai']);
+
+    let checkerEnabled = true;
+    let useAI = true;
+
+    if (settings) {
+      settings.forEach((s: { key: string; value: string }) => {
+        if (s.key === 'ai_content_checker_enabled') checkerEnabled = s.value === 'true';
+        if (s.key === 'ai_content_checker_use_ai') useAI = s.value === 'true';
+      });
+    }
+
+    // If checker is disabled, approve everything
+    if (!checkerEnabled) {
+      console.log('Content checker is disabled, approving by default');
       return new Response(JSON.stringify({ 
-        approved: false, 
-        blocked: true,
-        category: keywordResult.category,
-        message: keywordResult.message
+        approved: true, 
+        message: 'Contenuto approvato'
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Then, AI analysis for more subtle cases
+    // Fetch active rules from database
+    const { data: rules, error: rulesError } = await supabase
+      .from('prank_content_rules')
+      .select('category, keywords, block_message, is_active')
+      .eq('is_active', true);
+
+    if (rulesError) {
+      console.error('Error fetching rules:', rulesError);
+    }
+
+    // Check keywords from database rules
+    const lowerText = contentToCheck.toLowerCase();
+    
+    if (rules && rules.length > 0) {
+      for (const rule of rules as ContentRule[]) {
+        for (const keyword of rule.keywords) {
+          if (lowerText.includes(keyword.toLowerCase())) {
+            console.log('Blocked by keyword check:', rule.category, keyword);
+            return new Response(JSON.stringify({ 
+              approved: false, 
+              blocked: true,
+              category: rule.category,
+              message: rule.block_message
+            }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
+        }
+      }
+    }
+
+    // If AI analysis is disabled, approve after keyword check
+    if (!useAI) {
+      return new Response(JSON.stringify({ 
+        approved: true, 
+        message: 'Contenuto approvato'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // AI analysis for more subtle cases
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     
     if (!LOVABLE_API_KEY) {
@@ -119,7 +154,6 @@ Rispondi SOLO con un JSON nel formato:
 
     if (!response.ok) {
       console.error('AI gateway error:', response.status);
-      // Fallback to approved if AI fails
       return new Response(JSON.stringify({ 
         approved: true, 
         message: 'Contenuto approvato'
@@ -135,24 +169,26 @@ Rispondi SOLO con un JSON nel formato:
 
     // Parse AI response
     try {
-      // Extract JSON from response
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
         
         if (parsed.blocked || parsed.approved === false) {
-          const messages: Record<string, string> = {
-            TRAUMA: 'Questo scherzo simula eventi traumatici o gravi. Non è consentito per proteggere il benessere psicologico del destinatario.',
-            SCAM: 'Questo scherzo potrebbe essere interpretato come una truffa. Richieste di denaro o dati personali non sono consentite.',
-            THREATS: 'Questo scherzo contiene elementi intimidatori o minacciosi. Non è consentito.',
-            SENSITIVE: 'Questo scherzo contiene contenuti sensibili o potenzialmente dannosi. Non è consentito.'
-          };
+          // Find the matching rule message from database, or use AI reason
+          let blockMessage = parsed.reason || 'Contenuto non appropriato per uno scherzo telefonico.';
+          
+          if (rules && parsed.category) {
+            const matchingRule = (rules as ContentRule[]).find(r => r.category === parsed.category);
+            if (matchingRule) {
+              blockMessage = matchingRule.block_message;
+            }
+          }
           
           return new Response(JSON.stringify({ 
             approved: false, 
             blocked: true,
             category: parsed.category || 'SENSITIVE',
-            message: messages[parsed.category] || parsed.reason || 'Contenuto non appropriato per uno scherzo telefonico.',
+            message: blockMessage,
             aiReason: parsed.reason
           }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -185,7 +221,7 @@ Rispondi SOLO con un JSON nel formato:
       error: error instanceof Error ? error.message : 'Unknown error',
       approved: true // Fail open to not block users on errors
     }), {
-      status: 200, // Return 200 even on error to not break flow
+      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
