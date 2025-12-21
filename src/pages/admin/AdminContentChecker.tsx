@@ -22,7 +22,8 @@ import {
   Skull,
   DollarSign,
   MessageSquareWarning,
-  Brain
+  Brain,
+  Shield
 } from "lucide-react";
 import {
   Dialog,
@@ -55,6 +56,7 @@ const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ReactNode; co
   SCAM: { label: "Potenziale Truffa", icon: <DollarSign className="w-4 h-4" />, color: "bg-orange-500" },
   THREATS: { label: "Minacce/Intimidazioni", icon: <Ban className="w-4 h-4" />, color: "bg-yellow-500" },
   SENSITIVE: { label: "Contenuti Sensibili", icon: <AlertTriangle className="w-4 h-4" />, color: "bg-purple-500" },
+  AUTHORITY: { label: "Autorità/Enti Pubblici", icon: <Shield className="w-4 h-4" />, color: "bg-blue-600" },
 };
 
 const AdminContentChecker = () => {
@@ -408,6 +410,7 @@ const AdminContentChecker = () => {
                     <SelectItem value="SCAM">Potenziale Truffa</SelectItem>
                     <SelectItem value="THREATS">Minacce/Intimidazioni</SelectItem>
                     <SelectItem value="SENSITIVE">Contenuti Sensibili</SelectItem>
+                    <SelectItem value="AUTHORITY">Autorità/Enti Pubblici</SelectItem>
                     <SelectItem value="CUSTOM">Personalizzata</SelectItem>
                   </SelectContent>
                 </Select>
