@@ -78,7 +78,7 @@ const Inizia = () => {
           onClick={() => navigate("/blocca-segnala")}
           className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
         >
-          Hai ricevuto una chiamata indesiderata? Segnala e blocca
+          Scherzo fuori luogo? Segnala e blocca
         </button>
       </footer>
     </div>
