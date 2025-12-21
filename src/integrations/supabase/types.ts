@@ -132,6 +132,51 @@ export type Database = {
         }
         Relationships: []
       }
+      prank_disclaimer_acceptances: {
+        Row: {
+          accepted_at: string
+          created_at: string
+          disclaimer_version: string
+          id: string
+          ip_hash: string | null
+          prank_id: string
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          created_at?: string
+          disclaimer_version?: string
+          id?: string
+          ip_hash?: string | null
+          prank_id: string
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string
+          created_at?: string
+          disclaimer_version?: string
+          id?: string
+          ip_hash?: string | null
+          prank_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prank_disclaimer_acceptances_prank_id_fkey"
+            columns: ["prank_id"]
+            isOneToOne: false
+            referencedRelation: "pranks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prank_disclaimer_acceptances_prank_id_fkey"
+            columns: ["prank_id"]
+            isOneToOne: false
+            referencedRelation: "pranks_decrypted"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prank_presets: {
         Row: {
           background_sound_enabled: boolean | null
