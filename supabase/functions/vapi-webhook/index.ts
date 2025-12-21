@@ -340,9 +340,11 @@ serve(async (req) => {
             }
           }
           
-          // Send reveal SMS if enabled (only for successful/answered pranks, independent of consumption)
-          if (wasAnswered && !isFailed) {
-            console.log("=== SENDING REVEAL SMS ===");
+          // Send reveal SMS only if prank was successful (same criteria as consumption)
+          // This ensures SMS is only sent when: answered + min duration met + not failed
+          if (shouldConsume) {
+            console.log("=== SENDING REVEAL SMS (prank was successful) ===");
+            console.log(`Criteria met: answered=${wasAnswered}, duration=${durationSeconds}s >= ${minDuration}s, failed=${isFailed}`);
             try {
               const { error: smsError } = await supabase.functions.invoke("send-reveal-sms", {
                 body: { prankId: reportCallId }
@@ -355,6 +357,9 @@ serve(async (req) => {
             } catch (smsErr) {
               console.error("Exception sending reveal SMS:", smsErr);
             }
+          } else {
+            console.log("=== SKIPPING REVEAL SMS (prank not successful) ===");
+            console.log(`Criteria NOT met: answered=${wasAnswered}, duration=${durationSeconds}s, minRequired=${minDuration}s, failed=${isFailed}`);
           }
         }
       }
