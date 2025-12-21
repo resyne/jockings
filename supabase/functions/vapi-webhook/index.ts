@@ -339,6 +339,23 @@ serve(async (req) => {
               }
             }
           }
+          
+          // Send reveal SMS if enabled (only for successful/answered pranks, independent of consumption)
+          if (wasAnswered && !isFailed) {
+            console.log("=== SENDING REVEAL SMS ===");
+            try {
+              const { error: smsError } = await supabase.functions.invoke("send-reveal-sms", {
+                body: { prankId: reportCallId }
+              });
+              if (smsError) {
+                console.error("Error sending reveal SMS:", smsError);
+              } else {
+                console.log("Reveal SMS triggered successfully");
+              }
+            } catch (smsErr) {
+              console.error("Exception sending reveal SMS:", smsErr);
+            }
+          }
         }
       }
       
