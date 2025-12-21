@@ -271,6 +271,7 @@ export type Database = {
           recording_url: string | null
           scheduled_at: string | null
           send_recording: boolean
+          send_reveal_sms: boolean | null
           twilio_call_sid: string | null
           updated_at: string
           user_id: string
@@ -302,6 +303,7 @@ export type Database = {
           recording_url?: string | null
           scheduled_at?: string | null
           send_recording?: boolean
+          send_reveal_sms?: boolean | null
           twilio_call_sid?: string | null
           updated_at?: string
           user_id: string
@@ -333,6 +335,7 @@ export type Database = {
           recording_url?: string | null
           scheduled_at?: string | null
           send_recording?: boolean
+          send_reveal_sms?: boolean | null
           twilio_call_sid?: string | null
           updated_at?: string
           user_id?: string

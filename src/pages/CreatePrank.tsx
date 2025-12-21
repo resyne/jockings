@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, ArrowRight, Phone, User, Mic, Globe, Send, Play, Square, Loader2, Check, ShieldAlert, AlertTriangle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Phone, User, Mic, Globe, Send, Play, Square, Loader2, Check, ShieldAlert, AlertTriangle, MessageSquare } from "lucide-react";
 import saranoIcon from "@/assets/sarano-icon.png";
 import { z } from "zod";
 import { format } from "date-fns";
@@ -106,6 +106,7 @@ const CreatePrank = () => {
   const [maxDuration] = useState(120);
   const [creativityLevel] = useState([50]);
   const sendRecording = true;
+  const [sendRevealSms, setSendRevealSms] = useState(false);
   const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
   const [pendingPrankId, setPendingPrankId] = useState<string | null>(null);
   const [contentCheckLoading, setContentCheckLoading] = useState(false);
@@ -523,6 +524,7 @@ const CreatePrank = () => {
           max_duration: maxDuration,
           creativity_level: creativityLevel[0],
           send_recording: sendRecording,
+          send_reveal_sms: sendRevealSms,
           call_status: "pending",
           scheduled_at: null,
         })
@@ -1142,10 +1144,42 @@ const CreatePrank = () => {
             </Card>
 
             <Card>
-              <CardContent className="pt-6">
+              <CardContent className="pt-6 space-y-4">
                 <div className="flex items-center gap-2 py-2 text-muted-foreground">
                   <Mic className="w-4 h-4" />
                   <p className="text-sm">A termine della chiamata sarà disponibile la registrazione</p>
+                </div>
+                
+                {/* SMS Reveal Option */}
+                <div 
+                  className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                    sendRevealSms 
+                      ? "border-primary bg-primary/10" 
+                      : "border-border bg-card hover:border-primary/50"
+                  }`}
+                  onClick={() => setSendRevealSms(!sendRevealSms)}
+                >
+                  <div className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                    sendRevealSms 
+                      ? "border-primary bg-primary" 
+                      : "border-muted-foreground"
+                  }`}>
+                    {sendRevealSms && <Check className="w-3 h-3 text-primary-foreground" />}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4 text-primary" />
+                      <span className="font-medium">Invia SMS rivelatore 📱</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Dopo lo scherzo, la vittima riceverà un SMS ironico che rivela che era uno scherzo fatto da te tramite sarano.ai
+                    </p>
+                    {!profile?.phone_verified && (
+                      <p className="text-xs text-orange-500 mt-2">
+                        ⚠️ Devi verificare il tuo numero per usare questa funzione
+                      </p>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
