@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      abuse_reports: {
+        Row: {
+          additional_details: string | null
+          call_date: string
+          call_time: string | null
+          created_at: string
+          id: string
+          prank_subject: string | null
+          reporter_phone: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          additional_details?: string | null
+          call_date: string
+          call_time?: string | null
+          created_at?: string
+          id?: string
+          prank_subject?: string | null
+          reporter_phone: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          additional_details?: string | null
+          call_date?: string
+          call_time?: string | null
+          created_at?: string
+          id?: string
+          prank_subject?: string | null
+          reporter_phone?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           created_at: string
@@ -38,6 +80,30 @@ export type Database = {
           key?: string
           updated_at?: string
           value?: string
+        }
+        Relationships: []
+      }
+      blocked_phone_numbers: {
+        Row: {
+          blocked_at: string
+          created_at: string
+          id: string
+          phone_number: string
+          reason: string | null
+        }
+        Insert: {
+          blocked_at?: string
+          created_at?: string
+          id?: string
+          phone_number: string
+          reason?: string | null
+        }
+        Update: {
+          blocked_at?: string
+          created_at?: string
+          id?: string
+          phone_number?: string
+          reason?: string | null
         }
         Relationships: []
       }

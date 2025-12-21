@@ -215,6 +215,36 @@ serve(async (req) => {
       throw new Error('Prank not found');
     }
 
+    // Check if victim's phone number is blocked
+    const { data: blockedNumber } = await supabase
+      .from('blocked_phone_numbers')
+      .select('id')
+      .eq('phone_number', prank.victim_phone)
+      .maybeSingle();
+
+    if (blockedNumber) {
+      console.log('=== CALL BLOCKED - Number is in blocklist ===');
+      console.log(`Blocked phone: ${prank.victim_phone}`);
+      
+      // Update prank status to blocked
+      await supabase
+        .from('pranks')
+        .update({ call_status: 'blocked' })
+        .eq('id', prankId);
+
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'blocked_number',
+          message: 'Il numero destinatario ha richiesto di non ricevere chiamate da Sarano.ai'
+        }),
+        { 
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
     // Now fetch settings, voice_settings (based on prank's elevenlabs_voice_id), and VAPI phone in parallel
     const prankLanguage = prank.language === 'Italiano' ? 'Italiano' : 'English';
     const prankGender = prank.voice_gender;

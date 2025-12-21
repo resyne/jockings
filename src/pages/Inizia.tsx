@@ -72,8 +72,15 @@ const Inizia = () => {
         </div>
       </main>
 
-      {/* Footer spacer */}
-      <div className="h-16" />
+      {/* Footer with block link */}
+      <footer className="py-6 text-center">
+        <button
+          onClick={() => navigate("/blocca-segnala")}
+          className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+        >
+          Hai ricevuto una chiamata indesiderata? Segnala e blocca
+        </button>
+      </footer>
     </div>
   );
 };
