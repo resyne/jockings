@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, ArrowRight, Phone, User, Mic, Globe, Send, Play, Square, Loader2, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Phone, User, Mic, Globe, Send, Play, Square, Loader2, Check, ShieldAlert, AlertTriangle } from "lucide-react";
 import saranoIcon from "@/assets/sarano-icon.png";
 import { z } from "zod";
 import { format } from "date-fns";
@@ -108,6 +108,8 @@ const CreatePrank = () => {
   const sendRecording = true;
   const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
   const [pendingPrankId, setPendingPrankId] = useState<string | null>(null);
+  const [contentCheckLoading, setContentCheckLoading] = useState(false);
+  const [contentBlocked, setContentBlocked] = useState<{ blocked: boolean; message: string; category?: string } | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -423,8 +425,42 @@ const CreatePrank = () => {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (validateStep(currentStep)) {
+      // Check content with AI on step 2 (when going from theme to voice)
+      if (currentStep === 2 && selectedPreset === "custom") {
+        setContentCheckLoading(true);
+        setContentBlocked(null);
+        
+        try {
+          const { data, error } = await supabase.functions.invoke("check-prank-content", {
+            body: { 
+              prankTheme, 
+              realDetail,
+              language: "Italiano"
+            }
+          });
+          
+          if (error) {
+            console.error("Content check error:", error);
+            // Fail open - allow to proceed if check fails
+          } else if (data?.blocked) {
+            setContentBlocked({
+              blocked: true,
+              message: data.message || "Contenuto non appropriato",
+              category: data.category
+            });
+            setContentCheckLoading(false);
+            return; // Don't proceed
+          }
+        } catch (err) {
+          console.error("Content check failed:", err);
+          // Fail open - allow to proceed
+        }
+        
+        setContentCheckLoading(false);
+      }
+      
       setCurrentStep(prev => Math.min(prev + 1, 4));
     }
   };
@@ -782,6 +818,7 @@ const CreatePrank = () => {
                   value={prankTheme}
                   onChange={(e) => {
                     setPrankTheme(e.target.value);
+                    setContentBlocked(null); // Reset block when content changes
                     if (selectedPreset !== "custom") {
                       setSelectedPreset("custom");
                     }
@@ -794,11 +831,39 @@ const CreatePrank = () => {
                 <Textarea
                   placeholder="Es: lavora come idraulico, ha appena comprato una macchina nuova, suo figlio si chiama Luca..."
                   value={realDetail}
-                  onChange={(e) => setRealDetail(e.target.value)}
+                  onChange={(e) => {
+                    setRealDetail(e.target.value);
+                    setContentBlocked(null); // Reset block when content changes
+                  }}
                   className="min-h-[80px]"
                 />
                 <p className="text-xs text-muted-foreground">Un dettaglio vero sulla vittima rende lo scherzo molto più credibile!</p>
               </div>
+
+              {/* Content Block Alert */}
+              {contentBlocked && (
+                <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/30 space-y-2 animate-fade-in">
+                  <div className="flex items-start gap-3">
+                    <ShieldAlert className="w-6 h-6 text-destructive shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <h4 className="font-semibold text-destructive">Scherzo non consentito</h4>
+                      <p className="text-sm text-destructive/90">{contentBlocked.message}</p>
+                      {contentBlocked.category && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-destructive/20 text-destructive text-xs font-medium mt-1">
+                          <AlertTriangle className="w-3 h-3" />
+                          {contentBlocked.category === 'TRAUMA' && 'Eventi traumatici'}
+                          {contentBlocked.category === 'SCAM' && 'Potenziale truffa'}
+                          {contentBlocked.category === 'THREATS' && 'Minacce/Intimidazioni'}
+                          {contentBlocked.category === 'SENSITIVE' && 'Contenuto sensibile'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground ml-9">
+                    Modifica il contenuto dello scherzo per continuare. Gli scherzi devono essere divertenti e innocui.
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
@@ -1105,9 +1170,19 @@ const CreatePrank = () => {
               type="button"
               className="flex-1 h-14 gradient-primary"
               onClick={handleNext}
+              disabled={contentCheckLoading || !!contentBlocked}
             >
-              Avanti
-              <ArrowRight className="w-5 h-5 ml-2" />
+              {contentCheckLoading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Verifica contenuto...
+                </div>
+              ) : (
+                <>
+                  Avanti
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </>
+              )}
             </Button>
           ) : (
             <Button
