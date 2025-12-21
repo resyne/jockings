@@ -131,6 +131,20 @@ const Auth = () => {
         });
         if (error) throw error;
         
+        // Update profile with T&C and Privacy acceptance timestamps
+        if (data.user) {
+          const now = new Date().toISOString();
+          await supabase
+            .from("profiles")
+            .update({
+              terms_accepted_at: now,
+              privacy_accepted_at: now,
+              terms_version: "1.0",
+              privacy_version: "1.0",
+            })
+            .eq("user_id", data.user.id);
+        }
+        
         // Send welcome email (fire and forget, don't block registration)
         supabase.functions.invoke("send-welcome-email", {
           body: { email, name: username || email.split('@')[0] }

@@ -304,6 +304,10 @@ export type Database = {
           phone_verification_code: string | null
           phone_verification_expires_at: string | null
           phone_verified: boolean | null
+          privacy_accepted_at: string | null
+          privacy_version: string | null
+          terms_accepted_at: string | null
+          terms_version: string | null
           trial_prank_used: boolean | null
           updated_at: string
           user_id: string
@@ -318,6 +322,10 @@ export type Database = {
           phone_verification_code?: string | null
           phone_verification_expires_at?: string | null
           phone_verified?: boolean | null
+          privacy_accepted_at?: string | null
+          privacy_version?: string | null
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           trial_prank_used?: boolean | null
           updated_at?: string
           user_id: string
@@ -332,6 +340,10 @@ export type Database = {
           phone_verification_code?: string | null
           phone_verification_expires_at?: string | null
           phone_verified?: boolean | null
+          privacy_accepted_at?: string | null
+          privacy_version?: string | null
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           trial_prank_used?: boolean | null
           updated_at?: string
           user_id?: string
