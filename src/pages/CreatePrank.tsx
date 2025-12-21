@@ -855,6 +855,7 @@ const CreatePrank = () => {
                           {contentBlocked.category === 'SCAM' && 'Potenziale truffa'}
                           {contentBlocked.category === 'THREATS' && 'Minacce/Intimidazioni'}
                           {contentBlocked.category === 'SENSITIVE' && 'Contenuto sensibile'}
+                          {contentBlocked.category === 'AUTHORITY' && 'Autorità/Enti pubblici'}
                         </span>
                       )}
                     </div>
