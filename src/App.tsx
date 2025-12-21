@@ -18,6 +18,8 @@ const Pricing = lazy(() => import("./pages/Pricing"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const VerifyPhone = lazy(() => import("./pages/VerifyPhone"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminVoices = lazy(() => import("./pages/admin/AdminVoices"));
@@ -57,6 +59,8 @@ const App = () => (
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/verify-phone" element={<VerifyPhone />} />
+            <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/voices" element={<AdminVoices />} />
             <Route path="/admin/presets" element={<AdminPresets />} />
