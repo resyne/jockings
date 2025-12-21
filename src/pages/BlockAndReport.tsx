@@ -90,7 +90,7 @@ const BlockAndReport = () => {
     try {
       const formattedPhone = formatPhoneNumber(reportPhone);
       
-      const { error } = await supabase
+      const { data: insertedReport, error } = await supabase
         .from("abuse_reports")
         .insert({
           reporter_phone: formattedPhone,
@@ -98,9 +98,28 @@ const BlockAndReport = () => {
           call_time: callTime || null,
           prank_subject: prankSubject || null,
           additional_details: additionalDetails || null
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Send notification email
+      try {
+        await supabase.functions.invoke("notify-abuse-report", {
+          body: {
+            reportId: insertedReport.id,
+            reporterPhone: formattedPhone,
+            callDate,
+            callTime: callTime || undefined,
+            prankSubject: prankSubject || undefined,
+            additionalDetails: additionalDetails || undefined
+          }
+        });
+      } catch (emailError) {
+        console.error("Error sending notification email:", emailError);
+        // Don't fail the whole operation if email fails
+      }
 
       setReportSuccess(true);
       toast.success("Segnalazione inviata con successo");
