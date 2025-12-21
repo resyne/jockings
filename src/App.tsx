@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import CookieBanner from "@/components/CookieBanner";
 
 // Eager load landing and auth pages for fast initial navigation
 import Inizia from "./pages/Inizia";
@@ -20,6 +21,7 @@ const VerifyPhone = lazy(() => import("./pages/VerifyPhone"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const CookiePolicy = lazy(() => import("./pages/CookiePolicy"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminVoices = lazy(() => import("./pages/admin/AdminVoices"));
@@ -46,6 +48,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <CookieBanner />
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<Navigate to="/inizia" replace />} />
@@ -61,6 +64,7 @@ const App = () => (
             <Route path="/verify-phone" element={<VerifyPhone />} />
             <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/cookie-policy" element={<CookiePolicy />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/voices" element={<AdminVoices />} />
             <Route path="/admin/presets" element={<AdminPresets />} />
