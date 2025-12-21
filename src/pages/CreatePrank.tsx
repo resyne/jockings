@@ -7,13 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, ArrowRight, Phone, User, Mic, Globe, Send, CalendarClock, Play, Square, Loader2, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Phone, User, Mic, Globe, Send, Play, Square, Loader2, Check } from "lucide-react";
 import saranoIcon from "@/assets/sarano-icon.png";
 import { z } from "zod";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
+import PrankDisclaimerModal from "@/components/PrankDisclaimerModal";
 
 const phoneSchema = z.string().regex(/^\d{6,15}$/, "Numero di telefono non valido");
 const normalizePhoneDigits = (value: string) => value.replace(/\D/g, "");
@@ -106,9 +106,8 @@ const CreatePrank = () => {
   const [maxDuration] = useState(120);
   const [creativityLevel] = useState([50]);
   const sendRecording = true;
-  const [scheduleCall, setScheduleCall] = useState(false);
-  const [scheduledDate, setScheduledDate] = useState("");
-  const [scheduledTime, setScheduledTime] = useState("");
+  const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
+  const [pendingPrankId, setPendingPrankId] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -453,20 +452,7 @@ const CreatePrank = () => {
       return;
     }
 
-    if (scheduleCall) {
-      if (!scheduledDate || !scheduledTime) {
-        toast({ title: "Errore", description: "Seleziona data e ora per la schedulazione", variant: "destructive" });
-        return;
-      }
-      const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
-      if (scheduledDateTime <= new Date()) {
-        toast({ title: "Errore", description: "La data deve essere nel futuro", variant: "destructive" });
-        return;
-      }
-    }
-
     setLoading(true);
-    const isTrialCall = prankCheck.isTrialCall;
 
     try {
       const selectedVoice = allVoices.find(v => v.id === selectedVoiceId);
@@ -478,8 +464,6 @@ const CreatePrank = () => {
             .eq("id", selectedVoiceId)
             .single()
         : { data: null };
-
-      const scheduledAt = scheduleCall ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString() : null;
       
       const { data: prank, error } = await supabase
         .from("pranks")
@@ -503,64 +487,75 @@ const CreatePrank = () => {
           max_duration: maxDuration,
           creativity_level: creativityLevel[0],
           send_recording: sendRecording,
-          call_status: scheduleCall ? "scheduled" : "pending",
-          scheduled_at: scheduledAt,
+          call_status: "pending",
+          scheduled_at: null,
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      if (scheduleCall) {
+      // Store the prank ID and show disclaimer modal
+      setPendingPrankId(prank.id);
+      setShowDisclaimerModal(true);
+    } catch (error: any) {
+      toast({ title: "Errore", description: error.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDisclaimerConfirm = async () => {
+    if (!pendingPrankId || !user || !profile) return;
+
+    const prankCheck = canMakePrank();
+    const isTrialCall = prankCheck.isTrialCall;
+
+    setLoading(true);
+    try {
+      toast({
+        title: "Scherzo confermato! 🎭",
+        description: "Avvio della chiamata in corso...",
+      });
+
+      const { error: callError } = await supabase.functions.invoke("initiate-call-vapi", {
+        body: { prankId: pendingPrankId }
+      });
+
+      if (callError) {
+        console.error('Error initiating call:', callError);
+        await supabase
+          .from("pranks")
+          .update({ call_status: "failed" })
+          .eq("id", pendingPrankId);
+        
         toast({
-          title: "Scherzo schedulato! 📅",
-          description: `La chiamata partirà il ${format(new Date(scheduledAt!), "d MMMM 'alle' HH:mm", { locale: it })}`,
+          title: "Errore chiamata",
+          description: callError.message || "Nessun numero attivo configurato. Contatta l'amministratore.",
+          variant: "destructive",
         });
-        navigate("/dashboard");
       } else {
-        toast({
-          title: "Scherzo creato! 🎭",
-          description: "Avvio della chiamata in corso...",
-        });
-
-        const { error: callError } = await supabase.functions.invoke("initiate-call-vapi", {
-          body: { prankId: prank.id }
-        });
-
-        if (callError) {
-          console.error('Error initiating call:', callError);
-          // Update prank status to failed so LiveCallView doesn't show
+        // Update profile based on call type
+        if (isTrialCall) {
           await supabase
-            .from("pranks")
-            .update({ call_status: "failed" })
-            .eq("id", prank.id);
-          
-          toast({
-            title: "Errore chiamata",
-            description: callError.message || "Nessun numero attivo configurato. Contatta l'amministratore.",
-            variant: "destructive",
-          });
+            .from("profiles")
+            .update({ trial_prank_used: true })
+            .eq("user_id", user.id);
         } else {
-          // Update profile based on call type
-          if (isTrialCall) {
-            await supabase
-              .from("profiles")
-              .update({ trial_prank_used: true })
-              .eq("user_id", user.id);
-          } else {
-            await supabase
-              .from("profiles")
-              .update({ available_pranks: profile.available_pranks - 1 })
-              .eq("user_id", user.id);
-          }
-          
-          toast({
-            title: "Chiamata avviata! 📞",
-            description: `Stiamo chiamando ${victimFirstName}...`,
-          });
+          await supabase
+            .from("profiles")
+            .update({ available_pranks: profile.available_pranks - 1 })
+            .eq("user_id", user.id);
         }
-        navigate("/dashboard");
+        
+        toast({
+          title: "Chiamata avviata! 📞",
+          description: `Stiamo chiamando ${victimFirstName}...`,
+        });
       }
+      
+      setShowDisclaimerModal(false);
+      navigate("/dashboard");
     } catch (error: any) {
       toast({ title: "Errore", description: error.message, variant: "destructive" });
     } finally {
@@ -1081,49 +1076,11 @@ const CreatePrank = () => {
             </Card>
 
             <Card>
-              <CardContent className="pt-6 space-y-4">
+              <CardContent className="pt-6">
                 <div className="flex items-center gap-2 py-2 text-muted-foreground">
                   <Mic className="w-4 h-4" />
                   <p className="text-sm">A termine della chiamata sarà disponibile la registrazione</p>
                 </div>
-
-                <div className="flex items-center justify-between py-2 border-t pt-4">
-                  <div className="flex items-center gap-2">
-                    <CalendarClock className="w-5 h-5 text-orange-500" />
-                    <div>
-                      <Label>Programma Chiamata</Label>
-                      <p className="text-xs text-muted-foreground">Imposta data e ora</p>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={scheduleCall}
-                    onCheckedChange={setScheduleCall}
-                  />
-                </div>
-
-                {scheduleCall && (
-                  <div className="grid grid-cols-2 gap-3 pt-2">
-                    <div className="space-y-2">
-                      <Label>Data</Label>
-                      <Input
-                        type="date"
-                        value={scheduledDate}
-                        onChange={(e) => setScheduledDate(e.target.value)}
-                        min={new Date().toISOString().split('T')[0]}
-                        className="h-12"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Ora</Label>
-                      <Input
-                        type="time"
-                        value={scheduledTime}
-                        onChange={(e) => setScheduledTime(e.target.value)}
-                        className="h-12"
-                      />
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
           </div>
@@ -1157,23 +1114,40 @@ const CreatePrank = () => {
               type="button"
               className="flex-1 h-14 gradient-primary shadow-glow"
               onClick={handleSubmit}
-              disabled={loading}
+              disabled={loading || !canMakePrank().allowed}
             >
               {loading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  {scheduleCall ? "Schedulando..." : "Avviando..."}
+                  Preparando...
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
                   <Send className="w-5 h-5" />
-                  {scheduleCall ? "Programma Scherzo" : "Avvia Scherzo"}
+                  Avvia Scherzo
                 </div>
               )}
             </Button>
           )}
         </div>
       </main>
+
+      {/* Disclaimer Modal */}
+      <PrankDisclaimerModal
+        open={showDisclaimerModal}
+        onOpenChange={(open) => {
+          setShowDisclaimerModal(open);
+          if (!open && pendingPrankId) {
+            // If modal is closed without confirming, delete the pending prank
+            supabase.from("pranks").delete().eq("id", pendingPrankId);
+            setPendingPrankId(null);
+          }
+        }}
+        onConfirm={handleDisclaimerConfirm}
+        loading={loading}
+        userId={user?.id || ""}
+        prankId={pendingPrankId || undefined}
+      />
     </div>
   );
 };
