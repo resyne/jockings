@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
@@ -28,6 +29,8 @@ const Auth = () => {
   const [username, setUsername] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -74,13 +77,23 @@ const Auth = () => {
       emailSchema.parse(email);
       if (mode !== "forgot") {
         passwordSchema.parse(password);
-        if (mode === "signup" && password !== confirmPassword) {
-          toast({
-            title: "Errore di validazione",
-            description: "Le password non coincidono",
-            variant: "destructive",
-          });
-          return false;
+        if (mode === "signup") {
+          if (password !== confirmPassword) {
+            toast({
+              title: "Errore di validazione",
+              description: "Le password non coincidono",
+              variant: "destructive",
+            });
+            return false;
+          }
+          if (!acceptedTerms || !acceptedPrivacy) {
+            toast({
+              title: "Errore di validazione",
+              description: "Devi accettare i Termini e Condizioni e la Privacy Policy",
+              variant: "destructive",
+            });
+            return false;
+          }
         }
       }
       return true;
@@ -273,6 +286,39 @@ const Auth = () => {
                   >
                     {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
+                </div>
+              </div>
+            )}
+
+            {mode === "signup" && (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="terms"
+                    checked={acceptedTerms}
+                    onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
+                    className="mt-0.5"
+                  />
+                  <label htmlFor="terms" className="text-sm leading-tight cursor-pointer">
+                    Ho letto e accetto i{" "}
+                    <Link to="/terms-and-conditions" target="_blank" className="text-primary hover:underline font-medium">
+                      Termini e Condizioni
+                    </Link>
+                  </label>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="privacy"
+                    checked={acceptedPrivacy}
+                    onCheckedChange={(checked) => setAcceptedPrivacy(checked === true)}
+                    className="mt-0.5"
+                  />
+                  <label htmlFor="privacy" className="text-sm leading-tight cursor-pointer">
+                    Ho letto e accetto la{" "}
+                    <Link to="/privacy-policy" target="_blank" className="text-primary hover:underline font-medium">
+                      Privacy Policy
+                    </Link>
+                  </label>
                 </div>
               </div>
             )}
