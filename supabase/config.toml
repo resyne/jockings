@@ -89,3 +89,6 @@ verify_jwt = false
 
 [functions.reset-password]
 verify_jwt = false
+
+[functions.check-prank-content]
+verify_jwt = true
