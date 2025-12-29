@@ -29,6 +29,7 @@ interface UserProfile {
   created_at: string;
   phone_number: string | null;
   isAdmin?: boolean;
+  pranks_made?: number;
 }
 
 const AdminUsers = () => {
@@ -73,27 +74,30 @@ const AdminUsers = () => {
   const fetchUsers = async () => {
     setLoadingUsers(true);
     
-    const { data: profiles, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .order("created_at", { ascending: false });
+    const [profilesRes, adminRolesRes, pranksCountRes] = await Promise.all([
+      supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+      supabase.from("user_roles").select("user_id").eq("role", "admin"),
+      supabase.from("pranks").select("user_id"),
+    ]);
 
-    if (error) {
-      toast({ title: "Errore", description: error.message, variant: "destructive" });
+    if (profilesRes.error) {
+      toast({ title: "Errore", description: profilesRes.error.message, variant: "destructive" });
       setLoadingUsers(false);
       return;
     }
 
-    const { data: adminRoles } = await supabase
-      .from("user_roles")
-      .select("user_id")
-      .eq("role", "admin");
+    const adminUserIds = new Set(adminRolesRes.data?.map(r => r.user_id) || []);
+    
+    // Count pranks per user
+    const pranksCounts: Record<string, number> = {};
+    pranksCountRes.data?.forEach(p => {
+      pranksCounts[p.user_id] = (pranksCounts[p.user_id] || 0) + 1;
+    });
 
-    const adminUserIds = new Set(adminRoles?.map(r => r.user_id) || []);
-
-    const usersWithRoles = (profiles || []).map(profile => ({
+    const usersWithRoles = (profilesRes.data || []).map(profile => ({
       ...profile,
       isAdmin: adminUserIds.has(profile.user_id),
+      pranks_made: pranksCounts[profile.user_id] || 0,
     }));
 
     setUsers(usersWithRoles);
@@ -258,14 +262,21 @@ const AdminUsers = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <div className="flex items-center gap-1">
-                        <Phone className="w-4 h-4 text-primary" />
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      {/* Pranks made (read-only) */}
+                      <div className="flex items-center gap-1 text-muted-foreground" title="Prank effettuati">
+                        <Phone className="w-4 h-4" />
+                        <span className="text-sm font-medium">{user.pranks_made || 0}</span>
+                      </div>
+                      
+                      {/* Available pranks (editable) */}
+                      <div className="flex items-center gap-1" title="Crediti disponibili (modificabile)">
+                        <span className="text-xs text-primary">💰</span>
                         <input
                           type="number"
                           value={user.available_pranks || 0}
                           onChange={(e) => updatePranks(user.user_id, parseInt(e.target.value) || 0)}
-                          className="w-14 text-center bg-muted rounded px-2 py-1 text-sm"
+                          className="w-12 text-center bg-muted rounded px-1 py-1 text-sm"
                         />
                       </div>
                       <Button
