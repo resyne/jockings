@@ -173,7 +173,8 @@ const AdminKPI = () => {
     week, 
     month, 
     total,
-    extraInfo
+    extraInfo,
+    onClick
   }: { 
     title: string;
     icon: any;
@@ -183,17 +184,28 @@ const AdminKPI = () => {
     month: number;
     total: number;
     extraInfo?: string;
+    onClick?: () => void;
   }) => (
-    <Card>
+    <Card 
+      className={onClick ? "cursor-pointer hover:border-primary transition-colors" : ""}
+      onClick={onClick}
+    >
       <CardHeader className="pb-2">
-        <div className="flex items-center gap-3">
-          <div className={`p-3 rounded-lg ${iconColor}`}>
-            <Icon className="w-6 h-6" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`p-3 rounded-lg ${iconColor}`}>
+              <Icon className="w-6 h-6" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">{title}</CardTitle>
+              {extraInfo && <CardDescription>{extraInfo}</CardDescription>}
+            </div>
           </div>
-          <div>
-            <CardTitle className="text-lg">{title}</CardTitle>
-            {extraInfo && <CardDescription>{extraInfo}</CardDescription>}
-          </div>
+          {onClick && (
+            <Button variant="ghost" size="sm" className="text-muted-foreground">
+              Dettagli →
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent>
@@ -259,6 +271,7 @@ const AdminKPI = () => {
               week={kpiData.newUsersWeek}
               month={kpiData.newUsersMonth}
               total={kpiData.totalUsers}
+              onClick={() => navigate("/admin/users")}
             />
 
             <KPICard
@@ -269,6 +282,7 @@ const AdminKPI = () => {
               week={kpiData.promoCodesUsedWeek}
               month={kpiData.promoCodesUsedMonth}
               total={kpiData.totalPromoCodesUsed}
+              onClick={() => navigate("/admin/promo-codes")}
             />
 
             <KPICard
@@ -280,6 +294,7 @@ const AdminKPI = () => {
               month={kpiData.callsMonth}
               total={kpiData.totalCalls}
               extraInfo={`${kpiData.completedCalls} completate`}
+              onClick={() => navigate("/admin/calls")}
             />
 
             <KPICard
@@ -291,6 +306,7 @@ const AdminKPI = () => {
               month={kpiData.purchasesMonth}
               total={kpiData.totalPurchases}
               extraInfo={`${kpiData.totalPranksFromPurchases} prank acquistati`}
+              onClick={() => navigate("/admin/purchases")}
             />
           </div>
         )}
