@@ -36,6 +36,7 @@ const AdminPromoCodes = lazy(() => import("./pages/admin/AdminPromoCodes"));
 const AdminContentChecker = lazy(() => import("./pages/admin/AdminContentChecker"));
 const AdminAbuseReports = lazy(() => import("./pages/admin/AdminAbuseReports"));
 const AdminKPI = lazy(() => import("./pages/admin/AdminKPI"));
+const AdminPurchases = lazy(() => import("./pages/admin/AdminPurchases"));
 
 const queryClient = new QueryClient();
 
@@ -82,6 +83,7 @@ const App = () => (
             <Route path="/admin/content-checker" element={<AdminContentChecker />} />
             <Route path="/admin/abuse-reports" element={<AdminAbuseReports />} />
             <Route path="/admin/kpi" element={<AdminKPI />} />
+            <Route path="/admin/purchases" element={<AdminPurchases />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
