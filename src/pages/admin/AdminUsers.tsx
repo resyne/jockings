@@ -5,10 +5,21 @@ import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Users, Shield, ShieldCheck, ShieldOff, Phone } from "lucide-react";
+import { ArrowLeft, Users, Shield, ShieldCheck, ShieldOff, Phone, Search, Trash2, X } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface UserProfile {
   id: string;
@@ -16,6 +27,7 @@ interface UserProfile {
   username: string | null;
   available_pranks: number | null;
   created_at: string;
+  phone_number: string | null;
   isAdmin?: boolean;
 }
 
@@ -24,7 +36,11 @@ const AdminUsers = () => {
   const { toast } = useToast();
   const { isAdmin, loading, userId: currentUserId } = useAdminCheck();
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<UserProfile[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!loading && !isAdmin) {
@@ -38,10 +54,25 @@ const AdminUsers = () => {
     }
   }, [isAdmin]);
 
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredUsers(users);
+    } else {
+      const query = searchQuery.toLowerCase();
+      setFilteredUsers(
+        users.filter(
+          (user) =>
+            user.username?.toLowerCase().includes(query) ||
+            user.user_id.toLowerCase().includes(query) ||
+            user.phone_number?.toLowerCase().includes(query)
+        )
+      );
+    }
+  }, [searchQuery, users]);
+
   const fetchUsers = async () => {
     setLoadingUsers(true);
     
-    // Fetch profiles
     const { data: profiles, error } = await supabase
       .from("profiles")
       .select("*")
@@ -53,7 +84,6 @@ const AdminUsers = () => {
       return;
     }
 
-    // Fetch admin roles
     const { data: adminRoles } = await supabase
       .from("user_roles")
       .select("user_id")
@@ -67,6 +97,7 @@ const AdminUsers = () => {
     }));
 
     setUsers(usersWithRoles);
+    setFilteredUsers(usersWithRoles);
     setLoadingUsers(false);
   };
 
@@ -117,6 +148,28 @@ const AdminUsers = () => {
     }
   };
 
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("delete-user", {
+        body: { user_id: userToDelete.user_id },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({ title: "Utente eliminato", description: `${userToDelete.username || "Utente"} è stato eliminato` });
+      setUserToDelete(null);
+      fetchUsers();
+    } catch (error: any) {
+      toast({ title: "Errore", description: error.message, variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -138,29 +191,57 @@ const AdminUsers = () => {
             <Users className="w-5 h-5 text-blue-500" />
             <h1 className="font-bold">Gestione Utenti</h1>
           </div>
+          <Badge variant="secondary" className="ml-auto">
+            {filteredUsers.length} / {users.length}
+          </Badge>
         </div>
       </header>
 
-      <main className="px-4 py-6 max-w-4xl mx-auto">
+      <main className="px-4 py-6 max-w-4xl mx-auto space-y-4">
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Cerca per nome, ID o telefono..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 pr-10"
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+              onClick={() => setSearchQuery("")}
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+
         {loadingUsers ? (
           <div className="text-center py-12 text-muted-foreground">
             Caricamento utenti...
           </div>
+        ) : filteredUsers.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            {searchQuery ? "Nessun utente trovato" : "Nessun utente"}
+          </div>
         ) : (
           <div className="space-y-3">
-            {users.map((user) => (
+            {filteredUsers.map((user) => (
               <Card key={user.id}>
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                         <span className="text-lg font-bold text-primary">
                           {user.username?.[0]?.toUpperCase() || "U"}
                         </span>
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{user.username || "Senza nome"}</p>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-medium truncate">{user.username || "Senza nome"}</p>
                           {user.isAdmin && (
                             <Badge variant="secondary" className="text-xs">
                               <Shield className="w-3 h-3 mr-1" />
@@ -171,17 +252,20 @@ const AdminUsers = () => {
                         <p className="text-xs text-muted-foreground">
                           Registrato il {format(new Date(user.created_at), "d MMM yyyy", { locale: it })}
                         </p>
+                        {user.phone_number && (
+                          <p className="text-xs text-muted-foreground truncate">{user.phone_number}</p>
+                        )}
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="flex items-center gap-1">
                         <Phone className="w-4 h-4 text-primary" />
                         <input
                           type="number"
                           value={user.available_pranks || 0}
                           onChange={(e) => updatePranks(user.user_id, parseInt(e.target.value) || 0)}
-                          className="w-16 text-center bg-muted rounded px-2 py-1 text-sm"
+                          className="w-14 text-center bg-muted rounded px-2 py-1 text-sm"
                         />
                       </div>
                       <Button
@@ -202,6 +286,15 @@ const AdminUsers = () => {
                           </>
                         )}
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => setUserToDelete(user)}
+                        disabled={user.user_id === currentUserId}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
@@ -210,6 +303,29 @@ const AdminUsers = () => {
           </div>
         )}
       </main>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminare questo utente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Stai per eliminare <strong>{userToDelete?.username || "Senza nome"}</strong>. 
+              Questa azione è irreversibile e cancellerà tutti i dati associati all'utente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Annulla</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUser}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Eliminazione..." : "Elimina"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
