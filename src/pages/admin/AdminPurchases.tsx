@@ -22,7 +22,7 @@ interface Purchase {
   session_id: string;
   pranks_added: number;
   created_at: string;
-  user_email?: string;
+  username?: string;
 }
 
 const AdminPurchases = () => {
@@ -50,23 +50,37 @@ const AdminPurchases = () => {
   const fetchPurchases = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("processed_payments")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(100);
+      const [paymentsRes, profilesRes] = await Promise.all([
+        supabase
+          .from("processed_payments")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(100),
+        supabase.from("profiles").select("user_id, username"),
+      ]);
 
-      if (error) throw error;
+      if (paymentsRes.error) throw paymentsRes.error;
+
+      // Create username lookup
+      const usernames: Record<string, string> = {};
+      profilesRes.data?.forEach(p => {
+        usernames[p.user_id] = p.username || "Senza nome";
+      });
 
       // Calculate stats
-      const totalPranks = data?.reduce((sum, p) => sum + (p.pranks_added || 0), 0) || 0;
+      const totalPranks = paymentsRes.data?.reduce((sum, p) => sum + (p.pranks_added || 0), 0) || 0;
 
       setStats({
-        totalPurchases: data?.length || 0,
+        totalPurchases: paymentsRes.data?.length || 0,
         totalPranks,
       });
 
-      setPurchases(data || []);
+      const purchasesWithUsernames = (paymentsRes.data || []).map(p => ({
+        ...p,
+        username: usernames[p.user_id] || "Sconosciuto",
+      }));
+
+      setPurchases(purchasesWithUsernames);
     } catch (error) {
       console.error("Error fetching purchases:", error);
     } finally {
@@ -146,7 +160,7 @@ const AdminPurchases = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Data</TableHead>
-                      <TableHead>User ID</TableHead>
+                      <TableHead>Utente</TableHead>
                       <TableHead>Session ID</TableHead>
                       <TableHead className="text-right">Prank</TableHead>
                     </TableRow>
@@ -157,13 +171,13 @@ const AdminPurchases = () => {
                         <TableCell>
                           {format(new Date(purchase.created_at), "dd MMM yyyy HH:mm", { locale: it })}
                         </TableCell>
-                        <TableCell className="font-mono text-xs">
-                          {purchase.user_id.slice(0, 8)}...
+                        <TableCell className="font-medium">
+                          {purchase.username}
                         </TableCell>
-                        <TableCell className="font-mono text-xs">
-                          {purchase.session_id.slice(0, 20)}...
+                        <TableCell className="font-mono text-xs text-muted-foreground">
+                          {purchase.session_id.slice(0, 16)}...
                         </TableCell>
-                        <TableCell className="text-right font-semibold">
+                        <TableCell className="text-right font-semibold text-green-500">
                           +{purchase.pranks_added}
                         </TableCell>
                       </TableRow>
