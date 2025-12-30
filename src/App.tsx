@@ -13,6 +13,7 @@ import Auth from "./pages/Auth";
 // Lazy load other pages
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const CreatePrank = lazy(() => import("./pages/CreatePrank"));
+const PrankDetail = lazy(() => import("./pages/PrankDetail"));
 const History = lazy(() => import("./pages/History"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Pricing = lazy(() => import("./pages/Pricing"));
@@ -61,6 +62,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/create-prank" element={<CreatePrank />} />
+            <Route path="/prank/:id" element={<PrankDetail />} />
             <Route path="/history" element={<History />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/pricing" element={<Pricing />} />
