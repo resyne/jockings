@@ -144,34 +144,34 @@ const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, onQuickCal
 
   return (
     <Card className="shadow-soft hover:shadow-glow/20 transition-all">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-3">
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex items-start justify-between gap-2 sm:gap-3">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold truncate">
+            <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
+              <h3 className="font-semibold truncate text-sm sm:text-base">
                 {prank.victim_first_name} {prank.victim_last_name}
               </h3>
-              <Badge variant="outline" className={`text-xs shrink-0 ${getStatusColor(prank.call_status)}`}>
+              <Badge variant="outline" className={`text-[10px] sm:text-xs shrink-0 px-1.5 sm:px-2 ${getStatusColor(prank.call_status)}`}>
                 {getStatusLabel(prank.call_status)}
               </Badge>
             </div>
-            <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-1.5 sm:mb-2">
               {prank.prank_theme}
             </p>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-muted-foreground">
               {isScheduled && prank.scheduled_at ? (
-                <span className="flex items-center gap-1 text-orange-600 font-medium">
-                  <CalendarClock className="w-3 h-3" />
-                  {format(new Date(prank.scheduled_at), "d MMM 'alle' HH:mm", { locale: it })}
+                <span className="flex items-center gap-0.5 sm:gap-1 text-orange-600 font-medium">
+                  <CalendarClock className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                  {format(new Date(prank.scheduled_at), "d MMM HH:mm", { locale: it })}
                 </span>
               ) : (
                 <>
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    {format(new Date(prank.created_at), "d MMM yyyy", { locale: it })}
+                  <span className="flex items-center gap-0.5 sm:gap-1">
+                    <Calendar className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                    {format(new Date(prank.created_at), "d MMM", { locale: it })}
                   </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
+                  <span className="flex items-center gap-0.5 sm:gap-1">
+                    <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                     {format(new Date(prank.created_at), "HH:mm")}
                   </span>
                 </>
@@ -179,47 +179,47 @@ const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, onQuickCal
             </div>
           </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1.5 sm:gap-2">
             {isScheduled && onCancel ? (
               <Button
                 size="icon"
                 variant="outline"
-                className="w-10 h-10 rounded-full border-red-500/30 text-red-600 hover:bg-red-500/10"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-red-500/30 text-red-600 hover:bg-red-500/10"
                 onClick={onCancel}
                 title="Annulla scherzo"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </Button>
             ) : prank.recording_url ? (
               <div className="flex gap-1">
                 <Button
                   size="icon"
                   variant="outline"
-                  className="w-10 h-10 rounded-full"
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full"
                   onClick={togglePlay}
                   disabled={isDownloading}
                   title={isPlaying ? "Pausa" : "Ascolta"}
                 >
                   {isDownloading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
                   ) : isPlaying ? (
-                    <Pause className="w-4 h-4" />
+                    <Pause className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   ) : (
-                    <Play className="w-4 h-4" />
+                    <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   )}
                 </Button>
                 <Button
                   size="icon"
                   variant="outline"
-                  className="w-10 h-10 rounded-full"
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full"
                   onClick={handleDownload}
                   disabled={isDownloading}
                   title="Scarica registrazione"
                 >
                   {isDownloading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
                   ) : (
-                    <Download className="w-4 h-4" />
+                    <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   )}
                 </Button>
               </div>
@@ -228,11 +228,11 @@ const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, onQuickCal
               <Button
                 size="icon"
                 variant="ghost"
-                className="w-10 h-10 rounded-full"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full"
                 onClick={onRepeat}
                 title="Ripeti scherzo"
               >
-                <RotateCcw className="w-4 h-4" />
+                <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </Button>
             )}
           </div>
@@ -248,7 +248,7 @@ const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, onQuickCal
         )}
 
         {showDetails && prank.recording_url && isPlaying && (
-          <div className="mt-3 pt-3 border-t">
+          <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t">
             <div className="h-1 bg-primary/20 rounded-full overflow-hidden">
               <div className="h-full bg-primary rounded-full animate-pulse" style={{ width: "60%" }} />
             </div>
@@ -257,28 +257,28 @@ const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, onQuickCal
 
         {/* View Transcript Button for completed calls */}
         {isCallCompleted && (
-          <div className="mt-3 pt-3 border-t border-border">
+          <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-border">
             <Button
               variant="ghost"
               size="sm"
-              className="w-full text-xs text-muted-foreground hover:text-foreground"
+              className="w-full text-[10px] sm:text-xs text-muted-foreground hover:text-foreground h-7 sm:h-8"
               onClick={() => setShowTranscript(!showTranscript)}
             >
               {showTranscript ? (
                 <>
-                  <ChevronUp className="w-4 h-4 mr-1" />
+                  <ChevronUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
                   Nascondi conversazione
                 </>
               ) : (
                 <>
-                  <MessageSquare className="w-4 h-4 mr-1" />
+                  <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
                   Vedi conversazione
                 </>
               )}
             </Button>
             
             {showTranscript && (
-              <div className="mt-3">
+              <div className="mt-2 sm:mt-3">
                 <LiveCallView
                   prankId={prank.id}
                   victimName={`${prank.victim_first_name} ${prank.victim_last_name}`}
@@ -291,15 +291,15 @@ const PrankCard = ({ prank, getStatusColor, getStatusLabel, onRepeat, onQuickCal
 
         {/* Quick Call Buttons */}
         {onQuickCall && !isScheduled && isCallCompleted && (
-          <div className="mt-3 pt-3 border-t border-border">
-            <p className="text-xs text-muted-foreground mb-2">Richiama veloce:</p>
-            <div className="flex flex-wrap gap-2">
+          <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-border">
+            <p className="text-[10px] sm:text-xs text-muted-foreground mb-1.5 sm:mb-2">Richiama veloce:</p>
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {QUICK_PROMPTS.map((prompt, index) => (
                 <Button
                   key={index}
                   variant="outline"
                   size="sm"
-                  className="text-xs h-7 px-2"
+                  className="text-[10px] sm:text-xs h-6 sm:h-7 px-1.5 sm:px-2"
                   onClick={() => onQuickCall(prompt.theme)}
                 >
                   {prompt.label}

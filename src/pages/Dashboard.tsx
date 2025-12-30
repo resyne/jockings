@@ -233,85 +233,84 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-20 sm:pb-24">
       {/* Header */}
-      <header className="sticky top-0 z-50 glass border-b border-border px-4 py-3">
+      <header className="sticky top-0 z-50 glass border-b border-border px-3 py-2 sm:px-4 sm:py-3">
         <div className="flex items-center justify-between max-w-lg mx-auto">
           <img 
             src={saranoWordmarkIcon} 
             alt="sarano.ai" 
-            className="h-8 object-contain animate-bounce-in hover:animate-icon-pulse cursor-pointer transition-transform hover:scale-105" 
+            className="h-6 sm:h-8 object-contain" 
           />
-          <Button variant="ghost" size="icon" onClick={handleLogout}>
-            <LogOut className="w-5 h-5" />
+          <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10" onClick={handleLogout}>
+            <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
           </Button>
         </div>
       </header>
 
-      <main className="px-4 py-6 max-w-lg mx-auto space-y-6">
+      <main className="px-3 py-4 sm:px-4 sm:py-6 max-w-lg mx-auto space-y-4 sm:space-y-6">
         {/* Welcome Card */}
         <Card className="bg-primary text-primary-foreground shadow-card animate-slide-up overflow-hidden relative">
-          {/* Floating decorative icon */}
           <img 
             src={saranoIcon} 
             alt="" 
-            className="absolute -right-2 -bottom-2 w-20 h-20 object-contain opacity-20 animate-float pointer-events-none" 
+            className="absolute -right-2 -bottom-2 w-16 h-16 sm:w-20 sm:h-20 object-contain opacity-20 animate-float pointer-events-none" 
           />
-          <CardHeader className="pb-2 relative z-10">
-            <CardTitle className="text-xl text-primary-foreground">Ciao, {profile?.username || "amico"}! 🎭</CardTitle>
-            <CardDescription className="text-primary-foreground/80">
+          <CardHeader className="p-3 sm:p-6 pb-1 sm:pb-2 relative z-10">
+            <CardTitle className="text-lg sm:text-xl text-primary-foreground">Ciao, {profile?.username || "amico"}! 🎭</CardTitle>
+            <CardDescription className="text-primary-foreground/80 text-xs sm:text-sm">
               Pronto a fare qualche scherzo?
             </CardDescription>
           </CardHeader>
-          <CardContent className="relative z-10">
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/pricing")}>
-              <Phone className="w-5 h-5" />
-              <span className="font-bold text-lg">{profile?.available_pranks || 0}</span>
-              <span className="text-sm opacity-80">prank disponibili</span>
+          <CardContent className="p-3 sm:p-6 pt-1 sm:pt-0 relative z-10">
+            <div className="flex items-center gap-1.5 sm:gap-2 cursor-pointer" onClick={() => navigate("/pricing")}>
+              <Phone className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="font-bold text-base sm:text-lg">{profile?.available_pranks || 0}</span>
+              <span className="text-xs sm:text-sm opacity-80">prank disponibili</span>
             </div>
           </CardContent>
         </Card>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3">
           <Button
             onClick={() => navigate("/create-prank")}
-            className="h-auto py-6 flex flex-col gap-2 bg-primary text-primary-foreground shadow-card hover:bg-primary/90 transition-all animate-slide-up"
+            className="h-auto py-4 sm:py-6 flex flex-col gap-1.5 sm:gap-2 bg-primary text-primary-foreground shadow-card hover:bg-primary/90 transition-all animate-slide-up"
             style={{ animationDelay: "0.1s" }}
           >
-            <Plus className="w-8 h-8" />
-            <span className="font-semibold">Nuovo Scherzo</span>
+            <Plus className="w-6 h-6 sm:w-8 sm:h-8" />
+            <span className="font-semibold text-sm sm:text-base">Nuovo Scherzo</span>
           </Button>
           <Button
             variant="outline"
             onClick={() => navigate("/history")}
-            className="h-auto py-6 flex flex-col gap-2 shadow-card hover:bg-muted transition-all animate-slide-up border-border"
+            className="h-auto py-4 sm:py-6 flex flex-col gap-1.5 sm:gap-2 shadow-card hover:bg-muted transition-all animate-slide-up border-border"
             style={{ animationDelay: "0.15s" }}
           >
-            <History className="w-8 h-8 text-primary" />
-            <span className="font-semibold text-foreground">Cronologia</span>
+            <History className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
+            <span className="font-semibold text-foreground text-sm sm:text-base">Cronologia</span>
           </Button>
         </div>
 
         {/* Victims */}
         {victims.length > 0 && (
           <section className="animate-slide-up" style={{ animationDelay: "0.2s" }}>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-bold text-foreground">Vittime</h2>
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <h2 className="text-base sm:text-lg font-bold text-foreground">Vittime</h2>
             </div>
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
+            <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-3 px-3 sm:-mx-4 sm:px-4">
               {victims.map((victim) => (
                 <Card 
                   key={victim.phone} 
-                  className="min-w-[120px] flex-shrink-0 cursor-pointer hover:bg-muted transition-all shadow-card"
+                  className="min-w-[100px] sm:min-w-[120px] flex-shrink-0 cursor-pointer hover:bg-muted transition-all shadow-card"
                   onClick={() => navigate(`/create-prank?phone=${encodeURIComponent(victim.phone)}&firstName=${encodeURIComponent(victim.firstName)}&lastName=${encodeURIComponent(victim.lastName)}`)}
                 >
-                  <CardContent className="p-4 text-center">
-                    <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-secondary/20 flex items-center justify-center">
-                      <User className="w-6 h-6 text-secondary" />
+                  <CardContent className="p-2.5 sm:p-4 text-center">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-1.5 sm:mb-2 rounded-full bg-secondary/20 flex items-center justify-center">
+                      <User className="w-5 h-5 sm:w-6 sm:h-6 text-secondary" />
                     </div>
-                    <p className="font-semibold text-sm text-foreground truncate">{victim.firstName}</p>
-                    <p className="text-xs text-muted-foreground truncate">{victim.lastName}</p>
+                    <p className="font-semibold text-xs sm:text-sm text-foreground truncate">{victim.firstName}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{victim.lastName}</p>
                   </CardContent>
                 </Card>
               ))}
@@ -321,31 +320,31 @@ const Dashboard = () => {
 
         {/* Recent Pranks */}
         <section className="animate-slide-up" style={{ animationDelay: "0.25s" }}>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-foreground">Scherzi Recenti</h2>
+          <div className="flex items-center justify-between mb-2 sm:mb-4">
+            <h2 className="text-base sm:text-lg font-bold text-foreground">Scherzi Recenti</h2>
           {pranks.length > 0 && (
-              <Button variant="link" className="text-secondary p-0" onClick={() => navigate("/history")}>
+              <Button variant="link" className="text-secondary p-0 text-xs sm:text-sm" onClick={() => navigate("/history")}>
                 Vedi tutti →
               </Button>
             )}
           </div>
 
           {pranks.length === 0 ? (
-            <Card className="text-center py-12 shadow-card">
-              <CardContent>
-                <Phone className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
-                <p className="text-muted-foreground">Nessuno scherzo ancora</p>
-                <p className="text-sm text-muted-foreground/70 mb-4">
+            <Card className="text-center py-8 sm:py-12 shadow-card">
+              <CardContent className="p-3 sm:p-6">
+                <Phone className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-muted-foreground/30 mb-3 sm:mb-4" />
+                <p className="text-muted-foreground text-sm sm:text-base">Nessuno scherzo ancora</p>
+                <p className="text-xs sm:text-sm text-muted-foreground/70 mb-3 sm:mb-4">
                   Crea il tuo primo scherzo telefonico AI!
                 </p>
-                <Button onClick={() => navigate("/create-prank")} className="bg-primary text-primary-foreground">
-                  <Plus className="w-4 h-4 mr-2" />
+                <Button onClick={() => navigate("/create-prank")} className="bg-primary text-primary-foreground text-sm sm:text-base">
+                  <Plus className="w-4 h-4 mr-1.5 sm:mr-2" />
                   Crea Scherzo
                 </Button>
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {pranks.slice(0, 5).map((prank, index) => (
                 <PrankCard
                   key={prank.id}
@@ -363,23 +362,23 @@ const Dashboard = () => {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 glass border-t border-border px-4 py-2 safe-area-bottom">
+      <nav className="fixed bottom-0 left-0 right-0 glass border-t border-border px-2 py-1.5 sm:px-4 sm:py-2 safe-area-bottom">
         <div className="flex justify-around max-w-lg mx-auto">
-          <Button variant="ghost" className="flex-col gap-1 h-auto py-2" onClick={() => navigate("/dashboard")}>
-            <Phone className="w-5 h-5 text-primary" />
-            <span className="text-xs text-primary">Home</span>
+          <Button variant="ghost" className="flex-col gap-0.5 sm:gap-1 h-auto py-1.5 sm:py-2 px-2 sm:px-4" onClick={() => navigate("/dashboard")}>
+            <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+            <span className="text-[10px] sm:text-xs text-primary">Home</span>
           </Button>
-          <Button variant="ghost" className="flex-col gap-1 h-auto py-2" onClick={() => navigate("/create-prank")}>
-            <Plus className="w-5 h-5 text-secondary" />
-            <span className="text-xs text-muted-foreground">Nuovo</span>
+          <Button variant="ghost" className="flex-col gap-0.5 sm:gap-1 h-auto py-1.5 sm:py-2 px-2 sm:px-4" onClick={() => navigate("/create-prank")}>
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-secondary" />
+            <span className="text-[10px] sm:text-xs text-muted-foreground">Nuovo</span>
           </Button>
-          <Button variant="ghost" className="flex-col gap-1 h-auto py-2" onClick={() => navigate("/history")}>
-            <History className="w-5 h-5 text-secondary" />
-            <span className="text-xs text-muted-foreground">Storia</span>
+          <Button variant="ghost" className="flex-col gap-0.5 sm:gap-1 h-auto py-1.5 sm:py-2 px-2 sm:px-4" onClick={() => navigate("/history")}>
+            <History className="w-4 h-4 sm:w-5 sm:h-5 text-secondary" />
+            <span className="text-[10px] sm:text-xs text-muted-foreground">Storia</span>
           </Button>
-          <Button variant="ghost" className="flex-col gap-1 h-auto py-2" onClick={() => navigate("/settings")}>
-            <Settings className="w-5 h-5 text-secondary" />
-            <span className="text-xs text-muted-foreground">Profilo</span>
+          <Button variant="ghost" className="flex-col gap-0.5 sm:gap-1 h-auto py-1.5 sm:py-2 px-2 sm:px-4" onClick={() => navigate("/settings")}>
+            <Settings className="w-4 h-4 sm:w-5 sm:h-5 text-secondary" />
+            <span className="text-[10px] sm:text-xs text-muted-foreground">Profilo</span>
           </Button>
         </div>
       </nav>
