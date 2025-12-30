@@ -593,7 +593,7 @@ const CreatePrank = () => {
       }
       
       setShowDisclaimerModal(false);
-      navigate("/dashboard");
+      navigate(`/prank/${pendingPrankId}`);
     } catch (error: any) {
       toast({ title: "Errore", description: error.message, variant: "destructive" });
     } finally {
