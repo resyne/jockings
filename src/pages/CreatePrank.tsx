@@ -616,52 +616,52 @@ const CreatePrank = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-8">
+    <div className="min-h-screen bg-background pb-6">
       {/* Header */}
-      <header className="sticky top-0 z-50 glass border-b px-4 py-3">
-        <div className="flex items-center gap-3 max-w-lg mx-auto">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
-            <ArrowLeft className="w-5 h-5" />
+      <header className="sticky top-0 z-50 glass border-b px-3 py-2 sm:px-4 sm:py-3">
+        <div className="flex items-center gap-2 sm:gap-3 max-w-lg mx-auto">
+          <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10" onClick={() => navigate("/dashboard")}>
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           </Button>
           <img 
             src={saranoIcon} 
             alt="sarano.ai" 
-            className="w-10 h-10 object-contain animate-bounce-in hover:animate-icon-wiggle cursor-pointer transition-transform" 
+            className="w-8 h-8 sm:w-10 sm:h-10 object-contain" 
           />
           <div>
-            <h1 className="font-bold">Crea Scherzo</h1>
-            <p className="text-xs text-muted-foreground">Step {currentStep} di 4</p>
+            <h1 className="font-bold text-sm sm:text-base">Crea Scherzo</h1>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">Step {currentStep} di 4</p>
           </div>
         </div>
       </header>
 
-      {/* Progress Bar */}
-      <div className="px-4 py-4 max-w-lg mx-auto">
-        <div className="flex items-center justify-between mb-2">
+      {/* Progress Bar - Compact on mobile */}
+      <div className="px-3 py-2 sm:px-4 sm:py-4 max-w-lg mx-auto">
+        <div className="flex items-center justify-between">
           {STEPS.map((step, index) => (
             <div key={step.id} className="flex items-center flex-1">
               <div className="flex flex-col items-center">
                 <div 
-                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                  className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
                     currentStep >= step.id 
                       ? "bg-primary text-primary-foreground" 
                       : "bg-muted text-muted-foreground"
                   }`}
                 >
                   {currentStep > step.id ? (
-                    <Check className="w-5 h-5" />
+                    <Check className="w-4 h-4 sm:w-5 sm:h-5" />
                   ) : (
-                    <step.icon className="w-5 h-5" />
+                    <step.icon className="w-4 h-4 sm:w-5 sm:h-5" />
                   )}
                 </div>
-                <span className={`text-xs mt-1 font-medium ${
+                <span className={`text-[10px] sm:text-xs mt-0.5 sm:mt-1 font-medium ${
                   currentStep >= step.id ? "text-foreground" : "text-muted-foreground"
                 }`}>
                   {step.title}
                 </span>
               </div>
               {index < STEPS.length - 1 && (
-                <div className={`flex-1 h-1 mx-2 rounded-full transition-all duration-300 ${
+                <div className={`flex-1 h-0.5 sm:h-1 mx-1 sm:mx-2 rounded-full transition-all duration-300 ${
                   currentStep > step.id ? "bg-primary" : "bg-muted"
                 }`} />
               )}
@@ -670,48 +670,48 @@ const CreatePrank = () => {
         </div>
       </div>
 
-      <main className="px-4 max-w-lg mx-auto">
+      <main className="px-3 sm:px-4 max-w-lg mx-auto">
         {/* Step 1: Victim Info */}
         {currentStep === 1 && (
           <Card className="animate-fade-in">
-            <CardHeader className="pb-3">
+            <CardHeader className="p-3 sm:p-6 pb-2 sm:pb-3">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <User className="w-5 h-5 text-primary" />
+                <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10">
+                  <User className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">Chi vuoi chiamare?</CardTitle>
-                  <CardDescription>Inserisci i dati della vittima</CardDescription>
+                  <CardTitle className="text-base sm:text-lg">Chi vuoi chiamare?</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">Inserisci i dati della vittima</CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">Nome</Label>
+            <CardContent className="p-3 sm:p-6 pt-0 space-y-3 sm:space-y-4">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                <div className="space-y-1 sm:space-y-2">
+                  <Label htmlFor="firstName" className="text-xs sm:text-sm">Nome</Label>
                   <Input
                     id="firstName"
                     placeholder="Mario"
                     value={victimFirstName}
                     onChange={(e) => setVictimFirstName(e.target.value)}
-                    className="h-12"
+                    className="h-10 sm:h-12 text-sm"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Cognome <span className="text-muted-foreground text-xs font-normal">(opzionale)</span></Label>
+                <div className="space-y-1 sm:space-y-2">
+                  <Label htmlFor="lastName" className="text-xs sm:text-sm">Cognome <span className="text-muted-foreground text-[10px] sm:text-xs font-normal">(opz.)</span></Label>
                   <Input
                     id="lastName"
                     placeholder="Rossi"
                     value={victimLastName}
                     onChange={(e) => setVictimLastName(e.target.value)}
-                    className="h-12"
+                    className="h-10 sm:h-12 text-sm"
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>Sesso Vittima</Label>
+              <div className="space-y-1 sm:space-y-2">
+                <Label className="text-xs sm:text-sm">Sesso Vittima</Label>
                 <Select value={victimGender} onValueChange={setVictimGender}>
-                  <SelectTrigger className="h-12">
+                  <SelectTrigger className="h-10 sm:h-12 text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -719,13 +719,13 @@ const CreatePrank = () => {
                     <SelectItem value="female">Femmina 👩</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground">Importante per l'italiano (es. "caro" vs "cara")</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Per l'italiano (es. "caro" vs "cara")</p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Numero di Telefono</Label>
-                <div className="flex gap-2">
+              <div className="space-y-1 sm:space-y-2">
+                <Label htmlFor="phone" className="text-xs sm:text-sm">Numero di Telefono</Label>
+                <div className="flex gap-1.5 sm:gap-2">
                   <Select value={phoneCountryCode} onValueChange={setPhoneCountryCode}>
-                    <SelectTrigger className="w-[130px] h-12">
+                    <SelectTrigger className="w-[100px] sm:w-[130px] h-10 sm:h-12 text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -737,34 +737,34 @@ const CreatePrank = () => {
                     </SelectContent>
                   </Select>
                   <div className="relative flex-1">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Phone className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
                     <Input
                       id="phone"
                       type="tel"
                       placeholder="333 1234567"
                       value={victimPhone}
                       onChange={(e) => setVictimPhone(e.target.value)}
-                      className="pl-10 h-12"
+                      className="pl-8 sm:pl-10 h-10 sm:h-12 text-sm"
                     />
                   </div>
                 </div>
               </div>
               {/* Trial call warning */}
               {profile && profile.available_pranks === 0 && !profile.trial_prank_used && profile.phone_verified && (
-                <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/30">
-                  <p className="text-sm text-orange-500 font-medium">
-                    🎁 Hai 1 prank gratuito! Puoi usarlo solo sul tuo numero: {profile.phone_number}
+                <div className="p-2 sm:p-3 rounded-lg bg-orange-500/10 border border-orange-500/30">
+                  <p className="text-xs sm:text-sm text-orange-500 font-medium">
+                    🎁 Prank gratuito! Solo sul tuo numero: {profile.phone_number}
                   </p>
                 </div>
               )}
               {profile && profile.available_pranks === 0 && !profile.trial_prank_used && !profile.phone_verified && (
-                <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
-                  <p className="text-sm text-blue-500 font-medium">
-                    📱 Verifica il tuo numero per ottenere 1 prank gratuito!
+                <div className="p-2 sm:p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                  <p className="text-xs sm:text-sm text-blue-500 font-medium">
+                    📱 Verifica il numero per 1 prank gratuito!
                   </p>
                   <Button 
                     variant="link" 
-                    className="text-blue-500 p-0 h-auto text-sm"
+                    className="text-blue-500 p-0 h-auto text-xs sm:text-sm"
                     onClick={() => navigate("/verify-phone")}
                   >
                     Verifica ora →
@@ -778,26 +778,26 @@ const CreatePrank = () => {
         {/* Step 2: Prank Theme */}
         {currentStep === 2 && (
           <Card className="animate-fade-in">
-            <CardHeader className="pb-3">
+            <CardHeader className="p-3 sm:p-6 pb-2 sm:pb-3">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-secondary/10">
-                  <Mic className="w-5 h-5 text-secondary" />
+                <div className="p-1.5 sm:p-2 rounded-lg bg-secondary/10">
+                  <Mic className="w-4 h-4 sm:w-5 sm:h-5 text-secondary" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">Cosa vuoi far dire all'AI?</CardTitle>
-                  <CardDescription>Descrivi il tema dello scherzo</CardDescription>
+                  <CardTitle className="text-base sm:text-lg">Cosa vuoi far dire all'AI?</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">Descrivi il tema dello scherzo</CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <Label>Scegli un preset o scrivi il tuo</Label>
-                <div className="flex flex-wrap gap-2">
+            <CardContent className="p-3 sm:p-6 pt-0 space-y-3 sm:space-y-4">
+              <div className="space-y-2 sm:space-y-3">
+                <Label className="text-xs sm:text-sm">Scegli un preset o scrivi il tuo</Label>
+                <div className="flex flex-wrap gap-1.5 sm:gap-2">
                   <Button
                     type="button"
                     variant={selectedPreset === "custom" ? "default" : "outline"}
                     size="sm"
-                    className={`text-xs ${selectedPreset === "custom" ? "gradient-primary" : ""}`}
+                    className={`text-[10px] sm:text-xs h-7 sm:h-8 px-2 sm:px-3 ${selectedPreset === "custom" ? "gradient-primary" : ""}`}
                     onClick={() => handlePresetChange("custom")}
                   >
                     ✏️ Personalizzato
@@ -808,7 +808,7 @@ const CreatePrank = () => {
                       type="button"
                       variant={selectedPreset === preset.id ? "default" : "outline"}
                       size="sm"
-                      className={`text-xs ${selectedPreset === preset.id ? "gradient-primary" : ""}`}
+                      className={`text-[10px] sm:text-xs h-7 sm:h-8 px-2 sm:px-3 ${selectedPreset === preset.id ? "gradient-primary" : ""}`}
                       onClick={() => handlePresetChange(preset.id)}
                     >
                       {preset.icon} {preset.title}
@@ -820,39 +820,39 @@ const CreatePrank = () => {
                   value={prankTheme}
                   onChange={(e) => {
                     setPrankTheme(e.target.value);
-                    setContentBlocked(null); // Reset block when content changes
+                    setContentBlocked(null);
                     if (selectedPreset !== "custom") {
                       setSelectedPreset("custom");
                     }
                   }}
-                  className="min-h-[120px]"
+                  className="min-h-[90px] sm:min-h-[120px] text-sm"
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Dettaglio Reale (opzionale) 💣</Label>
+              <div className="space-y-1 sm:space-y-2">
+                <Label className="text-xs sm:text-sm">Dettaglio Reale (opzionale) 💣</Label>
                 <Textarea
-                  placeholder="Es: lavora come idraulico, ha appena comprato una macchina nuova, suo figlio si chiama Luca..."
+                  placeholder="Es: lavora come idraulico, ha una macchina nuova..."
                   value={realDetail}
                   onChange={(e) => {
                     setRealDetail(e.target.value);
-                    setContentBlocked(null); // Reset block when content changes
+                    setContentBlocked(null);
                   }}
-                  className="min-h-[80px]"
+                  className="min-h-[60px] sm:min-h-[80px] text-sm"
                 />
-                <p className="text-xs text-muted-foreground">Un dettaglio vero sulla vittima rende lo scherzo molto più credibile!</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Un dettaglio vero rende lo scherzo più credibile!</p>
               </div>
 
               {/* Content Block Alert */}
               {contentBlocked && (
-                <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/30 space-y-2 animate-fade-in">
-                  <div className="flex items-start gap-3">
-                    <ShieldAlert className="w-6 h-6 text-destructive shrink-0 mt-0.5" />
+                <div className="p-2.5 sm:p-4 rounded-xl bg-destructive/10 border border-destructive/30 space-y-1.5 sm:space-y-2 animate-fade-in">
+                  <div className="flex items-start gap-2 sm:gap-3">
+                    <ShieldAlert className="w-5 h-5 sm:w-6 sm:h-6 text-destructive shrink-0 mt-0.5" />
                     <div className="space-y-1">
-                      <h4 className="font-semibold text-destructive">Scherzo non consentito</h4>
-                      <p className="text-sm text-destructive/90">{contentBlocked.message}</p>
+                      <h4 className="font-semibold text-destructive text-sm sm:text-base">Scherzo non consentito</h4>
+                      <p className="text-xs sm:text-sm text-destructive/90">{contentBlocked.message}</p>
                       {contentBlocked.category && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-destructive/20 text-destructive text-xs font-medium mt-1">
-                          <AlertTriangle className="w-3 h-3" />
+                        <span className="inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full bg-destructive/20 text-destructive text-[10px] sm:text-xs font-medium mt-1">
+                          <AlertTriangle className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                           {contentBlocked.category === 'TRAUMA' && 'Eventi traumatici'}
                           {contentBlocked.category === 'SCAM' && 'Potenziale truffa'}
                           {contentBlocked.category === 'THREATS' && 'Minacce/Intimidazioni'}
@@ -862,8 +862,8 @@ const CreatePrank = () => {
                       )}
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground ml-9">
-                    Modifica il contenuto dello scherzo per continuare. Gli scherzi devono essere divertenti e innocui.
+                  <p className="text-[10px] sm:text-xs text-muted-foreground ml-7 sm:ml-9">
+                    Modifica il contenuto per continuare.
                   </p>
                 </div>
               )}
@@ -874,28 +874,27 @@ const CreatePrank = () => {
         {/* Step 3: Voice Selection */}
         {currentStep === 3 && (
           <Card className="animate-fade-in">
-            <CardHeader className="pb-3">
+            <CardHeader className="p-3 sm:p-6 pb-2 sm:pb-3">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-accent/10">
-                  <Globe className="w-5 h-5 text-accent" />
+                <div className="p-1.5 sm:p-2 rounded-lg bg-accent/10">
+                  <Globe className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">Scegli la voce</CardTitle>
-                  <CardDescription>Chi farà la chiamata?</CardDescription>
+                  <CardTitle className="text-base sm:text-lg">Scegli la voce</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">Chi farà la chiamata?</CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="p-3 sm:p-6 pt-0 space-y-3 sm:space-y-6">
               <div className="flex items-center gap-2 pb-2 border-b border-border">
-                <span className="text-lg">🇮🇹</span>
-                <span className="font-medium text-foreground">Italiano</span>
-                <span className="text-xs text-muted-foreground">(predefinito)</span>
+                <span className="text-base sm:text-lg">🇮🇹</span>
+                <span className="font-medium text-foreground text-sm sm:text-base">Italiano</span>
               </div>
 
-              <div className="space-y-2">
-                <Label>Tono Personalità</Label>
+              <div className="space-y-1 sm:space-y-2">
+                <Label className="text-xs sm:text-sm">Tono Personalità</Label>
                 <Select value={personalityTone} onValueChange={setPersonalityTone}>
-                  <SelectTrigger className="h-12">
+                  <SelectTrigger className="h-10 sm:h-12 text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -907,36 +906,36 @@ const CreatePrank = () => {
               </div>
               
               {maleVoices.length > 0 && (
-                <div className="space-y-3">
-                  <Label className="text-muted-foreground">👨 Voci Maschili</Label>
-                  <div className="grid gap-3">
+                <div className="space-y-2 sm:space-y-3">
+                  <Label className="text-muted-foreground text-xs sm:text-sm">👨 Voci Maschili</Label>
+                  <div className="grid gap-2 sm:gap-3">
                     {maleVoices.map((voice) => (
                       <div
                         key={voice.id}
                         onClick={() => setSelectedVoiceId(voice.id)}
-                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                        className={`p-2.5 sm:p-4 rounded-lg sm:rounded-xl border-2 cursor-pointer transition-all duration-200 ${
                           selectedVoiceId === voice.id
                             ? "border-primary bg-primary/10 shadow-md"
                             : "border-border bg-card hover:border-primary/50 hover:bg-accent/5"
                         }`}
                       >
-                        <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center justify-between gap-2 sm:gap-3">
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-foreground">
+                            <h4 className="font-semibold text-foreground text-sm sm:text-base">
                               {voice.voice_name || "Voce senza nome"}
                             </h4>
                             {voice.description && (
-                              <p className="text-sm text-muted-foreground mt-0.5 truncate">
+                              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 truncate">
                                 {voice.description}
                               </p>
                             )}
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5 sm:gap-2">
                             <Button
                               type="button"
                               variant="ghost"
                               size="icon"
-                              className="h-9 w-9 shrink-0"
+                              className="h-8 w-8 sm:h-9 sm:w-9 shrink-0"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 playVoicePreview(voice);
@@ -944,20 +943,20 @@ const CreatePrank = () => {
                               disabled={loadingPreviewId === voice.id}
                             >
                               {loadingPreviewId === voice.id ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
                               ) : playingVoiceId === voice.id ? (
-                                <Square className="w-4 h-4 text-primary" />
+                                <Square className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
                               ) : (
-                                <Play className="w-4 h-4" />
+                                <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                               )}
                             </Button>
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
+                            <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
                               selectedVoiceId === voice.id
                                 ? "border-primary bg-primary"
                                 : "border-muted-foreground"
                             }`}>
                               {selectedVoiceId === voice.id && (
-                                <div className="w-2 h-2 rounded-full bg-primary-foreground" />
+                                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary-foreground" />
                               )}
                             </div>
                           </div>
@@ -969,36 +968,36 @@ const CreatePrank = () => {
               )}
 
               {femaleVoices.length > 0 && (
-                <div className="space-y-3">
-                  <Label className="text-muted-foreground">👩 Voci Femminili</Label>
-                  <div className="grid gap-3">
+                <div className="space-y-2 sm:space-y-3">
+                  <Label className="text-muted-foreground text-xs sm:text-sm">👩 Voci Femminili</Label>
+                  <div className="grid gap-2 sm:gap-3">
                     {femaleVoices.map((voice) => (
                       <div
                         key={voice.id}
                         onClick={() => setSelectedVoiceId(voice.id)}
-                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                        className={`p-2.5 sm:p-4 rounded-lg sm:rounded-xl border-2 cursor-pointer transition-all duration-200 ${
                           selectedVoiceId === voice.id
                             ? "border-primary bg-primary/10 shadow-md"
                             : "border-border bg-card hover:border-primary/50 hover:bg-accent/5"
                         }`}
                       >
-                        <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center justify-between gap-2 sm:gap-3">
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-foreground">
+                            <h4 className="font-semibold text-foreground text-sm sm:text-base">
                               {voice.voice_name || "Voce senza nome"}
                             </h4>
                             {voice.description && (
-                              <p className="text-sm text-muted-foreground mt-0.5 truncate">
+                              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 truncate">
                                 {voice.description}
                               </p>
                             )}
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5 sm:gap-2">
                             <Button
                               type="button"
                               variant="ghost"
                               size="icon"
-                              className="h-9 w-9 shrink-0"
+                              className="h-8 w-8 sm:h-9 sm:w-9 shrink-0"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 playVoicePreview(voice);
@@ -1006,20 +1005,20 @@ const CreatePrank = () => {
                               disabled={loadingPreviewId === voice.id}
                             >
                               {loadingPreviewId === voice.id ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
                               ) : playingVoiceId === voice.id ? (
-                                <Square className="w-4 h-4 text-primary" />
+                                <Square className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
                               ) : (
-                                <Play className="w-4 h-4" />
+                                <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                               )}
                             </Button>
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
+                            <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
                               selectedVoiceId === voice.id
                                 ? "border-primary bg-primary"
                                 : "border-muted-foreground"
                             }`}>
                               {selectedVoiceId === voice.id && (
-                                <div className="w-2 h-2 rounded-full bg-primary-foreground" />
+                                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary-foreground" />
                               )}
                             </div>
                           </div>
@@ -1031,7 +1030,7 @@ const CreatePrank = () => {
               )}
 
               {allVoices.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">
+                <p className="text-xs sm:text-sm text-muted-foreground text-center py-3 sm:py-4">
                   Nessuna voce configurata
                 </p>
               )}
@@ -1041,7 +1040,7 @@ const CreatePrank = () => {
 
         {/* Step 4: Summary */}
         {currentStep === 4 && (
-          <div className="space-y-4 animate-fade-in">
+          <div className="space-y-3 sm:space-y-4 animate-fade-in">
             {/* Prank availability indicator */}
             {profile && (
               <Card className={`border-2 ${
@@ -1051,41 +1050,41 @@ const CreatePrank = () => {
                     : "border-green-500/50 bg-green-500/5"
                   : "border-destructive/50 bg-destructive/5"
               }`}>
-                <CardContent className="pt-4 pb-4">
+                <CardContent className="p-3 sm:p-4">
                   {canMakePrank().allowed ? (
                     canMakePrank().isTrialCall ? (
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-orange-500/20">
-                          <Phone className="w-5 h-5 text-orange-500" />
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="p-1.5 sm:p-2 rounded-lg bg-orange-500/20">
+                          <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
                         </div>
                         <div>
-                          <p className="font-semibold text-orange-500">Prank Gratuito</p>
-                          <p className="text-xs text-muted-foreground">
-                            Puoi fare un prank gratuito solo al tuo numero verificato
+                          <p className="font-semibold text-orange-500 text-sm sm:text-base">Prank Gratuito</p>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">
+                            Solo al tuo numero verificato
                           </p>
                         </div>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-green-500/20">
-                          <Phone className="w-5 h-5 text-green-500" />
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="p-1.5 sm:p-2 rounded-lg bg-green-500/20">
+                          <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
                         </div>
                         <div>
-                          <p className="font-semibold text-green-500">Prank Disponibili: {profile.available_pranks}</p>
-                          <p className="text-xs text-muted-foreground">
-                            Dopo questo scherzo ne avrai {profile.available_pranks - 1}
+                          <p className="font-semibold text-green-500 text-sm sm:text-base">Prank: {profile.available_pranks}</p>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground">
+                            Dopo: {profile.available_pranks - 1} rimasti
                           </p>
                         </div>
                       </div>
                     )
                   ) : (
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-destructive/20">
-                        <Phone className="w-5 h-5 text-destructive" />
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <div className="p-1.5 sm:p-2 rounded-lg bg-destructive/20">
+                        <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-destructive" />
                       </div>
                       <div>
-                        <p className="font-semibold text-destructive">Nessun Prank Disponibile</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="font-semibold text-destructive text-sm sm:text-base">Nessun Prank</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">
                           {canMakePrank().reason}
                         </p>
                       </div>
@@ -1096,87 +1095,87 @@ const CreatePrank = () => {
             )}
 
             <Card>
-              <CardHeader className="pb-3">
+              <CardHeader className="p-3 sm:p-6 pb-2 sm:pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-green-500/10">
-                    <Check className="w-5 h-5 text-green-500" />
+                  <div className="p-1.5 sm:p-2 rounded-lg bg-green-500/10">
+                    <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Riepilogo</CardTitle>
-                    <CardDescription>Controlla prima di avviare</CardDescription>
+                    <CardTitle className="text-base sm:text-lg">Riepilogo</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm">Controlla prima di avviare</CardDescription>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between py-2 border-b border-border">
-                    <span className="text-muted-foreground">Vittima</span>
-                    <span className="font-medium">{victimFirstName} {victimLastName}</span>
+              <CardContent className="p-3 sm:p-6 pt-0 space-y-0">
+                <div className="divide-y divide-border">
+                  <div className="flex items-center justify-between py-1.5 sm:py-2">
+                    <span className="text-muted-foreground text-xs sm:text-sm">Vittima</span>
+                    <span className="font-medium text-sm sm:text-base">{victimFirstName} {victimLastName}</span>
                   </div>
-                  <div className="flex items-center justify-between py-2 border-b border-border">
-                    <span className="text-muted-foreground">Telefono</span>
-                    <span className="font-medium font-mono">{selectedCountry?.flag} {phoneCountryCode} {victimPhone}</span>
+                  <div className="flex items-center justify-between py-1.5 sm:py-2">
+                    <span className="text-muted-foreground text-xs sm:text-sm">Telefono</span>
+                    <span className="font-medium font-mono text-xs sm:text-sm">{selectedCountry?.flag} {phoneCountryCode} {victimPhone}</span>
                   </div>
-                  <div className="flex items-center justify-between py-2 border-b border-border">
-                    <span className="text-muted-foreground">Sesso</span>
-                    <span className="font-medium">{victimGender === "male" ? "👨 Maschio" : "👩 Femmina"}</span>
+                  <div className="flex items-center justify-between py-1.5 sm:py-2">
+                    <span className="text-muted-foreground text-xs sm:text-sm">Sesso</span>
+                    <span className="font-medium text-sm sm:text-base">{victimGender === "male" ? "👨 M" : "👩 F"}</span>
                   </div>
-                  <div className="py-2 border-b border-border">
-                    <span className="text-muted-foreground">Tema</span>
-                    <p className="font-medium mt-1 text-sm">{prankTheme}</p>
+                  <div className="py-1.5 sm:py-2">
+                    <span className="text-muted-foreground text-xs sm:text-sm">Tema</span>
+                    <p className="font-medium mt-0.5 text-xs sm:text-sm line-clamp-2">{prankTheme}</p>
                   </div>
                   {realDetail && (
-                    <div className="py-2 border-b border-border">
-                      <span className="text-muted-foreground">Dettaglio reale</span>
-                      <p className="font-medium mt-1 text-sm">{realDetail}</p>
+                    <div className="py-1.5 sm:py-2">
+                      <span className="text-muted-foreground text-xs sm:text-sm">Dettaglio</span>
+                      <p className="font-medium mt-0.5 text-xs sm:text-sm line-clamp-2">{realDetail}</p>
                     </div>
                   )}
-                  <div className="flex items-center justify-between py-2 border-b border-border">
-                    <span className="text-muted-foreground">Voce</span>
-                    <span className="font-medium">{selectedVoice?.voice_name || "Non selezionata"}</span>
+                  <div className="flex items-center justify-between py-1.5 sm:py-2">
+                    <span className="text-muted-foreground text-xs sm:text-sm">Voce</span>
+                    <span className="font-medium text-sm sm:text-base">{selectedVoice?.voice_name || "-"}</span>
                   </div>
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-muted-foreground">Tono</span>
-                    <span className="font-medium">{TONES.find(t => t.value === personalityTone)?.label}</span>
+                  <div className="flex items-center justify-between py-1.5 sm:py-2">
+                    <span className="text-muted-foreground text-xs sm:text-sm">Tono</span>
+                    <span className="font-medium text-sm sm:text-base">{TONES.find(t => t.value === personalityTone)?.label}</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardContent className="pt-6 space-y-4">
-                <div className="flex items-center gap-2 py-2 text-muted-foreground">
-                  <Mic className="w-4 h-4" />
-                  <p className="text-sm">A termine della chiamata sarà disponibile la registrazione</p>
+              <CardContent className="p-3 sm:p-6 space-y-3 sm:space-y-4">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Mic className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <p className="text-[10px] sm:text-sm">Registrazione disponibile a fine chiamata</p>
                 </div>
                 
                 {/* SMS Reveal Option */}
                 <div 
-                  className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                  className={`flex items-start gap-2 sm:gap-3 p-2.5 sm:p-4 rounded-lg sm:rounded-xl border-2 cursor-pointer transition-all ${
                     sendRevealSms 
                       ? "border-primary bg-primary/10" 
                       : "border-border bg-card hover:border-primary/50"
                   }`}
                   onClick={() => setSendRevealSms(!sendRevealSms)}
                 >
-                  <div className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                  <div className={`mt-0.5 w-4 h-4 sm:w-5 sm:h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${
                     sendRevealSms 
                       ? "border-primary bg-primary" 
                       : "border-muted-foreground"
                   }`}>
-                    {sendRevealSms && <Check className="w-3 h-3 text-primary-foreground" />}
+                    {sendRevealSms && <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-primary-foreground" />}
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="w-4 h-4 text-primary" />
-                      <span className="font-medium">Invia SMS rivelatore 📱</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />
+                      <span className="font-medium text-sm sm:text-base">SMS rivelatore 📱</span>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Dopo lo scherzo, la vittima riceverà un SMS ironico che rivela che era uno scherzo fatto da te tramite sarano.ai
+                    <p className="text-[10px] sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
+                      La vittima saprà che era uno scherzo tuo
                     </p>
                     {!profile?.phone_verified && (
-                      <p className="text-xs text-orange-500 mt-2">
-                        ⚠️ Devi verificare il tuo numero per usare questa funzione
+                      <p className="text-[10px] sm:text-xs text-orange-500 mt-1 sm:mt-2">
+                        ⚠️ Verifica il numero per usare questa funzione
                       </p>
                     )}
                   </div>
@@ -1187,15 +1186,15 @@ const CreatePrank = () => {
         )}
 
         {/* Navigation Buttons */}
-        <div className="flex gap-3 mt-6">
+        <div className="flex gap-2 sm:gap-3 mt-4 sm:mt-6">
           {currentStep > 1 && (
             <Button
               type="button"
               variant="outline"
-              className="flex-1 h-14"
+              className="flex-1 h-11 sm:h-14 text-sm sm:text-base"
               onClick={handleBack}
             >
-              <ArrowLeft className="w-5 h-5 mr-2" />
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2" />
               Indietro
             </Button>
           )}
@@ -1203,38 +1202,41 @@ const CreatePrank = () => {
           {currentStep < 4 ? (
             <Button
               type="button"
-              className="flex-1 h-14 gradient-primary"
+              className="flex-1 h-11 sm:h-14 gradient-primary text-sm sm:text-base"
               onClick={handleNext}
               disabled={contentCheckLoading || !!contentBlocked}
             >
               {contentCheckLoading ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Verifica contenuto...
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                  <span className="hidden sm:inline">Verifica contenuto...</span>
+                  <span className="sm:hidden">Verifica...</span>
                 </div>
               ) : (
                 <>
                   Avanti
-                  <ArrowRight className="w-5 h-5 ml-2" />
+                  <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-1.5 sm:ml-2" />
                 </>
               )}
             </Button>
           ) : (
             <Button
               type="button"
-              className="flex-1 h-14 gradient-primary shadow-glow"
+              className="flex-1 h-11 sm:h-14 gradient-primary shadow-glow text-sm sm:text-base"
               onClick={handleSubmit}
               disabled={loading || !canMakePrank().allowed}
             >
               {loading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Preparando...
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span className="hidden sm:inline">Preparando...</span>
+                  <span className="sm:hidden">Preparo...</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
-                  <Send className="w-5 h-5" />
-                  Avvia Scherzo
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="hidden sm:inline">Avvia Scherzo</span>
+                  <span className="sm:hidden">Avvia</span>
                 </div>
               )}
             </Button>
