@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Gift, Heart, Trophy } from "lucide-react";
 import saranoWordmarkIcon from "@/assets/sarano-wordmark-icon.png";
@@ -7,6 +8,24 @@ const Challenge = () => {
   const navigate = useNavigate();
 
   return (
+    <>
+      <Helmet>
+        <title>Sarano Challenge - Scherzi telefonici con AI | sarano.ai</title>
+        <meta name="description" content="Partecipa alla Sarano Challenge! Fai uno scherzo con l'AI, registralo e vinci 100€. Usa il codice PRANK10 per 3 scherzi gratis." />
+        <link rel="canonical" href="https://www.sarano.ai/challenge" />
+        
+        {/* Open Graph */}
+        <meta property="og:url" content="https://www.sarano.ai/challenge" />
+        <meta property="og:title" content="Sarano Challenge - Vinci 100€ con uno scherzo!" />
+        <meta property="og:description" content="Fai uno scherzo con l'AI, registralo e partecipa. Usa PRANK10 per 3 scherzi gratis." />
+        <meta property="og:image" content="https://www.sarano.ai/og-challenge.png" />
+        
+        {/* Twitter */}
+        <meta name="twitter:url" content="https://www.sarano.ai/challenge" />
+        <meta name="twitter:title" content="Sarano Challenge - Vinci 100€ con uno scherzo!" />
+        <meta name="twitter:description" content="Fai uno scherzo con l'AI, registralo e partecipa. Usa PRANK10 per 3 scherzi gratis." />
+        <meta name="twitter:image" content="https://www.sarano.ai/og-challenge.png" />
+      </Helmet>
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="p-4 flex justify-center">
@@ -160,6 +179,7 @@ const Challenge = () => {
         </div>
       </footer>
     </div>
+    </>
   );
 };
 
