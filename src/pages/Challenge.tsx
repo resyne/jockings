@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Gift, Sparkles, Trophy, Heart } from "lucide-react";
+import { Gift, Heart, Trophy } from "lucide-react";
 import saranoWordmarkIcon from "@/assets/sarano-wordmark-icon.png";
 
 const Challenge = () => {
@@ -17,19 +17,25 @@ const Challenge = () => {
         />
       </header>
 
-      <main className="flex-1 px-4 md:px-6 pb-12">
+      <main className="flex-1 px-4 md:px-6 pb-32 md:pb-12">
         {/* HERO */}
         <section className="text-center py-12 md:py-16">
           <h1 className="text-4xl md:text-6xl font-black text-foreground mb-4 tracking-tight">
             SARANO CHALLENGE
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground mb-8">
+          <p className="text-lg md:text-xl text-muted-foreground mb-3">
             Scherzi telefonici con l'intelligenza artificiale.
+          </p>
+          <p className="text-base text-foreground/80 mb-8">
+            Registralo come vuoi. Screen, reaction o entrambi.
           </p>
 
           {/* Promo Code Block */}
-          <div className="inline-block bg-primary/10 border-2 border-primary rounded-2xl px-6 py-4 mb-8">
-            <p className="text-sm text-muted-foreground mb-1">Codice promo:</p>
+          <div className="inline-block bg-primary/10 border-2 border-primary rounded-2xl px-6 py-5 mb-8">
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-2">
+              <Gift className="w-4 h-4" />
+              <span>Codice per partecipare</span>
+            </div>
             <p className="text-2xl md:text-3xl font-bold text-primary tracking-widest">PRANK10</p>
             <p className="text-base text-foreground mt-2 font-medium">→ 3 scherzi gratis</p>
           </div>
@@ -47,28 +53,28 @@ const Challenge = () => {
 
         {/* COME FUNZIONA */}
         <section className="max-w-xl mx-auto py-10">
-          <h2 className="text-2xl md:text-3xl font-bold text-center text-foreground mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold text-center text-foreground mb-10">
             Come partecipare
           </h2>
 
-          <ol className="space-y-4 text-left">
+          <ol className="space-y-6">
             {[
               "Fai uno scherzo con Sarano AI",
-              <>Registri lo scherzo<br /><span className="text-muted-foreground text-sm">(screen, reaction o entrambi)</span></>,
-              "Pubblichi il video su TikTok o Instagram",
-              "Tagghi @sarano.ai",
-              "Ci mandi il video in DM o tramite form"
+              <>Registra lo scherzo<br /><span className="text-muted-foreground text-sm">(screen, reaction o entrambi)</span></>,
+              "Pubblica il video su TikTok o Instagram",
+              "Tagga @sarano.ai",
+              "Mandaci il video in DM o tramite form"
             ].map((step, index) => (
               <li key={index} className="flex items-start gap-4">
                 <span className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold text-sm">
                   {index + 1}
                 </span>
-                <span className="text-foreground pt-1">{step}</span>
+                <span className="text-foreground pt-1 leading-relaxed">{step}</span>
               </li>
             ))}
           </ol>
 
-          <div className="mt-8 space-y-2 text-center">
+          <div className="mt-10 space-y-3 text-center">
             <p className="text-muted-foreground">👉 Nessuna pressione.</p>
             <p className="text-muted-foreground">👉 Tutti possono partecipare.</p>
           </div>
@@ -84,8 +90,11 @@ const Challenge = () => {
             <p className="text-lg text-foreground font-medium mb-4">
               Se non fa ridere, si chiude.
             </p>
-            <p className="text-sm text-muted-foreground italic">
+            <p className="text-sm text-muted-foreground mb-4">
               Rispetta sempre chi risponde.
+            </p>
+            <p className="text-sm text-foreground/70 italic">
+              È una regola semplice.<br />Ma importante.
             </p>
           </div>
         </section>
@@ -104,6 +113,9 @@ const Challenge = () => {
             </p>
             <p className="text-5xl md:text-6xl font-black text-primary">100€</p>
           </div>
+          <p className="text-sm text-muted-foreground mt-4">
+            Non conta chi fa più views.<br />Conta far ridere.
+          </p>
         </section>
 
         {/* CTA FINALE */}
@@ -118,8 +130,22 @@ const Challenge = () => {
           <p className="text-sm text-muted-foreground mt-4">
             Il codice <span className="font-mono font-bold text-primary">PRANK10</span> è valido per partecipare.
           </p>
+          <p className="text-xs text-foreground/60 mt-2">
+            Ci vogliono 2 minuti per iniziare.
+          </p>
         </section>
       </main>
+
+      {/* Sticky CTA Mobile */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t border-border md:hidden safe-area-bottom">
+        <Button 
+          size="lg"
+          className="w-full bg-primary text-primary-foreground hover:bg-primary/90 text-lg py-6 rounded-full font-semibold shadow-lg"
+          onClick={() => navigate("/auth?mode=signup")}
+        >
+          👉 Partecipa ora
+        </Button>
+      </div>
 
       {/* FOOTER */}
       <footer className="border-t border-border py-8 px-4 text-center">
