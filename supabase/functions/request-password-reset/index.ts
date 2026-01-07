@@ -1,13 +1,40 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { Resend } from "https://esm.sh/resend@2.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/+esm";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+async function sendResendEmail(params: {
+  to: string;
+  subject: string;
+  html: string;
+}) {
+  const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+  if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY is not configured");
+
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: "sarano.ai <welcome@sarano.ai>",
+      to: [params.to],
+      subject: params.subject,
+      html: params.html,
+    }),
+  });
+
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    const msg = data?.message || data?.error || `Resend error: ${res.status}`;
+    throw new Error(msg);
+  }
+  return data;
+}
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
@@ -16,7 +43,7 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { email } = await req.json();
-    
+
     if (!email) {
       throw new Error("Email is required");
     }
@@ -25,7 +52,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
     // Check if user exists
@@ -35,8 +62,8 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Errore nel sistema");
     }
 
-    const user = users.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
-    
+    const user = users.users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
+
     if (!user) {
       // Don't reveal if user exists or not for security
       console.log("[PASSWORD-RESET] User not found, returning success anyway");
@@ -73,11 +100,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email
     const resetUrl = `https://sarano.ai/reset-password?token=${token}`;
-    const firstName = user.user_metadata?.username || email.split('@')[0];
+    const firstName = (user.user_metadata as any)?.username || email.split("@")[0];
 
-    const emailResponse = await resend.emails.send({
-      from: "sarano.ai <welcome@sarano.ai>",
-      to: [email],
+    const emailResponse = await sendResendEmail({
+      to: email,
       subject: "Reimposta la tua password 🔐",
       html: `
         <!DOCTYPE html>
@@ -171,13 +197,10 @@ const handler = async (req: Request): Promise<Response> => {
     });
   } catch (error: any) {
     console.error("[PASSWORD-RESET] Error:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
-    );
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
   }
 };
 

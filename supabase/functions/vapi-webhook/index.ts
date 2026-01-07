@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/+esm";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,7 +15,7 @@ function buildFailureDiagnosticMessage(endedReason: string) {
 }
 
 async function appendFailureDiagnostic(
-  supabase: SupabaseClient,
+  supabase: any,
   callId: string,
   endedReason: string,
 ) {
@@ -68,7 +68,7 @@ async function appendFailureDiagnostic(
 }
 
 // Helper function to decrement current_calls and process queue
-async function decrementCallerIdAndProcessQueue(supabase: SupabaseClient) {
+async function decrementCallerIdAndProcessQueue(supabase: any) {
   console.log("=== DECREMENTING CALLER ID AND PROCESSING QUEUE ===");
 
   // Find all caller IDs with current_calls > 0 and decrement one

@@ -1,11 +1,33 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@14.14.0?target=deno";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/+esm";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const STRIPE_API_BASE = "https://api.stripe.com/v1";
+const STRIPE_VERSION = "2025-08-27.basil";
+
+async function stripeGet(path: string) {
+  const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+  if (!stripeKey) throw new Error("STRIPE_SECRET_KEY not configured");
+
+  const res = await fetch(`${STRIPE_API_BASE}${path}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${stripeKey}`,
+      "Stripe-Version": STRIPE_VERSION,
+    },
+  });
+
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    const msg = data?.error?.message || data?.message || `Stripe error: ${res.status}`;
+    throw new Error(msg);
+  }
+  return data;
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -14,7 +36,7 @@ serve(async (req) => {
 
   const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
   );
 
   try {
@@ -29,18 +51,13 @@ serve(async (req) => {
     // Retrieve authenticated user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header provided");
-    
+
     const token = authHeader.replace("Bearer ", "");
     const { data: userData } = await supabaseClient.auth.getUser(token);
     const user = userData.user;
     if (!user) throw new Error("User not authenticated");
 
     console.log("User ID:", user.id);
-
-    // Initialize Stripe
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
-      apiVersion: "2025-08-27.basil",
-    });
 
     // Check if this session was already processed
     const { data: existingPayment, error: checkError } = await supabaseClient
@@ -55,37 +72,43 @@ serve(async (req) => {
 
     if (existingPayment) {
       console.log("=== SESSION ALREADY PROCESSED ===", existingPayment);
-      // Get current total pranks for the user
+
       const { data: profile } = await supabaseClient
         .from("profiles")
         .select("available_pranks")
         .eq("user_id", user.id)
         .single();
-      
-      return new Response(JSON.stringify({ 
-        success: true, 
-        pranks_added: existingPayment.pranks_added,
-        total_pranks: profile?.available_pranks || 0,
-        already_processed: true
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          pranks_added: existingPayment.pranks_added,
+          total_pranks: profile?.available_pranks || 0,
+          already_processed: true,
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        },
+      );
     }
 
     // Retrieve the checkout session
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    const session = await stripeGet(`/checkout/sessions/${encodeURIComponent(sessionId)}`);
     console.log("Session status:", session.payment_status);
     console.log("Session metadata:", session.metadata);
 
     if (session.payment_status !== "paid") {
-      return new Response(JSON.stringify({ 
-        success: false, 
-        message: "Payment not completed" 
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Payment not completed",
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        },
+      );
     }
 
     // Verify the user_id matches
@@ -152,7 +175,6 @@ serve(async (req) => {
 
       if (promoError) {
         console.error("Error recording promo code use:", promoError);
-        // Don't throw - the payment was already processed
       } else {
         console.log("Promo code usage recorded successfully");
       }
@@ -160,14 +182,17 @@ serve(async (req) => {
 
     console.log("=== PAYMENT VERIFIED - PRANKS ADDED ===");
 
-    return new Response(JSON.stringify({ 
-      success: true, 
-      pranks_added: pranksToAdd,
-      total_pranks: newPranks 
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+    return new Response(
+      JSON.stringify({
+        success: true,
+        pranks_added: pranksToAdd,
+        total_pranks: newPranks,
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      },
+    );
   } catch (error: unknown) {
     console.error("=== VERIFY-PAYMENT ERROR ===", error);
     const message = error instanceof Error ? error.message : "Unknown error";
