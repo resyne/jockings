@@ -121,7 +121,7 @@ serve(async (req) => {
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
     const twilioAuth = btoa(`${accountSid}:${authToken}`);
 
-    const smsBody = `Il tuo codice di verifica sarano.ai è: ${otp}. Scade tra 10 minuti.`;
+    const smsBody = `Codice Sarano: ${otp}. Valido 10 minuti. Non condividerlo.`;
 
     const twilioResponse = await fetch(twilioUrl, {
       method: 'POST',
