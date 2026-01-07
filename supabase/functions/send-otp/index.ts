@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -121,7 +121,7 @@ serve(async (req) => {
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
     const twilioAuth = btoa(`${accountSid}:${authToken}`);
 
-    const smsBody = `Codice Sarano: ${otp}. Valido 10 minuti. Non condividerlo.`;
+    const smsBody = `Sarano: il tuo codice di verifica è ${otp}. Scade tra 10 minuti.`;
 
     const twilioResponse = await fetch(twilioUrl, {
       method: 'POST',
