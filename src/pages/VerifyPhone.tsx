@@ -307,15 +307,19 @@ const VerifyPhone = () => {
                 )}
               </Button>
 
-              <div className="text-center">
-                <button
+              <div className="text-center space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  Non hai ricevuto il codice?
+                </p>
+                <Button
+                  variant="outline"
                   onClick={handleResendOtp}
                   disabled={resendCooldown > 0 || loading}
-                  className="text-sm text-primary hover:underline disabled:text-muted-foreground disabled:no-underline inline-flex items-center gap-1"
+                  className="inline-flex items-center gap-2"
                 >
-                  <RefreshCw className="w-4 h-4" />
-                  {resendCooldown > 0 ? `Rinvia tra ${resendCooldown}s` : "Rinvia codice"}
-                </button>
+                  <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                  {resendCooldown > 0 ? `Riprova tra ${resendCooldown}s` : "Rinvia SMS"}
+                </Button>
               </div>
 
               <button
