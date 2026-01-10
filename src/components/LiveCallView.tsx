@@ -20,10 +20,11 @@ interface LiveCallViewProps {
   onClose?: () => void;
 }
 
-const LiveCallView = ({ prankId, victimName, callStatus, onClose }: LiveCallViewProps) => {
+const LiveCallView = ({ prankId, victimName, callStatus: initialCallStatus, onClose }: LiveCallViewProps) => {
   const [transcript, setTranscript] = useState<TranscriptMessage[]>([]);
   const [isAISpeaking, setIsAISpeaking] = useState(false);
   const [isEndingCall, setIsEndingCall] = useState(false);
+  const [callStatus, setCallStatus] = useState(initialCallStatus);
 
   useEffect(() => {
     // Initial fetch of conversation history
@@ -55,6 +56,11 @@ const LiveCallView = ({ prankId, victimName, callStatus, onClose }: LiveCallView
         (payload) => {
           console.log("Prank update received:", payload);
           const newData = payload.new as { conversation_history?: unknown[]; call_status?: string };
+          
+          // Update call status in real-time
+          if (newData.call_status) {
+            setCallStatus(newData.call_status);
+          }
           
           if (newData.conversation_history && Array.isArray(newData.conversation_history)) {
             const messages = newData.conversation_history as unknown as TranscriptMessage[];
