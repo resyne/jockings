@@ -27,6 +27,8 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [username, setUsername] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -126,7 +128,7 @@ const Auth = () => {
           password,
           options: {
             emailRedirectTo: redirectUrl,
-            data: { username },
+            data: { username, first_name: firstName, last_name: lastName },
           },
         });
         if (error) throw error;
@@ -137,6 +139,8 @@ const Auth = () => {
           await supabase
             .from("profiles")
             .update({
+              first_name: firstName,
+              last_name: lastName,
               terms_accepted_at: now,
               privacy_accepted_at: now,
               terms_version: "1.0",
@@ -219,20 +223,46 @@ const Auth = () => {
         <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6">
           <form onSubmit={handleEmailAuth} className="space-y-3 sm:space-y-4">
             {mode === "signup" && (
-              <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    id="username"
-                    type="text"
-                    placeholder="Il tuo nickname"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="pl-10 h-10 sm:h-12"
-                  />
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">Nome</Label>
+                    <Input
+                      id="firstName"
+                      type="text"
+                      placeholder="Mario"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      className="h-10 sm:h-12"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Cognome</Label>
+                    <Input
+                      id="lastName"
+                      type="text"
+                      placeholder="Rossi"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      className="h-10 sm:h-12"
+                    />
+                  </div>
                 </div>
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="username">Username</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input
+                      id="username"
+                      type="text"
+                      placeholder="Il tuo nickname"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      className="pl-10 h-10 sm:h-12"
+                    />
+                  </div>
+                </div>
+              </>
             )}
 
             <div className="space-y-2">

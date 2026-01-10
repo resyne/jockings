@@ -443,7 +443,9 @@ export type Database = {
           available_pranks: number | null
           avatar_url: string | null
           created_at: string
+          first_name: string | null
           id: string
+          last_name: string | null
           phone_number: string | null
           phone_verification_code: string | null
           phone_verification_expires_at: string | null
@@ -461,7 +463,9 @@ export type Database = {
           available_pranks?: number | null
           avatar_url?: string | null
           created_at?: string
+          first_name?: string | null
           id?: string
+          last_name?: string | null
           phone_number?: string | null
           phone_verification_code?: string | null
           phone_verification_expires_at?: string | null
@@ -479,7 +483,9 @@ export type Database = {
           available_pranks?: number | null
           avatar_url?: string | null
           created_at?: string
+          first_name?: string | null
           id?: string
+          last_name?: string | null
           phone_number?: string | null
           phone_verification_code?: string | null
           phone_verification_expires_at?: string | null
