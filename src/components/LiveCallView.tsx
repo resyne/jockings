@@ -27,22 +27,52 @@ const LiveCallView = ({ prankId, victimName, callStatus: initialCallStatus, onCl
   const [callStatus, setCallStatus] = useState(initialCallStatus);
 
   useEffect(() => {
-    // Initial fetch of conversation history
-    const fetchTranscript = async () => {
+    let pollIntervalId: number | null = null;
+
+    const isActiveStatus = (status: string) =>
+      ["initiated", "pending", "queued", "ringing", "in_progress"].includes(status);
+
+    const fetchLatest = async () => {
       const { data, error } = await supabase
         .from("pranks")
-        .select("conversation_history")
+        .select("conversation_history, call_status")
         .eq("id", prankId)
-        .single();
+        .maybeSingle();
 
-      if (data?.conversation_history && Array.isArray(data.conversation_history)) {
-        setTranscript(data.conversation_history as unknown as TranscriptMessage[]);
+      if (error) {
+        console.error("Error fetching prank live data:", error);
+        return;
+      }
+
+      if (!data) return;
+
+      if (data.call_status) {
+        setCallStatus(data.call_status);
+
+        // Stop polling once the call is no longer active (but after we got the final state)
+        if (!isActiveStatus(data.call_status) && pollIntervalId) {
+          window.clearInterval(pollIntervalId);
+          pollIntervalId = null;
+        }
+      }
+
+      if (data.conversation_history && Array.isArray(data.conversation_history)) {
+        const messages = data.conversation_history as unknown as TranscriptMessage[];
+        setTranscript(messages);
+
+        // Check if last message is from assistant to animate
+        const lastMessage = messages[messages.length - 1];
+        if (lastMessage?.role === "assistant") {
+          setIsAISpeaking(true);
+          window.setTimeout(() => setIsAISpeaking(false), 2000);
+        }
       }
     };
 
-    fetchTranscript();
+    // Initial fetch
+    fetchLatest();
 
-    // Subscribe to real-time updates
+    // Subscribe to real-time updates (when available)
     const channel = supabase
       .channel(`prank-${prankId}`)
       .on(
@@ -54,33 +84,44 @@ const LiveCallView = ({ prankId, victimName, callStatus: initialCallStatus, onCl
           filter: `id=eq.${prankId}`,
         },
         (payload) => {
-          console.log("Prank update received:", payload);
-          const newData = payload.new as { conversation_history?: unknown[]; call_status?: string };
-          
-          // Update call status in real-time
+          const newData = payload.new as {
+            conversation_history?: unknown[];
+            call_status?: string;
+          };
+
           if (newData.call_status) {
             setCallStatus(newData.call_status);
           }
-          
-          if (newData.conversation_history && Array.isArray(newData.conversation_history)) {
-            const messages = newData.conversation_history as unknown as TranscriptMessage[];
+
+          if (
+            newData.conversation_history &&
+            Array.isArray(newData.conversation_history)
+          ) {
+            const messages =
+              newData.conversation_history as unknown as TranscriptMessage[];
             setTranscript(messages);
-            
-            // Check if last message is from assistant to animate
+
             const lastMessage = messages[messages.length - 1];
             if (lastMessage?.role === "assistant") {
               setIsAISpeaking(true);
-              setTimeout(() => setIsAISpeaking(false), 2000);
+              window.setTimeout(() => setIsAISpeaking(false), 2000);
             }
           }
         }
       )
       .subscribe();
 
+    // Poll fallback: ensures transcript + status update even if Realtime is misconfigured.
+    pollIntervalId = window.setInterval(fetchLatest, 2500);
+
     return () => {
+      if (pollIntervalId) {
+        window.clearInterval(pollIntervalId);
+      }
       supabase.removeChannel(channel);
     };
   }, [prankId]);
+
 
   const isCallActive = ["initiated", "pending", "queued", "ringing", "in_progress"].includes(callStatus);
 

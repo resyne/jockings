@@ -44,31 +44,77 @@ const PrankDetail = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
-    if (id) {
-      fetchPrank(id);
-      
-      // Subscribe to prank updates
-      const channel = supabase
-        .channel(`prank-${id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'pranks',
-            filter: `id=eq.${id}`
-          },
-          (payload) => {
-            setPrank(prev => prev ? { ...prev, ...payload.new } : null);
-          }
-        )
-        .subscribe();
+    if (!id) return;
 
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
+    fetchPrank(id);
+
+    const isTerminalStatus = (status: string) =>
+      ["completed", "recording_available", "no_answer", "busy", "failed"].includes(status);
+
+    // Subscribe to prank updates (Realtime)
+    const channel = supabase
+      .channel(`prank-${id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "pranks",
+          filter: `id=eq.${id}`,
+        },
+        (payload) => {
+          setPrank((prev) => (prev ? { ...prev, ...payload.new } : null));
+        }
+      )
+      .subscribe();
+
+    // Poll fallback: keeps status/recording in sync even if Realtime stops working.
+    let pollIntervalId: number | null = null;
+
+    const pollStatus = async () => {
+      const { data, error } = await supabase
+        .from("pranks")
+        .select("call_status, recording_url")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error polling prank status:", error);
+        return;
+      }
+
+      if (!data) return;
+
+      setPrank((prev) =>
+        prev
+          ? {
+              ...prev,
+              call_status: data.call_status ?? prev.call_status,
+              recording_url:
+                data.recording_url !== undefined
+                  ? data.recording_url
+                  : prev.recording_url,
+            }
+          : prev
+      );
+
+      if (data.call_status && isTerminalStatus(data.call_status) && pollIntervalId) {
+        window.clearInterval(pollIntervalId);
+        pollIntervalId = null;
+      }
+    };
+
+    pollStatus();
+    pollIntervalId = window.setInterval(pollStatus, 2500);
+
+    return () => {
+      if (pollIntervalId) {
+        window.clearInterval(pollIntervalId);
+      }
+      supabase.removeChannel(channel);
+    };
   }, [id]);
+
 
   const fetchPrank = async (prankId: string) => {
     try {
