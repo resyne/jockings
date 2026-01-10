@@ -175,6 +175,60 @@ serve(async (req) => {
     const messageType = body.message?.type;
     const callId = body.message?.call?.id;
 
+    // Handle live transcript updates during the call
+    if (messageType === "transcript") {
+      console.log("=== LIVE TRANSCRIPT EVENT ===");
+      const transcript = body.message?.transcript;
+      const role = body.message?.role; // "assistant" or "user"
+      const transcriptType = body.message?.transcriptType; // "partial" or "final"
+      
+      console.log("Role:", role);
+      console.log("Transcript type:", transcriptType);
+      console.log("Transcript:", transcript);
+      
+      // Only process final transcripts to avoid duplicates
+      if (transcriptType === "final" && callId && transcript) {
+        // Find prank by call ID
+        const { data: prank, error: prankError } = await supabase
+          .from("pranks")
+          .select("id, conversation_history")
+          .eq("twilio_call_sid", callId)
+          .maybeSingle();
+        
+        if (prank && !prankError) {
+          const currentHistory = Array.isArray(prank.conversation_history) 
+            ? prank.conversation_history 
+            : [];
+          
+          // Append the new message
+          const newMessage = {
+            role: role === "bot" ? "assistant" : role,
+            content: transcript,
+            timestamp: new Date().toISOString()
+          };
+          
+          const updatedHistory = [...currentHistory, newMessage];
+          
+          const { error: updateError } = await supabase
+            .from("pranks")
+            .update({ conversation_history: updatedHistory })
+            .eq("id", prank.id);
+          
+          if (updateError) {
+            console.error("Error updating live transcript:", updateError);
+          } else {
+            console.log("Live transcript updated, total messages:", updatedHistory.length);
+          }
+        } else {
+          console.log("Prank not found for live transcript, callId:", callId);
+        }
+      }
+      
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Handle end-of-call-report which contains recording URL and call duration
     if (messageType === "end-of-call-report") {
       console.log("=== END OF CALL REPORT ===");
