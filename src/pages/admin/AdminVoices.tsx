@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Mic, Save, Plus, Trash2, Shield, Play, Volume2, Loader2, Music, Brain, Phone, Zap, Star } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
@@ -518,6 +519,23 @@ const AdminVoices = () => {
     }
   };
 
+  const handleToggleActive = async (id: string, currentActive: boolean) => {
+    const { error } = await supabase
+      .from("voice_settings")
+      .update({ is_active: !currentActive })
+      .eq("id", id);
+
+    if (error) {
+      toast({ title: "Errore", description: error.message, variant: "destructive" });
+    } else {
+      toast({ 
+        title: !currentActive ? "Voce attivata" : "Voce disattivata", 
+        description: !currentActive ? "La voce è ora disponibile" : "La voce non sarà più disponibile per le chiamate"
+      });
+      fetchVoiceSettings();
+    }
+  };
+
   const handleTestVoice = async (setting: VoiceSetting) => {
     if (!setting.elevenlabs_voice_id) {
       toast({ title: "Errore", description: "Inserisci prima un Voice ID", variant: "destructive" });
@@ -701,7 +719,13 @@ const AdminVoices = () => {
                       {voiceSettings.map((setting) => (
                         <div 
                           key={setting.id} 
-                          className={`p-3 rounded-lg border ${selectedSetting?.id === setting.id ? 'border-orange-500 bg-orange-500/5' : 'bg-background'}`}
+                          className={`p-3 rounded-lg border transition-opacity ${
+                            selectedSetting?.id === setting.id 
+                              ? 'border-orange-500 bg-orange-500/5' 
+                              : setting.is_active === false 
+                                ? 'bg-muted/50 opacity-60' 
+                                : 'bg-background'
+                          }`}
                         >
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
@@ -726,7 +750,7 @@ const AdminVoices = () => {
                                 ))}
                               </div>
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-2">
                               <Button 
                                 variant="ghost" 
                                 size="sm"
@@ -734,13 +758,10 @@ const AdminVoices = () => {
                               >
                                 {selectedSetting?.id === setting.id ? "Chiudi" : "Modifica"}
                               </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleDelete(setting.id)}
-                              >
-                                <Trash2 className="w-3 h-3 text-destructive" />
-                              </Button>
+                              <Switch
+                                checked={setting.is_active !== false}
+                                onCheckedChange={() => handleToggleActive(setting.id, setting.is_active !== false)}
+                              />
                             </div>
                           </div>
                           
