@@ -606,6 +606,10 @@ serve(async (req) => {
         name: `${prank.victim_first_name} ${prank.victim_last_name}`,
         numberE164CheckEnabled: false,
       },
+      // CRITICAL: Pass prankId as metadata so webhook can identify prank before call ID is available
+      metadata: {
+        prankId: prankId,
+      },
       // TRANSIENT ASSISTANT - configured entirely at runtime
       assistant: {
         // Dynamic first message - CRITICAL for prank success
