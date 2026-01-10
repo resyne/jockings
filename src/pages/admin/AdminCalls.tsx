@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Phone, Shield, Search, Play, RefreshCw, ChevronDown, ChevronUp, Cpu, Mic, Settings2 } from "lucide-react";
+import { ArrowLeft, Phone, Shield, Search, Play, RefreshCw, ChevronDown, ChevronUp, Cpu, Mic, Settings2, User } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -36,10 +36,17 @@ interface PrankCall {
   scheduled_at: string | null;
 }
 
+interface UserProfile {
+  user_id: string;
+  username: string | null;
+  phone_number: string | null;
+}
+
 const AdminCalls = () => {
   const navigate = useNavigate();
   const { isAdmin, loading } = useAdminCheck();
   const [calls, setCalls] = useState<PrankCall[]>([]);
+  const [userProfiles, setUserProfiles] = useState<Map<string, UserProfile>>(new Map());
   const [loadingCalls, setLoadingCalls] = useState(true);
   const [search, setSearch] = useState("");
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -69,6 +76,21 @@ const AdminCalls = () => {
 
     if (!error && data) {
       setCalls(data as PrankCall[]);
+      
+      // Fetch user profiles for all unique user_ids
+      const userIds = [...new Set(data.map(p => p.user_id))];
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, username, phone_number")
+          .in("user_id", userIds);
+        
+        if (profiles) {
+          const profileMap = new Map<string, UserProfile>();
+          profiles.forEach(p => profileMap.set(p.user_id, p));
+          setUserProfiles(profileMap);
+        }
+      }
     }
     setLoadingCalls(false);
   };
@@ -259,9 +281,15 @@ const AdminCalls = () => {
                         <p className="text-sm text-muted-foreground line-clamp-1 mt-1">
                           {call.prank_theme}
                         </p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          {format(new Date(call.created_at), "d MMM yyyy HH:mm", { locale: it })}
-                        </p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <div className="flex items-center gap-1 text-xs bg-accent/50 text-accent-foreground px-2 py-0.5 rounded-full">
+                            <User className="w-3 h-3" />
+                            <span>{userProfiles.get(call.user_id)?.username || userProfiles.get(call.user_id)?.phone_number || 'Utente sconosciuto'}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {format(new Date(call.created_at), "d MMM yyyy HH:mm", { locale: it })}
+                          </p>
+                        </div>
                       </div>
 
                       <div className="flex items-center gap-2">
