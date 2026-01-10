@@ -430,7 +430,7 @@ const AdminVoices = () => {
     console.log("Rating:", setting.rating || 0);
     console.log("Notes:", setting.notes);
 
-    // Save voice ID, name, notes, and rating
+    // Save voice ID, name, notes, rating, and sample audio URL
     const { error } = await supabase
       .from("voice_settings")
       .update({
@@ -439,6 +439,7 @@ const AdminVoices = () => {
         voice_name: setting.voice_name,
         notes: setting.notes,
         rating: setting.rating || 0,
+        sample_audio_url: setting.sample_audio_url || null,
       })
       .eq("id", setting.id);
 
@@ -812,6 +813,18 @@ const AdminVoices = () => {
                                   placeholder="Annotazioni sulla voce, es. 'Ottima per tono serio', 'Accento napoletano'..."
                                   className="text-sm min-h-[60px]"
                                 />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-xs">URL Sample Audio (opzionale)</Label>
+                                <Input
+                                  value={selectedSetting.sample_audio_url || ""}
+                                  onChange={(e) => setSelectedSetting({ ...selectedSetting, sample_audio_url: e.target.value })}
+                                  placeholder="https://... (URL diretto a file MP3/WAV)"
+                                  className="h-8 text-sm font-mono"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                  Carica un sample audio su un servizio esterno (es. Cloudinary, S3) e incolla l'URL qui
+                                </p>
                               </div>
                               <div className="space-y-2">
                                 <Label className="text-xs">Valutazione</Label>

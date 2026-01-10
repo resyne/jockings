@@ -79,6 +79,7 @@ export interface VoiceSetting {
   notes: string | null;
   description?: string | null;
   rating?: number;
+  sample_audio_url?: string | null;
 }
 
 export interface VapiPhoneNumber {
