@@ -68,6 +68,46 @@ async function appendFailureDiagnostic(
   }
 }
 
+// Helper function to update live transcript
+async function updateLiveTranscript(supabase: any, callId: string, role: string, transcript: string) {
+  try {
+    const { data: prank, error: prankError } = await supabase
+      .from("pranks")
+      .select("id, conversation_history")
+      .eq("twilio_call_sid", callId)
+      .maybeSingle();
+    
+    if (prank && !prankError) {
+      const currentHistory = Array.isArray(prank.conversation_history) 
+        ? prank.conversation_history 
+        : [];
+      
+      const newMessage = {
+        role: role === "bot" ? "assistant" : role,
+        content: transcript,
+        timestamp: new Date().toISOString()
+      };
+      
+      const updatedHistory = [...currentHistory, newMessage];
+      
+      const { error: updateError } = await supabase
+        .from("pranks")
+        .update({ conversation_history: updatedHistory })
+        .eq("id", prank.id);
+      
+      if (updateError) {
+        console.error("Error updating live transcript:", updateError);
+      } else {
+        console.log("Live transcript updated, total messages:", updatedHistory.length);
+      }
+    } else {
+      console.log("Prank not found for live transcript, callId:", callId);
+    }
+  } catch (e) {
+    console.error("updateLiveTranscript error:", e);
+  }
+}
+
 // Helper function to decrement current_calls and process queue
 async function decrementCallerIdAndProcessQueue(supabase: any) {
   console.log("=== DECREMENTING CALLER ID AND PROCESSING QUEUE ===");
@@ -176,6 +216,7 @@ serve(async (req) => {
     const callId = body.message?.call?.id;
 
     // Handle live transcript updates during the call
+    // VAPI sends transcript in both "transcript" events and "status-update" events
     if (messageType === "transcript") {
       console.log("=== LIVE TRANSCRIPT EVENT ===");
       const transcript = body.message?.transcript;
@@ -188,39 +229,59 @@ serve(async (req) => {
       
       // Only process final transcripts to avoid duplicates
       if (transcriptType === "final" && callId && transcript) {
+        await updateLiveTranscript(supabase, callId, role, transcript);
+      }
+      
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    
+    // Handle status-update events which contain artifact.messages for live transcript
+    if (messageType === "status-update") {
+      console.log("=== STATUS UPDATE EVENT ===");
+      const status = body.message?.status;
+      const artifactMessages = body.message?.artifact?.messages;
+      
+      console.log("Status:", status);
+      console.log("Artifact messages count:", artifactMessages?.length || 0);
+      
+      // Update live transcript from artifact.messages if available
+      if (callId && artifactMessages && Array.isArray(artifactMessages) && artifactMessages.length > 0) {
         // Find prank by call ID
         const { data: prank, error: prankError } = await supabase
           .from("pranks")
-          .select("id, conversation_history")
+          .select("id, conversation_history, call_status")
           .eq("twilio_call_sid", callId)
           .maybeSingle();
         
         if (prank && !prankError) {
-          const currentHistory = Array.isArray(prank.conversation_history) 
-            ? prank.conversation_history 
-            : [];
+          // Filter out system messages and convert to our format
+          const conversationMessages = artifactMessages
+            .filter((msg: any) => msg.role !== "system")
+            .map((msg: any) => ({
+              role: msg.role === "bot" ? "assistant" : msg.role,
+              content: msg.message || msg.content,
+              timestamp: msg.time ? new Date(msg.time).toISOString() : new Date().toISOString()
+            }));
           
-          // Append the new message
-          const newMessage = {
-            role: role === "bot" ? "assistant" : role,
-            content: transcript,
-            timestamp: new Date().toISOString()
-          };
-          
-          const updatedHistory = [...currentHistory, newMessage];
-          
-          const { error: updateError } = await supabase
-            .from("pranks")
-            .update({ conversation_history: updatedHistory })
-            .eq("id", prank.id);
-          
-          if (updateError) {
-            console.error("Error updating live transcript:", updateError);
-          } else {
-            console.log("Live transcript updated, total messages:", updatedHistory.length);
+          if (conversationMessages.length > 0) {
+            const { error: updateError } = await supabase
+              .from("pranks")
+              .update({ 
+                conversation_history: conversationMessages,
+                // Also update call_status based on VAPI status
+                call_status: status === "in-progress" ? "in_progress" : 
+                             status === "ended" ? "completed" : prank.call_status
+              })
+              .eq("id", prank.id);
+            
+            if (updateError) {
+              console.error("Error updating from status-update:", updateError);
+            } else {
+              console.log("Updated from status-update, messages:", conversationMessages.length);
+            }
           }
-        } else {
-          console.log("Prank not found for live transcript, callId:", callId);
         }
       }
       
