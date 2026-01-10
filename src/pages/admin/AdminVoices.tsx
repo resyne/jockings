@@ -50,6 +50,7 @@ const AdminVoices = () => {
   const [aiModel, setAiModel] = useState("google/gemini-2.5-flash-lite");
   const [savingAiModel, setSavingAiModel] = useState(false);
   const [voiceTestOpen, setVoiceTestOpen] = useState(false);
+  const [generatingSampleId, setGeneratingSampleId] = useState<string | null>(null);
   
   // ElevenLabs model (managed separately for VAPI voice config)
   const [elevenlabsModel, setElevenlabsModel] = useState("eleven_turbo_v2_5");
@@ -120,7 +121,7 @@ const AdminVoices = () => {
     }
     
     // Save directly to voice_settings table
-    const { error } = await supabase
+    const { data: insertedData, error } = await supabase
       .from("voice_settings")
       .insert({
         language: newVapiPreset.language,
@@ -131,15 +132,39 @@ const AdminVoices = () => {
         description: newVapiPreset.description || null,
         notes: newVapiPreset.notes || null,
         is_active: true
-      });
+      })
+      .select()
+      .single();
     
     if (error) {
       toast({ title: "Errore", description: error.message, variant: "destructive" });
     } else {
       setIsAddVapiPresetOpen(false);
       setNewVapiPreset({ language: "Italiano", gender: "male", voiceId: "", voiceProvider: "11labs", voice_name: "", description: "", notes: "" });
-      toast({ title: "Salvato!", description: "Voce aggiunta con successo" });
-      fetchVoiceSettings(); // Refresh the list
+      toast({ title: "Salvato!", description: "Voce aggiunta. Generazione sample in corso..." });
+      fetchVoiceSettings();
+      
+      // Auto-generate sample for the new voice
+      if (insertedData?.id) {
+        try {
+          await supabase.functions.invoke("generate-voice-sample", {
+            body: {
+              voiceSettingId: insertedData.id,
+              voiceId: newVapiPreset.voiceId,
+              stability: 0.5,
+              similarity: 0.75,
+              style: 0,
+              speed: 1,
+              language: newVapiPreset.language,
+            },
+          });
+          toast({ title: "Sample generato!", description: "L'anteprima audio è stata salvata automaticamente" });
+          fetchVoiceSettings();
+        } catch (err) {
+          console.error("Auto-generate sample error:", err);
+          toast({ title: "Attenzione", description: "Sample non generato. Puoi generarlo manualmente.", variant: "default" });
+        }
+      }
     }
   };
 
@@ -537,6 +562,45 @@ const AdminVoices = () => {
     }
   };
 
+  const handleGenerateSample = async (setting: VoiceSetting) => {
+    if (!setting.elevenlabs_voice_id) {
+      toast({ title: "Errore", description: "Inserisci prima un Voice ID", variant: "destructive" });
+      return;
+    }
+
+    setGeneratingSampleId(setting.id);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-voice-sample", {
+        body: {
+          voiceSettingId: setting.id,
+          voiceId: setting.elevenlabs_voice_id,
+          stability: setting.elevenlabs_stability || 0.5,
+          similarity: setting.elevenlabs_similarity || 0.75,
+          style: setting.elevenlabs_style || 0,
+          speed: setting.elevenlabs_speed || 1,
+          language: setting.language,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast({ title: "Sample generato!", description: "L'anteprima audio è stata salvata" });
+        fetchVoiceSettings();
+        setSelectedSetting(null);
+      }
+    } catch (error: any) {
+      console.error("Generate sample error:", error);
+      toast({ 
+        title: "Errore", 
+        description: error.message || "Impossibile generare il sample", 
+        variant: "destructive" 
+      });
+    } finally {
+      setGeneratingSampleId(null);
+    }
+  };
   const handleTestVoice = async (setting: VoiceSetting) => {
     if (!setting.elevenlabs_voice_id) {
       toast({ title: "Errore", description: "Inserisci prima un Voice ID", variant: "destructive" });
@@ -853,7 +917,7 @@ const AdminVoices = () => {
                                   )}
                                 </div>
                               </div>
-                              <div className="flex gap-2">
+                              <div className="flex gap-2 flex-wrap">
                                 <Button 
                                   size="sm" 
                                   onClick={() => handleSave(selectedSetting)}
@@ -865,6 +929,19 @@ const AdminVoices = () => {
                                 <Button 
                                   size="sm" 
                                   variant="outline"
+                                  onClick={() => handleGenerateSample(selectedSetting)}
+                                  disabled={!selectedSetting.elevenlabs_voice_id || generatingSampleId === selectedSetting.id}
+                                >
+                                  {generatingSampleId === selectedSetting.id ? (
+                                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                  ) : (
+                                    <Mic className="w-3 h-3 mr-1" />
+                                  )}
+                                  {generatingSampleId === selectedSetting.id ? "Generando..." : "Genera Sample"}
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost"
                                   onClick={() => {
                                     setSelectedSetting(null);
                                     setVoiceTestOpen(true);
@@ -875,6 +952,12 @@ const AdminVoices = () => {
                                   Test
                                 </Button>
                               </div>
+                              {selectedSetting.sample_audio_url && (
+                                <div className="mt-2 p-2 bg-green-500/10 border border-green-500/20 rounded-lg">
+                                  <p className="text-xs text-green-500 mb-1">✓ Sample audio disponibile</p>
+                                  <audio src={selectedSetting.sample_audio_url} controls className="w-full h-8" />
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
