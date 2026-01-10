@@ -295,12 +295,13 @@ serve(async (req) => {
       // Update live transcript from artifact.messages if available
       if (prank && !prankError && artifactMessages && Array.isArray(artifactMessages) && artifactMessages.length > 0) {
         // Filter out system messages and convert to our format
+        // Note: VAPI artifact.messages may have timestamps in milliseconds
         const conversationMessages = artifactMessages
-          .filter((msg: any) => msg.role !== "system")
+          .filter((msg: any) => msg.role !== "system" && msg.role !== "tool-calls" && msg.role !== "tool-call-result")
           .map((msg: any) => ({
-            role: msg.role === "bot" ? "assistant" : msg.role,
-            content: msg.message || msg.content,
-            timestamp: msg.time ? new Date(msg.time).toISOString() : new Date().toISOString()
+            role: msg.role === "bot" ? "assistant" : (msg.role === "assistant" ? "assistant" : "user"),
+            content: msg.message || msg.content || "",
+            timestamp: new Date().toISOString() // Use current time to avoid timestamp conversion issues
           }));
         
         if (conversationMessages.length > 0) {
@@ -329,6 +330,72 @@ serve(async (req) => {
       });
     }
 
+    // Handle conversation-update events for LIVE transcript updates during the call
+    // This is the PRIMARY event for real-time transcript - VAPI sends these during active calls
+    if (messageType === "conversation-update") {
+      console.log("=== CONVERSATION UPDATE EVENT ===");
+      const conversation = body.message?.conversation;
+      
+      console.log("Conversation messages count:", conversation?.length || 0);
+      
+      // Find prank - try by prankId first (from metadata), then by callId
+      let prank = null;
+      let prankError = null;
+      
+      if (metadataPrankId) {
+        const result = await supabase
+          .from("pranks")
+          .select("id, conversation_history, call_status")
+          .eq("id", metadataPrankId)
+          .maybeSingle();
+        prank = result.data;
+        prankError = result.error;
+      }
+      
+      if (!prank && callId) {
+        const result = await supabase
+          .from("pranks")
+          .select("id, conversation_history, call_status")
+          .eq("twilio_call_sid", callId)
+          .maybeSingle();
+        prank = result.data;
+        prankError = result.error;
+      }
+      
+      if (prank && !prankError && conversation && Array.isArray(conversation) && conversation.length > 0) {
+        // Filter out system messages and convert to our format
+        // VAPI sends timestamps in milliseconds, not seconds
+        const conversationMessages = conversation
+          .filter((msg: any) => msg.role !== "system" && msg.role !== "tool-calls" && msg.role !== "tool-call-result")
+          .map((msg: any) => ({
+            role: msg.role === "bot" ? "assistant" : (msg.role === "assistant" ? "assistant" : "user"),
+            content: msg.message || msg.content || "",
+            timestamp: new Date().toISOString() // Use current time for live messages
+          }));
+        
+        if (conversationMessages.length > 0) {
+          const { error: updateError } = await supabase
+            .from("pranks")
+            .update({ 
+              conversation_history: conversationMessages,
+              call_status: "in_progress" // Ensure status is updated when we receive conversation
+            })
+            .eq("id", prank.id);
+          
+          if (updateError) {
+            console.error("Error updating from conversation-update:", updateError);
+          } else {
+            console.log("LIVE transcript updated from conversation-update, messages:", conversationMessages.length);
+          }
+        }
+      } else if (!prank) {
+        console.log("Prank not found for conversation-update, callId:", callId, "prankId:", metadataPrankId);
+      }
+      
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     // Handle end-of-call-report which contains recording URL and call duration
     if (messageType === "end-of-call-report") {
       console.log("=== END OF CALL REPORT ===");
@@ -403,11 +470,11 @@ serve(async (req) => {
         // Save conversation history from artifact messages if available
         if (artifactMessages && Array.isArray(artifactMessages) && artifactMessages.length > 0) {
           const conversationHistory = artifactMessages
-            .filter((msg: any) => msg.role !== "system")
+            .filter((msg: any) => msg.role !== "system" && msg.role !== "tool-calls" && msg.role !== "tool-call-result")
             .map((msg: any) => ({
-              role: msg.role === "bot" ? "assistant" : (msg.role === "user" ? "user" : msg.role),
+              role: msg.role === "bot" ? "assistant" : (msg.role === "assistant" ? "assistant" : "user"),
               content: msg.message || msg.content || "",
-              timestamp: msg.time ? new Date(msg.time * 1000).toISOString() : new Date().toISOString()
+              timestamp: new Date().toISOString() // Use current time to avoid VAPI timestamp issues
             }));
           
           if (conversationHistory.length > 0) {
