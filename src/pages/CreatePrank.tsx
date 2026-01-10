@@ -68,6 +68,7 @@ interface VoiceOption {
   elevenlabs_speed: number | null;
   gender: string;
   language: string;
+  sample_audio_url: string | null;
 }
 
 interface UserProfile {
@@ -261,7 +262,7 @@ const CreatePrank = () => {
   const fetchAllVoices = async () => {
     const { data } = await supabase
       .from("voice_settings")
-      .select("id, voice_name, description, elevenlabs_voice_id, elevenlabs_stability, elevenlabs_similarity, elevenlabs_style, elevenlabs_speed, gender, language")
+      .select("id, voice_name, description, elevenlabs_voice_id, elevenlabs_stability, elevenlabs_similarity, elevenlabs_style, elevenlabs_speed, gender, language, sample_audio_url")
       .eq("is_active", true)
       .order("gender", { ascending: true });
 
@@ -294,21 +295,30 @@ const CreatePrank = () => {
     setLoadingPreviewId(voice.id);
 
     try {
-      const { data, error } = await supabase.functions.invoke("test-voice", {
-        body: {
-          voiceId: voice.elevenlabs_voice_id,
-          stability: voice.elevenlabs_stability || 0.5,
-          similarity: voice.elevenlabs_similarity || 0.75,
-          style: voice.elevenlabs_style || 0,
-          speed: voice.elevenlabs_speed || 1,
-          language: voice.language,
-        }
-      });
+      let audioUrl: string | null = null;
+      
+      // Use saved sample if available
+      if (voice.sample_audio_url) {
+        audioUrl = voice.sample_audio_url;
+      } else {
+        // Fallback to generating audio via API (may fail if ElevenLabs limit reached)
+        const { data, error } = await supabase.functions.invoke("test-voice", {
+          body: {
+            voiceId: voice.elevenlabs_voice_id,
+            stability: voice.elevenlabs_stability || 0.5,
+            similarity: voice.elevenlabs_similarity || 0.75,
+            style: voice.elevenlabs_style || 0,
+            speed: voice.elevenlabs_speed || 1,
+            language: voice.language,
+          }
+        });
 
-      if (error) throw error;
+        if (error) throw error;
+        audioUrl = data?.audioUrl;
+      }
 
-      if (data?.audioUrl) {
-        const audio = new Audio(data.audioUrl);
+      if (audioUrl) {
+        const audio = new Audio(audioUrl);
         audioRef.current = audio;
         
         audio.onended = () => {
@@ -325,11 +335,11 @@ const CreatePrank = () => {
         await audio.play();
         setPlayingVoiceId(voice.id);
       } else {
-        throw new Error("Nessun audio ricevuto");
+        throw new Error("Nessun audio disponibile");
       }
     } catch (error: any) {
       console.error("Voice preview error:", error);
-      toast({ title: "Errore", description: "Impossibile caricare l'anteprima", variant: "destructive" });
+      toast({ title: "Errore", description: "Anteprima non disponibile. Aggiungi un sample audio dalla pagina admin.", variant: "destructive" });
     } finally {
       setLoadingPreviewId(null);
     }
