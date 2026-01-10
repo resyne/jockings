@@ -49,7 +49,8 @@ const buildFirstMessage = (prank: any, greeting: string, templateIT: string | nu
 };
 
 // Build system prompt for VAPI transient assistant - uses template from settings
-const buildSystemPrompt = (prank: any, templateIT: string | null, templateEN: string | null): string => {
+// voicePersonaDescription: description from voice_settings (e.g., "Signora matura con accento lombardo")
+const buildSystemPrompt = (prank: any, templateIT: string | null, templateEN: string | null, voicePersonaDescription: string | null): string => {
   const isItalian = prank.language === 'Italiano';
   const isMale = prank.voice_gender === 'male';
   const isVictimMale = prank.victim_gender === 'male';
@@ -75,9 +76,22 @@ const buildSystemPrompt = (prank: any, templateIT: string | null, templateEN: st
 
   const toneMap = isItalian ? toneMapIT : toneMapEN;
   const tone = toneMap[prank.personality_tone] || toneMap['friendly'];
-  const genderDesc = isItalian 
-    ? (isMale ? 'un uomo' : 'una donna')
-    : (isMale ? 'a man' : 'a woman');
+  
+  // Use voice persona description from voice_settings if available
+  // Otherwise fallback to generic description
+  let genderDesc: string;
+  if (voicePersonaDescription && voicePersonaDescription.trim()) {
+    // Use the persona description from voice_settings (e.g., "Signora matura con accento lombardo")
+    genderDesc = isItalian 
+      ? voicePersonaDescription.trim()
+      : voicePersonaDescription.trim(); // Keep as-is for English too
+  } else {
+    // Fallback to generic description
+    genderDesc = isItalian 
+      ? (isMale ? 'un uomo' : 'una donna')
+      : (isMale ? 'a man' : 'a woman');
+  }
+  
   const victimGenderDesc = isItalian
     ? (isVictimMale ? 'maschio' : 'femmina')
     : (isVictimMale ? 'male' : 'female');
@@ -433,7 +447,12 @@ serve(async (req) => {
     const systemPromptTemplateEN = settings['vapi_system_prompt_en'] || null;
     const firstMessageTemplateIT = settings['vapi_first_message_it'] || null;
     const firstMessageTemplateEN = settings['vapi_first_message_en'] || null;
-    const systemPrompt = buildSystemPrompt(prank, systemPromptTemplateIT, systemPromptTemplateEN);
+    // Get voice persona description from voice_settings (fetched in parallel query above)
+    // This will be used in the system prompt to describe the AI's persona (e.g., "Signora matura con accento lombardo")
+    const voicePersonaDescription = voiceSettingsResult.data?.description || null;
+    console.log('Voice Persona Description:', voicePersonaDescription);
+    
+    const systemPrompt = buildSystemPrompt(prank, systemPromptTemplateIT, systemPromptTemplateEN, voicePersonaDescription);
     const firstMessage = buildFirstMessage(prank, greeting, firstMessageTemplateIT, firstMessageTemplateEN);
 
     // VAPI transcriber configuration is provider/model-specific.
