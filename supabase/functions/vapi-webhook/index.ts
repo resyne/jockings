@@ -192,8 +192,24 @@ serve(async (req) => {
         || body.message?.artifact?.duration
         || 0;
       
-      // Get conversation transcript from artifact
-      const artifactMessages = body.message?.artifact?.messages;
+      // Get conversation transcript from artifact - VAPI can send it in multiple places
+      // Try artifact.messages first, then fall back to other possible locations
+      const artifact = body.message?.artifact;
+      const artifactMessages = artifact?.messages 
+        || body.message?.messages 
+        || body.message?.call?.artifact?.messages;
+      
+      // Also get the full transcript string if available
+      const fullTranscript = artifact?.transcript || body.message?.transcript;
+      
+      console.log("=== ARTIFACT DEBUG ===");
+      console.log("Artifact exists:", !!artifact);
+      console.log("Artifact keys:", artifact ? Object.keys(artifact) : "N/A");
+      console.log("Artifact messages:", artifactMessages?.length || 0);
+      console.log("Full transcript:", fullTranscript ? fullTranscript.substring(0, 200) + "..." : "N/A");
+      if (artifactMessages && artifactMessages.length > 0) {
+        console.log("First message sample:", JSON.stringify(artifactMessages[0]));
+      }
       
       // Check if call was answered (customer picked up)
       const wasAnswered = endedReason !== "customer-did-not-answer" 
@@ -209,7 +225,6 @@ serve(async (req) => {
       console.log("Duration (seconds):", durationSeconds);
       console.log("Was Answered:", wasAnswered);
       console.log("Is Failed:", isFailed);
-      console.log("Artifact Messages:", artifactMessages?.length || 0);
       
       if (reportCallId) {
         let newStatus = "completed";
