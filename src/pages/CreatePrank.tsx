@@ -463,11 +463,13 @@ const CreatePrank = () => {
       }
       
       setCurrentStep(prev => Math.min(prev + 1, 4));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const handleBack = () => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSubmit = async () => {
