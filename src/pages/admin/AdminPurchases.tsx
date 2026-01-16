@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, ArrowLeft, CreditCard, Calendar, Ticket, Euro } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Shield, ArrowLeft, CreditCard, Calendar, Ticket, Euro, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -40,17 +41,37 @@ interface PromoCodeUse {
   discount_percentage?: number;
 }
 
+interface Subscription {
+  id: string;
+  status: string;
+  customer_email: string;
+  customer_name: string;
+  amount: number;
+  currency: string;
+  interval: string;
+  current_period_start: number;
+  current_period_end: number;
+  created: number;
+  canceled_at: number | null;
+  cancel_at_period_end: boolean;
+  metadata: Record<string, string>;
+}
+
 const AdminPurchases = () => {
   const navigate = useNavigate();
   const { isAdmin, loading } = useAdminCheck();
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [promoUses, setPromoUses] = useState<PromoCodeUse[]>([]);
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [subsLoading, setSubsLoading] = useState(false);
   const [stats, setStats] = useState({
     totalPurchases: 0,
     totalPranks: 0,
     totalRevenue: 0,
     totalPromoUses: 0,
+    activeSubscriptions: 0,
+    monthlyRecurring: 0,
   });
 
   useEffect(() => {
@@ -62,8 +83,33 @@ const AdminPurchases = () => {
   useEffect(() => {
     if (isAdmin) {
       fetchData();
+      fetchSubscriptions();
     }
   }, [isAdmin]);
+
+  const fetchSubscriptions = async () => {
+    setSubsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("list-subscriptions");
+      if (error) throw error;
+      
+      const subs = data?.subscriptions || [];
+      setSubscriptions(subs);
+      
+      const activeSubs = subs.filter((s: Subscription) => s.status === "active");
+      const mrr = activeSubs.reduce((sum: number, s: Subscription) => sum + s.amount, 0);
+      
+      setStats(prev => ({
+        ...prev,
+        activeSubscriptions: activeSubs.length,
+        monthlyRecurring: mrr,
+      }));
+    } catch (error) {
+      console.error("Error fetching subscriptions:", error);
+    } finally {
+      setSubsLoading(false);
+    }
+  };
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -106,6 +152,8 @@ const AdminPurchases = () => {
         totalPranks,
         totalRevenue,
         totalPromoUses: promoUsesRes.data?.length || 0,
+        activeSubscriptions: 0,
+        monthlyRecurring: 0,
       });
 
       const purchasesWithUsernames = (paymentsRes.data || []).map(p => ({
@@ -162,12 +210,12 @@ const AdminPurchases = () => {
             <div className="flex items-center gap-2">
               <CreditCard className="w-6 h-6 text-primary" />
               <div>
-                <h1 className="font-bold">Acquisti & Promo</h1>
-                <p className="text-xs text-muted-foreground">Pagamenti e codici sconto</p>
+                <h1 className="font-bold">Acquisti & Abbonamenti</h1>
+                <p className="text-xs text-muted-foreground">Pagamenti, sottoscrizioni e promo</p>
               </div>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={fetchData} disabled={isLoading}>
+          <Button variant="outline" size="sm" onClick={() => { fetchData(); fetchSubscriptions(); }} disabled={isLoading || subsLoading}>
             Aggiorna
           </Button>
         </div>
@@ -175,7 +223,7 @@ const AdminPurchases = () => {
 
       <main className="px-4 py-6 max-w-4xl mx-auto space-y-6">
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <Card>
             <CardContent className="pt-6 text-center">
               <CreditCard className="w-8 h-8 mx-auto text-amber-500 mb-2" />
@@ -188,6 +236,20 @@ const AdminPurchases = () => {
               <Euro className="w-8 h-8 mx-auto text-green-500 mb-2" />
               <p className="text-2xl font-bold">{formatCurrency(stats.totalRevenue, "eur")}</p>
               <p className="text-xs text-muted-foreground">Ricavi totali</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6 text-center">
+              <RefreshCw className="w-8 h-8 mx-auto text-purple-500 mb-2" />
+              <p className="text-2xl font-bold">{stats.activeSubscriptions}</p>
+              <p className="text-xs text-muted-foreground">Abbonamenti attivi</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6 text-center">
+              <Euro className="w-8 h-8 mx-auto text-purple-500 mb-2" />
+              <p className="text-2xl font-bold">{formatCurrency(stats.monthlyRecurring, "eur")}</p>
+              <p className="text-xs text-muted-foreground">MRR</p>
             </CardContent>
           </Card>
           <Card>
@@ -208,9 +270,10 @@ const AdminPurchases = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="purchases" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="purchases">Acquisti ({stats.totalPurchases})</TabsTrigger>
-            <TabsTrigger value="promo">Promo Code ({stats.totalPromoUses})</TabsTrigger>
+            <TabsTrigger value="subscriptions">Abbonamenti ({stats.activeSubscriptions})</TabsTrigger>
+            <TabsTrigger value="promo">Promo ({stats.totalPromoUses})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="purchases">
@@ -256,6 +319,75 @@ const AdminPurchases = () => {
                             </TableCell>
                             <TableCell className="text-right font-semibold">
                               +{purchase.pranks_added}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="subscriptions">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-lg">Abbonamenti Stripe</CardTitle>
+                <Button variant="ghost" size="sm" onClick={fetchSubscriptions} disabled={subsLoading}>
+                  <RefreshCw className={`w-4 h-4 ${subsLoading ? "animate-spin" : ""}`} />
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {subsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                ) : subscriptions.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">Nessun abbonamento trovato</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Stato</TableHead>
+                          <TableHead>Cliente</TableHead>
+                          <TableHead>Importo</TableHead>
+                          <TableHead>Periodo</TableHead>
+                          <TableHead>Creato</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {subscriptions.map((sub) => (
+                          <TableRow key={sub.id}>
+                            <TableCell>
+                              <Badge 
+                                variant={sub.status === "active" ? "default" : "secondary"}
+                                className={sub.status === "active" ? "bg-green-500" : sub.status === "canceled" ? "bg-red-500" : ""}
+                              >
+                                {sub.status === "active" ? "Attivo" : 
+                                 sub.status === "canceled" ? "Cancellato" : 
+                                 sub.status === "past_due" ? "Scaduto" : 
+                                 sub.status === "trialing" ? "Prova" : sub.status}
+                              </Badge>
+                              {sub.cancel_at_period_end && (
+                                <span className="text-xs text-muted-foreground ml-1">(cancella a fine periodo)</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <p className="font-medium">{sub.customer_name}</p>
+                                <p className="text-xs text-muted-foreground">{sub.customer_email}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-semibold text-green-500">
+                              {formatCurrency(sub.amount, sub.currency)}/{sub.interval === "month" ? "mese" : sub.interval}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {format(new Date(sub.current_period_start * 1000), "dd/MM/yy", { locale: it })} - {format(new Date(sub.current_period_end * 1000), "dd/MM/yy", { locale: it })}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap text-sm">
+                              {format(new Date(sub.created * 1000), "dd MMM yyyy", { locale: it })}
                             </TableCell>
                           </TableRow>
                         ))}
