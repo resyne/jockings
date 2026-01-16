@@ -416,22 +416,31 @@ export type Database = {
       }
       processed_payments: {
         Row: {
+          amount_paid: number | null
           created_at: string
+          currency: string | null
           id: string
+          package_type: string | null
           pranks_added: number
           session_id: string
           user_id: string
         }
         Insert: {
+          amount_paid?: number | null
           created_at?: string
+          currency?: string | null
           id?: string
+          package_type?: string | null
           pranks_added: number
           session_id: string
           user_id: string
         }
         Update: {
+          amount_paid?: number | null
           created_at?: string
+          currency?: string | null
           id?: string
+          package_type?: string | null
           pranks_added?: number
           session_id?: string
           user_id?: string
