@@ -404,10 +404,14 @@ const AdminPurchases = () => {
                               {formatCurrency(sub.amount, sub.currency)}/{sub.interval === "month" ? "mese" : sub.interval}
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
-                              {format(new Date(sub.current_period_start * 1000), "dd/MM/yy", { locale: it })} - {format(new Date(sub.current_period_end * 1000), "dd/MM/yy", { locale: it })}
+                              {sub.current_period_start && sub.current_period_end ? (
+                                <>
+                                  {format(new Date(sub.current_period_start * 1000), "dd/MM/yy", { locale: it })} - {format(new Date(sub.current_period_end * 1000), "dd/MM/yy", { locale: it })}
+                                </>
+                              ) : "—"}
                             </TableCell>
                             <TableCell className="whitespace-nowrap text-sm">
-                              {format(new Date(sub.created * 1000), "dd MMM yyyy", { locale: it })}
+                              {sub.created ? format(new Date(sub.created * 1000), "dd MMM yyyy", { locale: it }) : "—"}
                             </TableCell>
                           </TableRow>
                         ))}
