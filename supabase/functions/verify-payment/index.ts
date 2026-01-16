@@ -118,7 +118,10 @@ serve(async (req) => {
     }
 
     const pranksToAdd = parseInt(session.metadata?.pranks_to_add || "0");
-    console.log("Pranks to add:", pranksToAdd);
+    const amountPaid = session.amount_total ? session.amount_total / 100 : null;
+    const currency = session.currency || "eur";
+    const packageType = session.metadata?.package_type || null;
+    console.log("Pranks to add:", pranksToAdd, "Amount:", amountPaid, currency);
 
     // Get current pranks count
     const { data: profile, error: profileError } = await supabaseClient
@@ -155,6 +158,9 @@ serve(async (req) => {
         session_id: sessionId,
         user_id: user.id,
         pranks_added: pranksToAdd,
+        amount_paid: amountPaid,
+        currency: currency,
+        package_type: packageType,
       });
 
     if (insertError) {
