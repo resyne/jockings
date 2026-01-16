@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Settings, Users, Phone, Mic, FileText, Shield, ArrowLeft, Ticket, ShieldAlert, TrendingUp } from "lucide-react";
+import { Settings, Users, Phone, Mic, FileText, Shield, ArrowLeft, Ticket, ShieldAlert, TrendingUp, CreditCard } from "lucide-react";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -257,6 +257,23 @@ const AdminDashboard = () => {
                 <div>
                   <CardTitle className="text-lg">AI Content Checker</CardTitle>
                   <CardDescription>Gestisci regole e filtri contenuti</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+
+          <Card 
+            className="cursor-pointer hover:border-primary transition-colors"
+            onClick={() => navigate("/admin/purchases")}
+          >
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-lg bg-amber-500/10">
+                  <CreditCard className="w-6 h-6 text-amber-500" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Acquisti & Abbonamenti</CardTitle>
+                  <CardDescription>Storico pagamenti e sottoscrizioni</CardDescription>
                 </div>
               </div>
             </CardHeader>
