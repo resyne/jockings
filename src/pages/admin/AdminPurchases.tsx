@@ -5,6 +5,7 @@ import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Shield, ArrowLeft, CreditCard, Calendar, Ticket, Euro, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -65,6 +66,8 @@ const AdminPurchases = () => {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [subsLoading, setSubsLoading] = useState(false);
+  const [subsError, setSubsError] = useState<string | null>(null);
+  const [subsLastFetchedAt, setSubsLastFetchedAt] = useState<string | null>(null);
   const [stats, setStats] = useState({
     totalPurchases: 0,
     totalPranks: 0,
@@ -89,23 +92,27 @@ const AdminPurchases = () => {
 
   const fetchSubscriptions = async () => {
     setSubsLoading(true);
+    setSubsError(null);
     try {
       const { data, error } = await supabase.functions.invoke("list-subscriptions");
       if (error) throw error;
-      
+
       const subs = data?.subscriptions || [];
       setSubscriptions(subs);
-      
+      setSubsLastFetchedAt(new Date().toISOString());
+
       const activeSubs = subs.filter((s: Subscription) => s.status === "active");
       const mrr = activeSubs.reduce((sum: number, s: Subscription) => sum + s.amount, 0);
-      
-      setStats(prev => ({
+
+      setStats((prev) => ({
         ...prev,
         activeSubscriptions: activeSubs.length,
         monthlyRecurring: mrr,
       }));
     } catch (error) {
+      const message = error instanceof Error ? error.message : "Errore sconosciuto";
       console.error("Error fetching subscriptions:", error);
+      setSubsError(message);
     } finally {
       setSubsLoading(false);
     }
@@ -147,14 +154,13 @@ const AdminPurchases = () => {
       const totalPranks = paymentsRes.data?.reduce((sum, p) => sum + (p.pranks_added || 0), 0) || 0;
       const totalRevenue = paymentsRes.data?.reduce((sum, p) => sum + (p.amount_paid || 0), 0) || 0;
 
-      setStats({
+      setStats((prev) => ({
+        ...prev,
         totalPurchases: paymentsRes.data?.length || 0,
         totalPranks,
         totalRevenue,
         totalPromoUses: promoUsesRes.data?.length || 0,
-        activeSubscriptions: 0,
-        monthlyRecurring: 0,
-      });
+      }));
 
       const purchasesWithUsernames = (paymentsRes.data || []).map(p => ({
         ...p,
@@ -332,13 +338,27 @@ const AdminPurchases = () => {
 
           <TabsContent value="subscriptions">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg">Abbonamenti Stripe</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between gap-3">
+                <div>
+                  <CardTitle className="text-lg">Abbonamenti Stripe</CardTitle>
+                  {subsLastFetchedAt && (
+                    <p className="text-xs text-muted-foreground">
+                      Ultimo aggiornamento: {format(new Date(subsLastFetchedAt), "dd MMM yyyy HH:mm", { locale: it })}
+                    </p>
+                  )}
+                </div>
                 <Button variant="ghost" size="sm" onClick={fetchSubscriptions} disabled={subsLoading}>
                   <RefreshCw className={`w-4 h-4 ${subsLoading ? "animate-spin" : ""}`} />
                 </Button>
               </CardHeader>
               <CardContent>
+                {subsError && (
+                  <Alert variant="destructive" className="mb-4">
+                    <AlertDescription>
+                      Errore caricamento abbonamenti: {subsError}
+                    </AlertDescription>
+                  </Alert>
+                )}
                 {subsLoading ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
