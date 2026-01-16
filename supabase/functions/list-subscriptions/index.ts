@@ -76,10 +76,21 @@ serve(async (req) => {
     console.log("Admin user:", user.email);
 
     // Fetch all subscriptions from Stripe
-    const subscriptions = await stripeRequest("GET", "/subscriptions", undefined, {
-      limit: "100",
-      "expand[]": "data.customer",
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY not configured");
+    
+    const subsUrl = `${STRIPE_API_BASE}/subscriptions?limit=100&expand[]=data.customer`;
+    const subsRes = await fetch(subsUrl, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${stripeKey}`,
+      },
     });
+    
+    const subscriptions = await subsRes.json();
+    if (!subsRes.ok) {
+      throw new Error(subscriptions?.error?.message || "Failed to fetch subscriptions");
+    }
 
     console.log("Found subscriptions:", subscriptions.data?.length || 0);
 
