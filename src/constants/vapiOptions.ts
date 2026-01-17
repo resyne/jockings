@@ -8,6 +8,7 @@ export const GENDERS = ["male", "female"] as const;
 // ElevenLabs TTS Models
 export const ELEVENLABS_MODELS = [
   { value: "eleven_turbo_v2_5", label: "Turbo v2.5", description: "⚡ Più veloce - 32 lingue - Consigliato", recommended: true },
+  { value: "eleven_v3", label: "Eleven v3 (Alpha)", description: "🎭 Più espressivo - Nuovo!", recommended: false },
   { value: "eleven_multilingual_v2", label: "Multilingual v2", description: "Alta qualità - 29 lingue", recommended: false },
   { value: "eleven_turbo_v2", label: "Turbo v2", description: "Veloce - Solo inglese", recommended: false },
   { value: "eleven_flash_v2_5", label: "Flash v2.5", description: "Ultra veloce - Bassa latenza", recommended: false },
