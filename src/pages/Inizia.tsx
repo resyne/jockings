@@ -73,13 +73,19 @@ const Inizia = () => {
       </main>
 
       {/* Footer with block link */}
-      <footer className="py-6 text-center">
+      <footer className="py-6 text-center space-y-2">
         <button
           onClick={() => navigate("/blocca-segnala")}
-          className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+          className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors block mx-auto"
         >
           Scherzo fuori luogo? Segnala e blocca
         </button>
+        <a
+          href="mailto:prank@sarani.ai"
+          className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors block"
+        >
+          Contatti: prank@sarani.ai
+        </a>
       </footer>
     </div>
   );

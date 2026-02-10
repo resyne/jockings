@@ -233,6 +233,14 @@ const Settings = () => {
           <LogOut className="w-5 h-5 mr-2" />
           Esci dall'account
         </Button>
+
+        {/* Contact */}
+        <p className="text-xs text-muted-foreground text-center animate-slide-up" style={{ animationDelay: "0.3s" }}>
+          Hai bisogno di aiuto?{" "}
+          <a href="mailto:prank@sarani.ai" className="underline hover:text-foreground transition-colors">
+            prank@sarani.ai
+          </a>
+        </p>
       </main>
     </div>
   );

@@ -311,6 +311,12 @@ const BlockAndReport = () => {
           <p className="text-xs text-muted-foreground text-center mt-6">
             Le segnalazioni ci aiutano a mantenere la piattaforma sicura e rispettosa.
           </p>
+          <p className="text-xs text-muted-foreground text-center mt-2">
+            Per qualsiasi domanda:{" "}
+            <a href="mailto:prank@sarani.ai" className="underline hover:text-foreground transition-colors">
+              prank@sarani.ai
+            </a>
+          </p>
         </div>
       </main>
     </div>
