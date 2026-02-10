@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, User, Mail, Phone, LogOut, Save } from "lucide-react";
+import { ArrowLeft, User, Mail, Phone, LogOut, Save, CreditCard, Loader2, ExternalLink } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import saranoIcon from "@/assets/sarano-icon.png";
 
@@ -22,6 +22,7 @@ const Settings = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -65,6 +66,28 @@ const Settings = () => {
       setProfile((prev) => prev ? { ...prev, username: username.trim() } : null);
     }
     setLoading(false);
+  };
+
+  const handleManageSubscription = async () => {
+    setPortalLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("customer-portal");
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("Nessun URL del portale ricevuto");
+      }
+    } catch (error: any) {
+      console.error("Portal error:", error);
+      toast({
+        title: "Errore",
+        description: error.message || "Impossibile aprire il portale di gestione",
+        variant: "destructive",
+      });
+    } finally {
+      setPortalLoading(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -162,11 +185,49 @@ const Settings = () => {
           </CardContent>
         </Card>
 
+        {/* Subscription Management */}
+        <Card className="animate-slide-up" style={{ animationDelay: "0.15s" }}>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <CreditCard className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Abbonamento</CardTitle>
+                <CardDescription>Gestisci il tuo piano e pagamenti</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Puoi gestire il tuo abbonamento, cambiare metodo di pagamento o annullare il rinnovo automatico dal portale Stripe.
+            </p>
+            <Button
+              onClick={handleManageSubscription}
+              variant="outline"
+              className="w-full h-12"
+              disabled={portalLoading}
+            >
+              {portalLoading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Caricamento...
+                </span>
+              ) : (
+                <>
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Gestisci abbonamento
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+
         {/* Logout */}
         <Button
           variant="outline"
           className="w-full h-14 text-destructive border-destructive/20 hover:bg-destructive/10 animate-slide-up"
-          style={{ animationDelay: "0.2s" }}
+          style={{ animationDelay: "0.25s" }}
           onClick={handleLogout}
         >
           <LogOut className="w-5 h-5 mr-2" />
