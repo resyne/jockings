@@ -81,10 +81,10 @@ const Inizia = () => {
           Scherzo fuori luogo? Segnala e blocca
         </button>
         <a
-          href="mailto:prank@sarani.ai"
+          href="mailto:prank@sarano.ai"
           className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors block"
         >
-          Contatti: prank@sarani.ai
+          Contatti: prank@sarano.ai
         </a>
       </footer>
     </div>
