@@ -670,72 +670,13 @@ serve(async (req) => {
         break;
 
       case "transcript":
-        // Handle transcript updates for live display
-        console.log("=== TRANSCRIPT EVENT ===");
-        const transcriptRole = body.message?.role; // "user" or "assistant"
-        const transcriptText = body.message?.transcript;
-        
-        if (transcriptRole && transcriptText && callId) {
-          console.log(`Transcript from ${transcriptRole}: ${transcriptText}`);
-          
-          // Fetch current conversation history
-          const { data: prankData } = await supabase
-            .from("pranks")
-            .select("conversation_history")
-            .eq("twilio_call_sid", callId)
-            .single();
-          
-          const currentHistory = (prankData?.conversation_history as any[]) || [];
-          const newMessage = {
-            role: transcriptRole === "bot" ? "assistant" : transcriptRole,
-            content: transcriptText,
-            timestamp: new Date().toISOString()
-          };
-          
-          // Append new message to history
-          const updatedHistory = [...currentHistory, newMessage];
-          
-          const { error: updateError } = await supabase
-            .from("pranks")
-            .update({ conversation_history: updatedHistory })
-            .eq("twilio_call_sid", callId);
-          
-          if (updateError) {
-            console.error("Error updating transcript:", updateError);
-          } else {
-            console.log("Transcript updated successfully");
-          }
-        }
+        // Already handled above (lines 242-260) - skip duplicate processing
+        console.log("Transcript event already handled above, skipping switch case");
         break;
         
       case "conversation-update":
-        // Handle real-time conversation updates
-        console.log("=== CONVERSATION UPDATE EVENT ===");
-        const messages = body.message?.messages || body.message?.artifact?.messages;
-        
-        if (messages && Array.isArray(messages) && callId) {
-          // Filter out system messages and format for display
-          const conversationHistory = messages
-            .filter((msg: any) => msg.role !== "system")
-            .map((msg: any) => ({
-              role: msg.role === "bot" ? "assistant" : msg.role,
-              content: msg.message || msg.content || "",
-              timestamp: msg.time ? new Date(msg.time).toISOString() : new Date().toISOString()
-            }));
-          
-          console.log("Updating conversation history with", conversationHistory.length, "messages");
-          
-          const { error: convError } = await supabase
-            .from("pranks")
-            .update({ conversation_history: conversationHistory })
-            .eq("twilio_call_sid", callId);
-          
-          if (convError) {
-            console.error("Error updating conversation:", convError);
-          } else {
-            console.log("Conversation updated successfully");
-          }
-        }
+        // Already handled above (lines 335-398) - skip duplicate processing
+        console.log("Conversation-update event already handled above, skipping switch case");
         break;
 
       case "speech-update":
