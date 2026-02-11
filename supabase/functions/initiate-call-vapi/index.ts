@@ -631,6 +631,20 @@ serve(async (req) => {
       },
       // TRANSIENT ASSISTANT - configured entirely at runtime
       assistant: {
+        // CRITICAL: Server URL for receiving webhook events during the call
+        // Without this, VAPI may not send transcript/conversation-update events to our webhook
+        server: {
+          url: webhookUrl,
+        },
+        // CRITICAL: Explicitly request all event types we need
+        // Without this, VAPI may not send transcript or conversation-update events
+        serverMessages: [
+          "transcript",
+          "conversation-update",
+          "status-update",
+          "speech-update",
+          "end-of-call-report",
+        ],
         // Dynamic first message - CRITICAL for prank success
         firstMessage: firstMessage,
         
@@ -651,7 +665,9 @@ serve(async (req) => {
             : settings['vapi_ai_model'],
           systemPrompt: systemPrompt,
           temperature: parseFloat(settings['vapi_temperature']),
-          maxTokens: parseInt(settings['vapi_max_tokens']),
+          // CRITICAL: Use higher maxTokens to ensure the model can always respond
+          // 250 was too low and could cause the model to not generate responses
+          maxTokens: Math.max(parseInt(settings['vapi_max_tokens']), 500),
         },
         
         // Voice configuration - use admin panel settings first, then voice_settings table as fallback
