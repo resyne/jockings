@@ -1173,7 +1173,7 @@ const AdminVoices = () => {
                         value={vapiSettings.transcriberProvider} 
                         onValueChange={(value) => {
                           const modelMap: Record<string, string> = {
-                            'deepgram': 'nova-2-phonecall',
+                            'deepgram': 'nova-3',
                             'google': 'gemini-2.5-flash',
                             'talkscriber': 'whisper',
                             'gladia': 'fast',

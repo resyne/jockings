@@ -106,10 +106,12 @@ export const VAPI_ELEVENLABS_VOICES = [
 
 // Deepgram STT Models
 export const DEEPGRAM_MODELS = [
-  { value: "nova-2", label: "Nova 2", description: "⚡ Più veloce e accurato", recommended: true },
-  { value: "nova-2-general", label: "Nova 2 General", description: "General purpose", recommended: false },
-  { value: "nova-2-meeting", label: "Nova 2 Meeting", description: "Ottimizzato per meeting", recommended: false },
-  { value: "nova-2-phonecall", label: "Nova 2 Phonecall", description: "⚡ Ottimizzato per telefonate", recommended: true },
+  { value: "nova-3", label: "Nova 3", description: "🚀 Ultimo modello, massima accuratezza", recommended: true },
+  { value: "nova-3-general", label: "Nova 3 General", description: "General purpose - ultima generazione", recommended: false },
+  { value: "nova-3-medical", label: "Nova 3 Medical", description: "Ottimizzato per contesto medico", recommended: false },
+  { value: "nova-3-finance", label: "Nova 3 Finance", description: "Ottimizzato per contesto finanziario", recommended: false },
+  { value: "nova-2", label: "Nova 2", description: "Veloce e accurato", recommended: false },
+  { value: "nova-2-phonecall", label: "Nova 2 Phonecall", description: "Ottimizzato per telefonate", recommended: false },
   { value: "nova-2-conversationalai", label: "Nova 2 ConversationalAI", description: "Ottimizzato per AI", recommended: false },
   { value: "nova", label: "Nova", description: "Versione precedente", recommended: false },
   { value: "enhanced", label: "Enhanced", description: "Qualità migliorata", recommended: false },
