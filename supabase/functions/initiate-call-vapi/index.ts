@@ -333,14 +333,14 @@ serve(async (req) => {
       vapi_recording_enabled: 'true',
       vapi_transcript_enabled: 'true',
       vapi_transcriber_provider: 'deepgram',
-      vapi_transcriber_model: 'nova-2', // Default (multi-language)
+      vapi_transcriber_model: 'nova-3', // Default - upgraded from nova-2 for better accuracy
       vapi_transcriber_language: 'it', // Default (used for Deepgram models)
       vapi_silence_timeout: '30',
       vapi_max_duration: '300',
       vapi_background_sound: 'off',
       vapi_backchanneling: 'false',
       vapi_end_call_message: 'Arrivederci!',
-      elevenlabs_model: 'eleven_turbo_v2_5', // Default ElevenLabs TTS model
+      elevenlabs_model: 'eleven_v3', // Default - upgraded from eleven_turbo_v2_5 for max expressiveness
     };
     
     settingsResult.data?.forEach((s: { key: string; value: string }) => {
