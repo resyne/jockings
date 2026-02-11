@@ -104,7 +104,7 @@ const CreatePrank = () => {
   const [prankTheme, setPrankTheme] = useState("");
   const [realDetail, setRealDetail] = useState("");
   const [personalityTone, setPersonalityTone] = useState("enthusiastic");
-  const [maxDuration] = useState(120);
+  const [maxDuration] = useState(300);
   const [creativityLevel] = useState([50]);
   const sendRecording = true;
   const [sendRevealSms, setSendRevealSms] = useState(false);
