@@ -585,16 +585,13 @@ const CreatePrank = () => {
           variant: "destructive",
         });
       } else {
-        // Update profile based on call type
+        // Mark trial as used immediately (one-time flag)
+        // NOTE: available_pranks is NOT decremented here - the vapi-webhook end-of-call-report
+        // handles consumption based on call outcome (answered, duration, etc.)
         if (isTrialCall) {
           await supabase
             .from("profiles")
             .update({ trial_prank_used: true })
-            .eq("user_id", user.id);
-        } else {
-          await supabase
-            .from("profiles")
-            .update({ available_pranks: profile.available_pranks - 1 })
             .eq("user_id", user.id);
         }
         
