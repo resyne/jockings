@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Headphones } from "lucide-react";
 import saranoWordmarkIcon from "@/assets/sarano-wordmark-icon.png";
@@ -6,7 +7,30 @@ import saranoWordmarkIcon from "@/assets/sarano-wordmark-icon.png";
 const Inizia = () => {
   const navigate = useNavigate();
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Sarano AI",
+    "url": "https://www.sarano.ai",
+    "description": "Crea scherzi telefonici personalizzati con l'intelligenza artificiale. Divertiti con amici e familiari in modo sicuro e rispettoso.",
+    "applicationCategory": "EntertainmentApplication",
+    "operatingSystem": "Web",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "EUR",
+      "description": "Prova gratuita inclusa"
+    }
+  };
+
   return (
+    <>
+      <Helmet>
+        <title>Sarano AI - Scherzi telefonici con intelligenza artificiale</title>
+        <meta name="description" content="Crea scherzi telefonici personalizzati con l'intelligenza artificiale. Divertiti con amici e familiari in modo sicuro e rispettoso." />
+        <link rel="canonical" href="https://www.sarano.ai/" />
+        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+      </Helmet>
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="p-4 flex justify-center">
@@ -88,6 +112,7 @@ const Inizia = () => {
         </a>
       </footer>
     </div>
+    </>
   );
 };
 
