@@ -184,7 +184,7 @@ IMPORTANT: The first 3 seconds are crucial. Launch the scenario immediately!`;
         : `NOTE: ${realDetail}`);
 
   // Replace placeholders
-  return template
+  let prompt = template
     .replace(/\{\{GENDER\}\}/g, genderDesc)
     .replace(/\{\{VICTIM_NAME\}\}/g, victimName)
     .replace(/\{\{VICTIM_GENDER\}\}/g, victimGenderDesc)
@@ -192,6 +192,20 @@ IMPORTANT: The first 3 seconds are crucial. Launch the scenario immediately!`;
     .replace(/\{\{REAL_DETAIL\}\}/g, realDetail)
     .replace(/\{\{REAL_DETAIL_SECTION\}\}/g, realDetailSection)
     .replace(/\{\{PERSONALITY_TONE\}\}/g, tone);
+
+  // ALWAYS inject gender-name consistency rule at the end of the prompt
+  // This ensures it applies regardless of the admin template content
+  const genderNameRule = isItalian
+    ? `\n\n### REGOLA OBBLIGATORIA SUL NOME (PRIORITÀ MASSIMA)
+Il tuo sesso è: ${isMale ? 'MASCHIO' : 'FEMMINA'}.
+Quando ti presenti o dici il tuo nome, DEVI usare un nome ${isMale ? 'MASCHILE (es. Marco, Luca, Alessandro, Giovanni, Roberto)' : 'FEMMINILE (es. Giulia, Francesca, Sara, Maria, Alessandra)'}.
+È VIETATO usare un nome ${isMale ? 'femminile' : 'maschile'}. Questa regola non può essere ignorata.`
+    : `\n\n### MANDATORY NAME RULE (HIGHEST PRIORITY)
+Your gender is: ${isMale ? 'MALE' : 'FEMALE'}.
+When introducing yourself or saying your name, you MUST use a ${isMale ? 'MALE name (e.g., John, David, James, Robert, Michael)' : 'FEMALE name (e.g., Sarah, Emily, Jessica, Jennifer, Lisa)'}.
+You are FORBIDDEN from using a ${isMale ? 'female' : 'male'} name. This rule cannot be overridden.`;
+
+  return prompt + genderNameRule;
 };
 
 serve(async (req) => {
