@@ -460,6 +460,7 @@ const AdminVoices = () => {
       .from("voice_settings")
       .update({
         elevenlabs_voice_id: setting.elevenlabs_voice_id,
+        gender: setting.gender,
         is_active: setting.is_active,
         voice_name: setting.voice_name,
         notes: setting.notes,
@@ -845,6 +846,21 @@ const AdminVoices = () => {
                           {/* Edit form when selected */}
                           {selectedSetting?.id === setting.id && (
                             <div className="space-y-3 mt-3 pt-3 border-t">
+                              <div className="space-y-2">
+                                <Label className="text-xs">Sesso</Label>
+                                <Select
+                                  value={selectedSetting.gender}
+                                  onValueChange={(value) => setSelectedSetting({ ...selectedSetting, gender: value })}
+                                >
+                                  <SelectTrigger className="h-8 text-sm">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="male">👨 Maschile</SelectItem>
+                                    <SelectItem value="female">👩 Femminile</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
                               <div className="space-y-2">
                                 <Label className="text-xs">Nome Voce (opzionale)</Label>
                                 <Input
