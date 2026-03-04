@@ -160,9 +160,9 @@ FUNDAMENTAL RULES:
 
 IMPORTANT: The first 3 seconds are crucial. First impression determines the success of the prank.`;
 
-export const DEFAULT_FIRST_MESSAGE_IT = `{{GREETING}}! Parlo con {{VICTIM_FIRST_NAME}}?`;
+export const DEFAULT_FIRST_MESSAGE_IT = `{{GREETING}}, {{VICTIM_FIRST_NAME}}! Senta, la chiamo perché...`;
 
-export const DEFAULT_FIRST_MESSAGE_EN = `{{GREETING}}! Am I speaking with {{VICTIM_FIRST_NAME}}?`;
+export const DEFAULT_FIRST_MESSAGE_EN = `{{GREETING}}, {{VICTIM_FIRST_NAME}}! Listen, I'm calling because...`;
 
 // Default VAPI settings
 export const DEFAULT_VAPI_SETTINGS: VapiSettings = {
@@ -171,7 +171,7 @@ export const DEFAULT_VAPI_SETTINGS: VapiSettings = {
   callerId: "",
   aiProvider: "openai",
   aiModel: "gpt-4o-mini",
-  temperature: 0.7,
+  temperature: 1.0,
   maxTokens: 150,
   voiceProvider: "11labs",
   voiceId: "21m00Tcm4TlvDq8ikWAM",
@@ -183,7 +183,7 @@ export const DEFAULT_VAPI_SETTINGS: VapiSettings = {
   voiceUseSpeakerBoost: true,
   fillerInjectionEnabled: true,
   transcriberProvider: "deepgram",
-  transcriberModel: "nova-2",
+  transcriberModel: "nova-3",
   transcriberLanguage: "it",
   firstMessage: "Pronto?",
   firstMessageMode: "assistant-speaks-first",
