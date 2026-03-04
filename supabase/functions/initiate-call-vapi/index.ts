@@ -244,6 +244,43 @@ serve(async (req) => {
       throw new Error('Prank not found');
     }
 
+    // === SERVER-SIDE CREDIT CHECK ===
+    // Prevent users from initiating calls without available credits
+    const { data: userProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('available_pranks, trial_prank_used')
+      .eq('user_id', prank.user_id)
+      .single();
+
+    if (profileError || !userProfile) {
+      console.error('Profile fetch error:', profileError);
+      throw new Error('User profile not found');
+    }
+
+    const availablePranks = userProfile.available_pranks || 0;
+    console.log(`Credit check: user ${prank.user_id} has ${availablePranks} available pranks`);
+
+    if (availablePranks <= 0) {
+      console.log('=== CALL BLOCKED - No credits available ===');
+      
+      await supabase
+        .from('pranks')
+        .update({ call_status: 'failed' })
+        .eq('id', prankId);
+
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'no_credits',
+          message: 'Non hai prank disponibili. Acquista un pacchetto per continuare.'
+        }),
+        { 
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
     // Check if victim's phone number is blocked
     const { data: blockedNumber } = await supabase
       .from('blocked_phone_numbers')
