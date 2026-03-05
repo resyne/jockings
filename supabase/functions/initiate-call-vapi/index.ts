@@ -519,7 +519,16 @@ serve(async (req) => {
     const voicePersonaDescription = voiceSettingsResult.data?.description || null;
     console.log('Voice Persona Description:', voicePersonaDescription);
     
-    const systemPrompt = buildSystemPrompt(prank, systemPromptTemplateIT, systemPromptTemplateEN, voicePersonaDescription);
+    // CRITICAL: Use the gender from voice_settings (the actual selected voice) if available,
+    // because prank.voice_gender may not match the actual voice selected by the user
+    const actualVoiceGender = voiceSettingsResult.data?.gender || prank.voice_gender;
+    if (voiceSettingsResult.data?.gender && voiceSettingsResult.data.gender !== prank.voice_gender) {
+      console.log(`=== VOICE GENDER OVERRIDE: prank says "${prank.voice_gender}" but voice_settings says "${voiceSettingsResult.data.gender}" — using voice_settings ===`);
+    }
+    // Override prank.voice_gender with the actual voice gender for prompt building
+    const prankForPrompt = { ...prank, voice_gender: actualVoiceGender };
+    
+    const systemPrompt = buildSystemPrompt(prankForPrompt, systemPromptTemplateIT, systemPromptTemplateEN, voicePersonaDescription);
     const firstMessage = buildFirstMessage(prank, greeting, firstMessageTemplateIT, firstMessageTemplateEN);
 
     // VAPI transcriber configuration is provider/model-specific.
