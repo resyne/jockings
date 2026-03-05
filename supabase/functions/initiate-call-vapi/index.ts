@@ -820,11 +820,10 @@ serve(async (req) => {
       vapiCallBody.assistant.backgroundDenoisingEnabled = true;
     }
 
-    // Add voicemail detection if enabled - VAPI requires provider field
+    // Add voicemail detection if enabled - VAPI only accepts provider, no voicemailMessage
     if (settings['vapi_voicemail_detection'] === 'true') {
       vapiCallBody.assistant.voicemailDetection = {
         provider: 'vapi',
-        voicemailMessage: settings['vapi_voicemail_message'] || 'Questo è un messaggio automatico. Richiameremo più tardi.',
       };
     }
 
