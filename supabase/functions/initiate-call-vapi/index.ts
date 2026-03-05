@@ -366,6 +366,22 @@ serve(async (req) => {
         'vapi_voice_speaker_boost',
         // Background denoising
         'vapi_background_denoising',
+        // Speaking plan settings from admin panel
+        'vapi_start_speaking_wait',
+        'vapi_smart_endpointing_enabled',
+        'vapi_smart_endpointing_provider',
+        'vapi_transcription_endpointing_enabled',
+        'vapi_stop_speaking_num_words',
+        'vapi_stop_speaking_voice_seconds',
+        'vapi_stop_speaking_backoff_seconds',
+        // Call behavior settings from admin panel
+        'vapi_first_message_mode',
+        'vapi_first_message_interruptions',
+        'vapi_voicemail_detection',
+        'vapi_voicemail_message',
+        'vapi_smart_denoising_enabled',
+        'vapi_hipaa_enabled',
+        'vapi_end_call_phrases',
       ]),
       voiceSettingsQuery,
       // Fetch active caller IDs that have VAPI phone number configured, ordered by default first
@@ -699,13 +715,11 @@ serve(async (req) => {
         // Dynamic first message - CRITICAL for prank success
         firstMessage: firstMessage,
         
-        // CRITICAL: First message mode - assistant speaks first without waiting
-        // This ensures the call starts immediately with the greeting
-        firstMessageMode: 'assistant-speaks-first',
+        // CRITICAL: First message mode - from admin settings
+        firstMessageMode: settings['vapi_first_message_mode'] || 'assistant-speaks-first',
         
-        // CRITICAL: Disable waiting for user response after first message
-        // This prevents the call from getting stuck waiting for the victim to respond
-        firstMessageInterruptionsEnabled: false,
+        // CRITICAL: First message interruptions - from admin settings
+        firstMessageInterruptionsEnabled: settings['vapi_first_message_interruptions'] === 'true',
         
         // AI Model configuration - use provider from settings
         // VAPI requires model name WITHOUT provider prefix (e.g., "gpt-4o-mini" not "openai/gpt-4o-mini")
@@ -717,7 +731,6 @@ serve(async (req) => {
           systemPrompt: systemPrompt,
           temperature: parseFloat(settings['vapi_temperature']),
           // CRITICAL: Use higher maxTokens to ensure the model can always respond
-          // 250 was too low and could cause the model to not generate responses
           maxTokens: Math.max(parseInt(settings['vapi_max_tokens']), 500),
         },
         
@@ -749,10 +762,10 @@ serve(async (req) => {
           language: transcriberLanguage,
         },
         
-        // CRITICAL: Start speaking plan - control timing after user speaks
+        // CRITICAL: Start speaking plan - from admin settings
         startSpeakingPlan: {
-          waitSeconds: 0.4, // Wait briefly before responding
-          smartEndpointingEnabled: true, // Better detection of when user stops talking
+          waitSeconds: parseFloat(settings['vapi_start_speaking_wait'] || '0.4'),
+          smartEndpointingEnabled: settings['vapi_smart_endpointing_enabled'] !== 'false', // default true
           transcriptionEndpointingPlan: {
             onPunctuationSeconds: 0.1,
             onNoPunctuationSeconds: 0.8,
@@ -760,11 +773,11 @@ serve(async (req) => {
           },
         },
         
-        // CRITICAL: Stop speaking plan - handle interruptions gracefully
+        // CRITICAL: Stop speaking plan - from admin settings
         stopSpeakingPlan: {
-          numWords: 0, // Don't require words to interrupt
-          voiceSeconds: 0.2, // Quick detection of user speaking
-          backoffSeconds: 1.0, // Time before AI resumes after interruption
+          numWords: parseInt(settings['vapi_stop_speaking_num_words'] || '0'),
+          voiceSeconds: parseFloat(settings['vapi_stop_speaking_voice_seconds'] || '0.2'),
+          backoffSeconds: parseFloat(settings['vapi_stop_speaking_backoff_seconds'] || '1.0'),
         },
         
         // Call behavior settings
@@ -805,6 +818,27 @@ serve(async (req) => {
     // Add background denoising if enabled
     if (settings['vapi_background_denoising'] === 'true') {
       vapiCallBody.assistant.backgroundDenoisingEnabled = true;
+    }
+
+    // Add voicemail detection if enabled
+    if (settings['vapi_voicemail_detection'] === 'true') {
+      vapiCallBody.assistant.voicemailDetection = {
+        enabled: true,
+        ...(settings['vapi_voicemail_message'] ? { provider: '11labs', voicemailMessage: settings['vapi_voicemail_message'] } : {}),
+      };
+    }
+
+    // Add HIPAA mode if enabled
+    if (settings['vapi_hipaa_enabled'] === 'true') {
+      vapiCallBody.assistant.hipaaEnabled = true;
+    }
+
+    // Add end call phrases if configured
+    if (settings['vapi_end_call_phrases']) {
+      const phrases = settings['vapi_end_call_phrases'].split(',').map((p: string) => p.trim()).filter(Boolean);
+      if (phrases.length > 0) {
+        vapiCallBody.assistant.endCallPhrases = phrases;
+      }
     }
 
     console.log('=== VAPI REQUEST ===');
