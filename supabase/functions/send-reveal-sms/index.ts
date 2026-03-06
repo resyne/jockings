@@ -7,15 +7,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Array of fun reveal messages in Italian
-const REVEAL_MESSAGES = [
-  "😂 SORPRESA! Eri appena vittima di uno scherzo telefonico AI creato con sarano.ai! Il tuo \"amico\" {senderPhone} ti ha fatto un regalo speciale 🎁",
-  "🎭 SCHERZO SVELATO! Quella chiamata era uno scherzo AI da sarano.ai! Ringrazia {senderPhone} per la risata 😜",
-  "🤖 GOTCHA! Era tutto uno scherzo AI fatto con sarano.ai! {senderPhone} ti ha beccato 🎉",
-  "📞 Quella chiamata era uno SCHERZO AI! Fatto con sarano.ai per te da {senderPhone}. Ora tocca a te vendicarti! 😈",
-  "🎪 RIVELAZIONE: sei stato/a scherzato/a dall'AI di sarano.ai! Mandante: {senderPhone}. Ci sei cascato/a? 🙈",
-];
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -40,12 +31,12 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Get prank data with decrypted victim phone using the RPC function
-    const { data: pranksDecrypted, error: prankError } = await supabase
-      .rpc("get_user_pranks_decrypted");
-
-    // Find the specific prank from the decrypted results
-    const prank = pranksDecrypted?.find((p: { id: string }) => p.id === prankId);
+    // Get prank data
+    const { data: prank, error: prankError } = await supabase
+      .from("pranks")
+      .select("send_reveal_sms, reveal_sender_name, user_id")
+      .eq("id", prankId)
+      .single();
 
     if (prankError || !prank) {
       console.error("Error fetching prank:", prankError);
@@ -55,37 +46,28 @@ serve(async (req) => {
       });
     }
 
-    // Check if send_reveal_sms is enabled
-    const { data: prankFull } = await supabase
-      .from("pranks")
-      .select("send_reveal_sms, user_id")
-      .eq("id", prankId)
-      .single();
-
-    if (!prankFull?.send_reveal_sms) {
+    if (!prank.send_reveal_sms) {
       console.log("Reveal SMS not enabled for this prank");
       return new Response(JSON.stringify({ success: false, message: "Reveal SMS not enabled" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Get the sender's phone number from their profile
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("phone_number")
-      .eq("user_id", prankFull.user_id)
-      .single();
+    // Get decrypted victim phone
+    const { data: pranksDecrypted, error: decryptError } = await supabase
+      .rpc("get_user_pranks_decrypted");
 
-    if (profileError || !profile?.phone_number) {
-      console.error("Error fetching sender profile or phone not verified:", profileError);
-      return new Response(JSON.stringify({ error: "Sender phone not found" }), {
+    const decryptedPrank = pranksDecrypted?.find((p: { id: string }) => p.id === prankId);
+
+    if (decryptError || !decryptedPrank) {
+      console.error("Error fetching decrypted prank:", decryptError);
+      return new Response(JSON.stringify({ error: "Could not decrypt victim phone" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const victimPhone = prank.victim_phone as string;
-    const senderPhone = profile.phone_number;
+    const victimPhone = decryptedPrank.victim_phone as string;
 
     if (!victimPhone) {
       console.error("Victim phone not found");
@@ -95,11 +77,12 @@ serve(async (req) => {
       });
     }
 
-    // Pick a random reveal message
-    const randomMessage = REVEAL_MESSAGES[Math.floor(Math.random() * REVEAL_MESSAGES.length)];
-    const smsBody = randomMessage.replace(/{senderPhone}/g, senderPhone);
+    // Build the SMS message
+    const senderName = prank.reveal_sender_name || "Un amico";
+    const smsBody = `Sarano AI: la chiamata ricevuta era parte di uno scherzo.\n\nInviato da: ${senderName} (tramite Sarano AI).`;
 
     console.log("Sending reveal SMS to:", victimPhone);
+    console.log("Sender name:", senderName);
     console.log("Message:", smsBody);
 
     // Get Twilio credentials
