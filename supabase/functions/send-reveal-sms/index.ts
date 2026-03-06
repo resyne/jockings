@@ -31,10 +31,10 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Get prank data
+    // Get prank data including encrypted fields
     const { data: prank, error: prankError } = await supabase
       .from("pranks")
-      .select("send_reveal_sms, reveal_sender_name, user_id")
+      .select("send_reveal_sms, reveal_sender_name, user_id, victim_phone")
       .eq("id", prankId)
       .single();
 
@@ -53,21 +53,19 @@ serve(async (req) => {
       });
     }
 
-    // Get decrypted victim phone
-    const { data: pranksDecrypted, error: decryptError } = await supabase
-      .rpc("get_user_pranks_decrypted");
+    // Decrypt victim phone using the database function directly
+    const { data: decryptedPhone, error: decryptError } = await supabase
+      .rpc("decrypt_victim_data", { encrypted_text: prank.victim_phone });
 
-    const decryptedPrank = pranksDecrypted?.find((p: { id: string }) => p.id === prankId);
-
-    if (decryptError || !decryptedPrank) {
-      console.error("Error fetching decrypted prank:", decryptError);
+    if (decryptError || !decryptedPhone) {
+      console.error("Error decrypting victim phone:", decryptError);
       return new Response(JSON.stringify({ error: "Could not decrypt victim phone" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const victimPhone = decryptedPrank.victim_phone as string;
+    const victimPhone = decryptedPhone as string;
 
     if (!victimPhone) {
       console.error("Victim phone not found");
@@ -83,7 +81,6 @@ serve(async (req) => {
 
     console.log("Sending reveal SMS to:", victimPhone);
     console.log("Sender name:", senderName);
-    console.log("Message:", smsBody);
 
     // Get Twilio credentials
     const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
