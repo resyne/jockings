@@ -37,4 +37,8 @@ Disallow: /payment-success
 Disallow: /verify-phone
 Disallow: /reset-password
 
+User-agent: Googlebot-Image
+Allow: /favicon
+Allow: /apple-touch-icon.png
+
 Sitemap: https://www.sarano.ai/sitemap.xml
