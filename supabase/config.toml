@@ -92,3 +92,12 @@ verify_jwt = false
 
 [functions.check-prank-content]
 verify_jwt = true
+
+[functions.send-reveal-sms]
+verify_jwt = false
+
+[functions.process-reveal-sms]
+verify_jwt = false
+
+[functions.notify-admin]
+verify_jwt = false

@@ -153,6 +153,11 @@ const Auth = () => {
         supabase.functions.invoke("send-welcome-email", {
           body: { email, name: username || email.split('@')[0] }
         }).catch(err => console.error("Welcome email error:", err));
+
+        // Notify admin of new registration
+        supabase.functions.invoke("notify-admin", {
+          body: { type: "new_user", data: { email, name: `${firstName} ${lastName}`.trim() || username } }
+        }).catch(err => console.error("Admin notify error:", err));
         
         toast({
           title: "Registrazione completata! 🎊",
