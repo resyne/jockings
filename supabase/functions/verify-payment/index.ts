@@ -189,6 +189,28 @@ serve(async (req) => {
 
     console.log("=== PAYMENT VERIFIED - PRANKS ADDED ===");
 
+    // Notify admin of purchase (fire and forget)
+    try {
+      await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/notify-admin`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+        },
+        body: JSON.stringify({
+          type: "purchase",
+          data: {
+            email: user.email,
+            packageType,
+            pranksAdded: pranksToAdd,
+            amountPaid,
+          },
+        }),
+      });
+    } catch (notifyErr) {
+      console.error("Admin notify error:", notifyErr);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
