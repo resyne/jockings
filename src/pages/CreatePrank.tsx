@@ -107,7 +107,8 @@ const CreatePrank = () => {
   const [maxDuration] = useState(300);
   const [creativityLevel] = useState([50]);
   const sendRecording = true;
-  const [sendRevealSms, setSendRevealSms] = useState(false);
+  const [sendRevealSms, setSendRevealSms] = useState(true);
+  const [revealSenderName, setRevealSenderName] = useState("");
   const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
   const [pendingPrankId, setPendingPrankId] = useState<string | null>(null);
   const [contentCheckLoading, setContentCheckLoading] = useState(false);
