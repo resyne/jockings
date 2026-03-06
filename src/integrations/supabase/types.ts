@@ -335,6 +335,7 @@ export type Database = {
           pregenerated_greeting_url: string | null
           real_detail: string | null
           recording_url: string | null
+          reveal_sender_name: string | null
           scheduled_at: string | null
           send_recording: boolean
           send_reveal_sms: boolean | null
@@ -367,6 +368,7 @@ export type Database = {
           pregenerated_greeting_url?: string | null
           real_detail?: string | null
           recording_url?: string | null
+          reveal_sender_name?: string | null
           scheduled_at?: string | null
           send_recording?: boolean
           send_reveal_sms?: boolean | null
@@ -399,6 +401,7 @@ export type Database = {
           pregenerated_greeting_url?: string | null
           real_detail?: string | null
           recording_url?: string | null
+          reveal_sender_name?: string | null
           scheduled_at?: string | null
           send_recording?: boolean
           send_reveal_sms?: boolean | null
