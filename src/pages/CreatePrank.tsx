@@ -107,7 +107,8 @@ const CreatePrank = () => {
   const [maxDuration] = useState(300);
   const [creativityLevel] = useState([50]);
   const sendRecording = true;
-  const [sendRevealSms, setSendRevealSms] = useState(false);
+  const [sendRevealSms, setSendRevealSms] = useState(true);
+  const [revealSenderName, setRevealSenderName] = useState("");
   const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
   const [pendingPrankId, setPendingPrankId] = useState<string | null>(null);
   const [contentCheckLoading, setContentCheckLoading] = useState(false);
@@ -537,6 +538,7 @@ const CreatePrank = () => {
           creativity_level: creativityLevel[0],
           send_recording: sendRecording,
           send_reveal_sms: sendRevealSms,
+          reveal_sender_name: sendRevealSms ? (revealSenderName.trim() || null) : null,
           call_status: "pending",
           scheduled_at: null,
         })
@@ -1180,15 +1182,28 @@ const CreatePrank = () => {
                       <span className="font-medium text-sm sm:text-base">SMS rivelatore 📱</span>
                     </div>
                     <p className="text-[10px] sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
-                      La vittima saprà che era uno scherzo tuo
+                      Dopo lo scherzo, la vittima riceverà un SMS che rivela che era uno scherzo (solo se la chiamata dura più di 30 secondi)
                     </p>
-                    {!profile?.phone_verified && (
-                      <p className="text-[10px] sm:text-xs text-orange-500 mt-1 sm:mt-2">
-                        ⚠️ Verifica il numero per usare questa funzione
-                      </p>
-                    )}
                   </div>
                 </div>
+                
+                {sendRevealSms && (
+                  <div className="mt-2 sm:mt-3">
+                    <Label htmlFor="revealSenderName" className="text-xs sm:text-sm text-muted-foreground">
+                      Il tuo nome (apparirà nell'SMS)
+                    </Label>
+                    <Input
+                      id="revealSenderName"
+                      placeholder="es. Marco"
+                      value={revealSenderName}
+                      onChange={(e) => setRevealSenderName(e.target.value)}
+                      className="mt-1 h-9 sm:h-10 text-sm"
+                    />
+                    <p className="text-[9px] sm:text-xs text-muted-foreground mt-1">
+                      Messaggio: "Sarano AI: la chiamata ricevuta era parte di uno scherzo. Inviato da: {revealSenderName || "..."} (tramite Sarano AI)."
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

@@ -1,0 +1,1 @@
+ALTER TABLE public.pranks ADD COLUMN reveal_sender_name text DEFAULT null;
