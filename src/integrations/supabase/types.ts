@@ -336,6 +336,8 @@ export type Database = {
           real_detail: string | null
           recording_url: string | null
           reveal_sender_name: string | null
+          reveal_sms_scheduled_at: string | null
+          reveal_sms_sent: boolean | null
           scheduled_at: string | null
           send_recording: boolean
           send_reveal_sms: boolean | null
@@ -369,6 +371,8 @@ export type Database = {
           real_detail?: string | null
           recording_url?: string | null
           reveal_sender_name?: string | null
+          reveal_sms_scheduled_at?: string | null
+          reveal_sms_sent?: boolean | null
           scheduled_at?: string | null
           send_recording?: boolean
           send_reveal_sms?: boolean | null
@@ -402,6 +406,8 @@ export type Database = {
           real_detail?: string | null
           recording_url?: string | null
           reveal_sender_name?: string | null
+          reveal_sms_scheduled_at?: string | null
+          reveal_sms_sent?: boolean | null
           scheduled_at?: string | null
           send_recording?: boolean
           send_reveal_sms?: boolean | null
