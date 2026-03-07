@@ -310,10 +310,24 @@ const AdminUsers = () => {
                     </div>
 
                     <div className="flex items-center gap-3 flex-shrink-0">
-                      {/* Pranks made (read-only) */}
-                      <div className="flex items-center gap-1 text-muted-foreground" title="Prank effettuati">
-                        <Phone className="w-4 h-4" />
-                        <span className="text-sm font-medium">{user.pranks_made || 0}</span>
+                      {/* Call stats */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex items-center gap-1 text-muted-foreground" title="Totale chiamate">
+                          <Phone className="w-3.5 h-3.5" />
+                          <span className="text-xs font-medium">{user.callStats?.total || 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-blue-500" title="Prove (verso sé stesso)">
+                          <UserCheck className="w-3.5 h-3.5" />
+                          <span className="text-xs font-medium">{user.callStats?.trial || 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-green-500" title="Successo (>30s)">
+                          <PhoneCall className="w-3.5 h-3.5" />
+                          <span className="text-xs font-medium">{user.callStats?.success || 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-destructive" title="Fallite">
+                          <PhoneOff className="w-3.5 h-3.5" />
+                          <span className="text-xs font-medium">{user.callStats?.failed || 0}</span>
+                        </div>
                       </div>
                       
                       {/* Available pranks (editable) */}
