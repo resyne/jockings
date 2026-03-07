@@ -176,7 +176,7 @@ const Settings = () => {
             </div>
             <Button
               onClick={handleSave}
-              className="w-full h-12 gradient-primary"
+              className="w-full h-12 bg-primary text-primary-foreground hover:bg-primary/90"
               disabled={loading || username === profile?.username}
             >
               <Save className="w-4 h-4 mr-2" />
