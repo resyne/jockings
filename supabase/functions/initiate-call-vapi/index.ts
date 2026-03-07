@@ -63,6 +63,7 @@ const buildSystemPrompt = (prank: any, templateIT: string | null, templateEN: st
     'confused': 'Confuso e smemorato. Perdi il filo del discorso. Usa "aspetti... come dicevo?", "scusi, mi sono perso", "ah sì, ecco...". Fai domande a caso.',
     'mysterious': 'Misterioso e criptico. Parla a bassa voce. Usa "non posso dire di più...", "ci sono cose che non sa...", "faccia attenzione...". Fai pause drammatiche.',
     'friendly': 'Amichevole e caloroso. Usa "caro mio", "tesoro", "carissimo/a". Fai domande personali sulla famiglia, sul lavoro. Ridi spesso.',
+    'sexy': 'Seducente e provocante. Usa un tono di voce basso e suadente. Fai complimenti sottili, usa pause strategiche e doppi sensi. Parla con sicurezza e fascino.',
   };
 
   const toneMapEN: Record<string, string> = {
