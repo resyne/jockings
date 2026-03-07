@@ -290,7 +290,7 @@ const Pricing = () => {
         <div className="space-y-4">
           {packages.map((pkg) => {
             const discountedPrice = getDiscountedPrice(pkg.price);
-            const hasDiscount = appliedPromo && discountedPrice < pkg.price;
+            const hasDiscount = discountedPrice < pkg.price;
             
             return (
               <Card 
