@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Users, Shield, ShieldCheck, ShieldOff, Phone, Search, Trash2, X } from "lucide-react";
+import { ArrowLeft, Users, Shield, ShieldCheck, ShieldOff, Phone, Search, Trash2, X, PhoneCall, PhoneOff, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import {
@@ -21,6 +21,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+interface CallStats {
+  total: number;
+  trial: number;    // calls to own number
+  success: number;  // completed calls >30s (non-trial)
+  failed: number;   // failed/no_answer/busy
+}
+
 interface UserProfile {
   id: string;
   user_id: string;
@@ -30,6 +37,7 @@ interface UserProfile {
   phone_number: string | null;
   isAdmin?: boolean;
   pranks_made?: number;
+  callStats?: CallStats;
 }
 
 const AdminUsers = () => {
@@ -74,10 +82,10 @@ const AdminUsers = () => {
   const fetchUsers = async () => {
     setLoadingUsers(true);
     
-    const [profilesRes, adminRolesRes, pranksCountRes] = await Promise.all([
+    const [profilesRes, adminRolesRes, pranksRes] = await Promise.all([
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("user_roles").select("user_id").eq("role", "admin"),
-      supabase.from("pranks").select("user_id"),
+      supabase.from("pranks_decrypted").select("user_id, call_status, victim_phone, max_duration, created_at, updated_at"),
     ]);
 
     if (profilesRes.error) {
@@ -88,16 +96,55 @@ const AdminUsers = () => {
 
     const adminUserIds = new Set(adminRolesRes.data?.map(r => r.user_id) || []);
     
-    // Count pranks per user
-    const pranksCounts: Record<string, number> = {};
-    pranksCountRes.data?.forEach(p => {
-      pranksCounts[p.user_id] = (pranksCounts[p.user_id] || 0) + 1;
+    // Build phone lookup from profiles
+    const phoneByUserId: Record<string, string> = {};
+    (profilesRes.data || []).forEach(p => {
+      if (p.phone_number) phoneByUserId[p.user_id] = p.phone_number;
+    });
+
+    // Build call stats per user
+    const statsMap: Record<string, CallStats> = {};
+    const pranksCountMap: Record<string, number> = {};
+    
+    (pranksRes.data || []).forEach((p: any) => {
+      if (!p.user_id) return;
+      pranksCountMap[p.user_id] = (pranksCountMap[p.user_id] || 0) + 1;
+      
+      if (!statsMap[p.user_id]) {
+        statsMap[p.user_id] = { total: 0, trial: 0, success: 0, failed: 0 };
+      }
+      const stats = statsMap[p.user_id];
+      stats.total++;
+
+      const userPhone = phoneByUserId[p.user_id];
+      const isSelfCall = userPhone && p.victim_phone && (
+        p.victim_phone.includes(userPhone.replace(/\D/g, "").slice(-8)) ||
+        userPhone.includes((p.victim_phone || "").replace(/\D/g, "").slice(-8))
+      );
+
+      if (isSelfCall) {
+        stats.trial++;
+      } else if (["failed", "no_answer", "busy"].includes(p.call_status)) {
+        stats.failed++;
+      } else if (p.call_status === "completed" || p.call_status === "recording_available") {
+        // Consider successful if completed/recording available
+        // We approximate >30s by checking if updated_at - created_at > 30s
+        const created = new Date(p.created_at).getTime();
+        const updated = new Date(p.updated_at).getTime();
+        const durationSec = (updated - created) / 1000;
+        if (durationSec > 30) {
+          stats.success++;
+        } else {
+          stats.failed++;
+        }
+      }
     });
 
     const usersWithRoles = (profilesRes.data || []).map(profile => ({
       ...profile,
       isAdmin: adminUserIds.has(profile.user_id),
-      pranks_made: pranksCounts[profile.user_id] || 0,
+      pranks_made: pranksCountMap[profile.user_id] || 0,
+      callStats: statsMap[profile.user_id] || { total: 0, trial: 0, success: 0, failed: 0 },
     }));
 
     setUsers(usersWithRoles);
@@ -263,10 +310,24 @@ const AdminUsers = () => {
                     </div>
 
                     <div className="flex items-center gap-3 flex-shrink-0">
-                      {/* Pranks made (read-only) */}
-                      <div className="flex items-center gap-1 text-muted-foreground" title="Prank effettuati">
-                        <Phone className="w-4 h-4" />
-                        <span className="text-sm font-medium">{user.pranks_made || 0}</span>
+                      {/* Call stats */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex items-center gap-1 text-muted-foreground" title="Totale chiamate">
+                          <Phone className="w-3.5 h-3.5" />
+                          <span className="text-xs font-medium">{user.callStats?.total || 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-blue-500" title="Prove (verso sé stesso)">
+                          <UserCheck className="w-3.5 h-3.5" />
+                          <span className="text-xs font-medium">{user.callStats?.trial || 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-green-500" title="Successo (>30s)">
+                          <PhoneCall className="w-3.5 h-3.5" />
+                          <span className="text-xs font-medium">{user.callStats?.success || 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-destructive" title="Fallite">
+                          <PhoneOff className="w-3.5 h-3.5" />
+                          <span className="text-xs font-medium">{user.callStats?.failed || 0}</span>
+                        </div>
                       </div>
                       
                       {/* Available pranks (editable) */}
