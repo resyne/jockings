@@ -86,11 +86,11 @@ const VerifyPhone = () => {
         body: { phoneNumber: fullPhone },
       });
 
-      if (error) throw error;
-      
-      // Check for phone already used error
-      if (data?.error) {
-        if (data.code === 'PHONE_ALREADY_USED') {
+      // supabase.functions.invoke puts non-2xx responses in error,
+      // but the body with error details is still in data
+      if (error) {
+        // Check if it's a "phone already used" error from the response body
+        if (data?.code === 'PHONE_ALREADY_USED') {
           toast({
             title: "Numero già registrato",
             description: "Questo numero è già associato a un altro account. Effettua il login con l'account esistente.",
@@ -98,6 +98,11 @@ const VerifyPhone = () => {
           });
           return;
         }
+        throw new Error(data?.error || error.message);
+      }
+      
+      // Also check data.error for edge cases
+      if (data?.error) {
         throw new Error(data.error);
       }
 
