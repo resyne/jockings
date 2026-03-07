@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import CookieBanner from "@/components/CookieBanner";
+import FloatingHelpButton from "@/components/FloatingHelpButton";
 
 // Eager load landing and auth pages for fast initial navigation
 import Inizia from "./pages/Inizia";
