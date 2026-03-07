@@ -21,6 +21,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+interface CallStats {
+  total: number;
+  trial: number;    // calls to own number
+  success: number;  // completed calls >30s (non-trial)
+  failed: number;   // failed/no_answer/busy
+}
+
 interface UserProfile {
   id: string;
   user_id: string;
@@ -30,6 +37,7 @@ interface UserProfile {
   phone_number: string | null;
   isAdmin?: boolean;
   pranks_made?: number;
+  callStats?: CallStats;
 }
 
 const AdminUsers = () => {
