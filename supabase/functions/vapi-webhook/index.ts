@@ -587,7 +587,7 @@ serve(async (req) => {
             const { error: scheduleError } = await supabase
               .from("pranks")
               .update({ reveal_sms_scheduled_at: scheduledAt })
-              .eq("id", reportCallId);
+              .eq("twilio_call_sid", reportCallId);
             if (scheduleError) {
               console.error("Error scheduling reveal SMS:", scheduleError);
             } else {

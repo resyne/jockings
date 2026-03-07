@@ -886,6 +886,17 @@ serve(async (req) => {
 
     if (!vapiResponse.ok) {
       console.error('VAPI API Error:', vapiData);
+      
+      // === ROLLBACK: Decrement current_calls since call failed to initiate ===
+      console.log('Rolling back current_calls for caller ID:', selectedCallerId.id);
+      const { error: rollbackError } = await supabase
+        .from('verified_caller_ids')
+        .update({ current_calls: Math.max(0, (selectedCallerId.current_calls || 0)) })
+        .eq('id', selectedCallerId.id);
+      if (rollbackError) {
+        console.error('Error rolling back current_calls:', rollbackError);
+      }
+      
       throw new Error(vapiData.message || vapiData.error || JSON.stringify(vapiData));
     }
 
