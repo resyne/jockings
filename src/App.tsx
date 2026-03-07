@@ -59,6 +59,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <CookieBanner />
+        <FloatingHelpButton />
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<Navigate to="/inizia" replace />} />
