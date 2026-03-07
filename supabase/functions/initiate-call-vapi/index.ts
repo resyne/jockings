@@ -73,6 +73,7 @@ const buildSystemPrompt = (prank: any, templateIT: string | null, templateEN: st
     'confused': 'Confused and forgetful. Lose track of the conversation. Use "wait... what was I saying?", "sorry, I got lost", "oh yes, right...". Ask random questions.',
     'mysterious': 'Mysterious and cryptic. Speak in a low voice. Use "I cannot say more...", "there are things you dont know...", "be careful...". Make dramatic pauses.',
     'friendly': 'Friendly and warm. Use "my friend", "dear", "buddy". Ask personal questions about family, work. Laugh often.',
+    'sexy': 'Seductive and provocative. Use a low, sultry tone. Give subtle compliments, use strategic pauses and double entendres. Speak with confidence and charm.',
   };
 
   const toneMap = isItalian ? toneMapIT : toneMapEN;
