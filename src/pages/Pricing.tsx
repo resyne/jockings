@@ -6,22 +6,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Phone, ArrowLeft, Check, Sparkles, Zap, Tag, X, CheckCircle } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Phone, ArrowLeft, Check, Tag, X, CheckCircle, Clock } from "lucide-react";
 import saranoIcon from "@/assets/sarano-icon.png";
+import { useEffect } from "react";
 
 interface PricingPackage {
   id: string;
   name: string;
   pranks: number;
   price: number;
-  pricePerPrank: string;
   recommended?: boolean;
 }
 
@@ -33,20 +26,21 @@ interface PromoCodeInfo {
 
 const LAUNCH_DISCOUNT = 0.5; // 50% off
 
+// Launch offer end date — change this to set when the offer expires
+const LAUNCH_END_DATE = new Date("2026-04-15T23:59:59");
+
 const packages: PricingPackage[] = [
   {
     id: "pack_10",
     name: "Mega Pack",
     pranks: 10,
     price: 24.99,
-    pricePerPrank: "2,50",
   },
   {
     id: "pack_3",
     name: "Starter Pack",
     pranks: 3,
     price: 9.99,
-    pricePerPrank: "3,33",
     recommended: true,
   },
   {
@@ -54,28 +48,43 @@ const packages: PricingPackage[] = [
     name: "Singolo",
     pranks: 1,
     price: 3.99,
-    pricePerPrank: "3,99",
   },
 ];
 
+function useCountdown(targetDate: Date) {
+  const [timeLeft, setTimeLeft] = useState(() => {
+    const diff = targetDate.getTime() - Date.now();
+    return Math.max(0, diff);
+  });
+
+  useEffect(() => {
+    if (timeLeft <= 0) return;
+    const timer = setInterval(() => {
+      const diff = targetDate.getTime() - Date.now();
+      setTimeLeft(Math.max(0, diff));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [targetDate, timeLeft]);
+
+  const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+  return { days, hours, minutes, seconds, expired: timeLeft <= 0 };
+}
+
 const Pricing = () => {
-  console.log("[Pricing] Component rendering");
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
-  const [showUpsell, setShowUpsell] = useState(false);
-  const [selectedPackage, setSelectedPackage] = useState<PricingPackage | null>(null);
+  const countdown = useCountdown(LAUNCH_END_DATE);
   
   // Promo code state
   const [promoInput, setPromoInput] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<PromoCodeInfo | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoError, setPromoError] = useState<string | null>(null);
-
-  const handlePackageClick = (pkg: PricingPackage) => {
-    setSelectedPackage(pkg);
-    setShowUpsell(true);
-  };
 
   const validatePromoCode = async () => {
     if (!promoInput.trim()) return;
@@ -84,7 +93,6 @@ const Pricing = () => {
     setPromoError(null);
 
     try {
-      // Check if user is logged in
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setPromoError("Devi essere loggato per usare un codice promo");
@@ -92,7 +100,6 @@ const Pricing = () => {
         return;
       }
 
-      // Fetch the promo code
       const { data: promoCode, error } = await supabase
         .from("promo_codes")
         .select("*")
@@ -101,27 +108,23 @@ const Pricing = () => {
         .maybeSingle();
 
       if (error) throw error;
-
       if (!promoCode) {
         setPromoError("Codice non valido o scaduto");
         setPromoLoading(false);
         return;
       }
 
-      // Check expiration
       if (promoCode.expires_at && new Date(promoCode.expires_at) < new Date()) {
         setPromoError("Codice scaduto");
         setPromoLoading(false);
         return;
       }
 
-      // Check max uses
       if (promoCode.max_uses) {
         const { count } = await supabase
           .from("promo_code_uses")
           .select("*", { count: "exact", head: true })
           .eq("promo_code_id", promoCode.id);
-        
         if (count && count >= promoCode.max_uses) {
           setPromoError("Codice esaurito");
           setPromoLoading(false);
@@ -129,7 +132,6 @@ const Pricing = () => {
         }
       }
 
-      // Check if user already used this code
       const { data: existingUse } = await supabase
         .from("promo_code_uses")
         .select("id")
@@ -143,7 +145,6 @@ const Pricing = () => {
         return;
       }
 
-      // Code is valid
       setAppliedPromo({
         code: promoCode.code,
         discount_percentage: promoCode.discount_percentage,
@@ -176,7 +177,6 @@ const Pricing = () => {
 
   const handleCheckout = async (packageType: string) => {
     setLoading(packageType);
-    setShowUpsell(false);
 
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout", {
@@ -226,7 +226,7 @@ const Pricing = () => {
       <main className="px-4 py-6 max-w-lg mx-auto space-y-6">
         {/* Hero */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-2 bg-secondary/10 text-secondary px-4 py-1.5 rounded-full text-sm font-semibold animate-pulse">
+          <div className="inline-flex items-center gap-2 bg-secondary/10 text-secondary px-4 py-1.5 rounded-full text-sm font-semibold">
             🔥 Offerta Lancio: -50% su tutto!
           </div>
           <h2 className="text-2xl font-bold text-foreground">Scegli il tuo pacchetto</h2>
@@ -235,6 +235,31 @@ const Pricing = () => {
             Per scherzare gli amici, acquista un pacchetto!
           </p>
         </div>
+
+        {/* Countdown Timer */}
+        {!countdown.expired && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-4 text-center space-y-2">
+            <div className="flex items-center justify-center gap-2 text-destructive font-semibold text-sm">
+              <Clock className="w-4 h-4" />
+              L'offerta scade tra:
+            </div>
+            <div className="flex items-center justify-center gap-3">
+              {[
+                { value: countdown.days, label: "giorni" },
+                { value: countdown.hours, label: "ore" },
+                { value: countdown.minutes, label: "min" },
+                { value: countdown.seconds, label: "sec" },
+              ].map((item) => (
+                <div key={item.label} className="flex flex-col items-center">
+                  <span className="text-2xl font-bold text-foreground tabular-nums">
+                    {String(item.value).padStart(2, "0")}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground uppercase">{item.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Promo Code Section */}
         <Card className="border-dashed">
@@ -287,11 +312,12 @@ const Pricing = () => {
           </CardContent>
         </Card>
 
-        {/* Packages */}
+        {/* Packages — direct checkout, no upsell */}
         <div className="space-y-4">
           {packages.map((pkg) => {
             const discountedPrice = getDiscountedPrice(pkg.price);
             const hasDiscount = discountedPrice < pkg.price;
+            const discountedPerPrank = (discountedPrice / pkg.pranks).toFixed(2).replace(".", ",");
             
             return (
               <Card 
@@ -301,12 +327,11 @@ const Pricing = () => {
                     ? "border-primary shadow-lg ring-2 ring-primary/20" 
                     : "border-border"
                 }`}
-                onClick={() => handlePackageClick(pkg)}
+                onClick={() => handleCheckout(pkg.id)}
               >
                 {pkg.recommended && (
                   <Badge className="absolute top-3 right-3 bg-primary text-primary-foreground">
-                    <Sparkles className="w-3 h-3 mr-1" />
-                    Consigliato
+                    ⭐ Più scelto
                   </Badge>
                 )}
                 <CardHeader className="pb-2">
@@ -334,7 +359,7 @@ const Pricing = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">
-                      €{pkg.pricePerPrank} per prank
+                      €{discountedPerPrank} per prank
                     </span>
                     <Button 
                       className="bg-primary text-primary-foreground"
@@ -379,70 +404,6 @@ const Pricing = () => {
           </CardContent>
         </Card>
       </main>
-
-      {/* Upsell Modal */}
-      <Dialog open={showUpsell} onOpenChange={setShowUpsell}>
-        <DialogContent className="w-[calc(100%-2rem)] max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-xl text-center text-foreground">
-              <Zap className="w-8 h-8 mx-auto mb-2 text-primary" />
-              Vuoi risparmiare?
-            </DialogTitle>
-            <DialogDescription className="text-center space-y-2" asChild>
-              <div>
-                <span className="block text-base">
-                  Con <span className="line-through text-muted-foreground">€9,99</span>{" "}
-                  <span className="font-bold text-primary">€4,99 al mese</span> ottieni{" "}
-                  <span className="font-bold">5 prank</span>,
-                </span>
-                <span className="block text-muted-foreground">
-                  meno del pacchetto da 3 prank!
-                </span>
-              </div>
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-3 pt-4">
-            <Button 
-              className="w-full bg-primary text-primary-foreground py-6 text-lg"
-              onClick={() => handleCheckout("subscription")}
-              disabled={loading === "subscription"}
-            >
-              {loading === "subscription" ? (
-                <span className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                  Caricamento...
-                </span>
-              ) : (
-                <>
-                  <Sparkles className="w-5 h-5 mr-2" />
-                  Attiva abbonamento mensile
-                </>
-              )}
-            </Button>
-            
-            <Button 
-              variant="ghost"
-              className="w-full text-muted-foreground"
-              onClick={() => selectedPackage && handleCheckout(selectedPackage.id)}
-              disabled={loading === selectedPackage?.id}
-            >
-              {loading === selectedPackage?.id ? (
-                "Caricamento..."
-              ) : (
-                <>
-                  Continua con il pacchetto
-                  {selectedPackage && (
-                    <span className="ml-1">
-                      (€{getDiscountedPrice(selectedPackage.price).toFixed(2).replace(".", ",")})
-                    </span>
-                  )}
-                </>
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
