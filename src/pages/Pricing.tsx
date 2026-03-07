@@ -225,9 +225,13 @@ const Pricing = () => {
       <main className="px-4 py-6 max-w-lg mx-auto space-y-6">
         {/* Hero */}
         <div className="text-center space-y-2">
+          <div className="inline-flex items-center gap-2 bg-secondary/10 text-secondary px-4 py-1.5 rounded-full text-sm font-semibold animate-pulse">
+            🔥 Offerta Lancio: -50% su tutto!
+          </div>
           <h2 className="text-2xl font-bold text-foreground">Scegli il tuo pacchetto</h2>
           <p className="text-muted-foreground">
-            Più prank compri, più risparmi!
+            La prova gratuita è solo verso il tuo numero.<br/>
+            Per scherzare gli amici, acquista un pacchetto!
           </p>
         </div>
 
