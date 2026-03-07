@@ -390,7 +390,8 @@ const Pricing = () => {
             <DialogDescription className="text-center space-y-2" asChild>
               <div>
                 <span className="block text-base">
-                  Con <span className="font-bold text-primary">€9,99 al mese</span> ottieni{" "}
+                  Con <span className="line-through text-muted-foreground">€9,99</span>{" "}
+                  <span className="font-bold text-primary">€4,99 al mese</span> ottieni{" "}
                   <span className="font-bold">5 prank</span>,
                 </span>
                 <span className="block text-muted-foreground">
