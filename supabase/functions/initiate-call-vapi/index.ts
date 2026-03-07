@@ -933,6 +933,24 @@ serve(async (req) => {
     console.error('Error:', error.message);
     console.error('Stack:', error.stack);
     
+    // Mark prank as failed so it doesn't stay stuck as 'pending'
+    try {
+      const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+      const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      
+      const { prankId: failedPrankId } = await req.clone().json().catch(() => ({ prankId: null }));
+      if (failedPrankId) {
+        await supabase
+          .from('pranks')
+          .update({ call_status: 'failed' })
+          .eq('id', failedPrankId);
+        console.log('Prank marked as failed:', failedPrankId);
+      }
+    } catch (updateErr) {
+      console.error('Failed to mark prank as failed:', updateErr);
+    }
+    
     return new Response(
       JSON.stringify({ error: error.message || 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
