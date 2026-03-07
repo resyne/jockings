@@ -63,6 +63,7 @@ const buildSystemPrompt = (prank: any, templateIT: string | null, templateEN: st
     'confused': 'Confuso e smemorato. Perdi il filo del discorso. Usa "aspetti... come dicevo?", "scusi, mi sono perso", "ah sì, ecco...". Fai domande a caso.',
     'mysterious': 'Misterioso e criptico. Parla a bassa voce. Usa "non posso dire di più...", "ci sono cose che non sa...", "faccia attenzione...". Fai pause drammatiche.',
     'friendly': 'Amichevole e caloroso. Usa "caro mio", "tesoro", "carissimo/a". Fai domande personali sulla famiglia, sul lavoro. Ridi spesso.',
+    'sexy': 'Seducente e provocante. Usa un tono di voce basso e suadente. Fai complimenti sottili, usa pause strategiche e doppi sensi. Parla con sicurezza e fascino.',
   };
 
   const toneMapEN: Record<string, string> = {
@@ -72,6 +73,7 @@ const buildSystemPrompt = (prank: any, templateIT: string | null, templateEN: st
     'confused': 'Confused and forgetful. Lose track of the conversation. Use "wait... what was I saying?", "sorry, I got lost", "oh yes, right...". Ask random questions.',
     'mysterious': 'Mysterious and cryptic. Speak in a low voice. Use "I cannot say more...", "there are things you dont know...", "be careful...". Make dramatic pauses.',
     'friendly': 'Friendly and warm. Use "my friend", "dear", "buddy". Ask personal questions about family, work. Laugh often.',
+    'sexy': 'Seductive and provocative. Use a low, sultry tone. Give subtle compliments, use strategic pauses and double entendres. Speak with confidence and charm.',
   };
 
   const toneMap = isItalian ? toneMapIT : toneMapEN;

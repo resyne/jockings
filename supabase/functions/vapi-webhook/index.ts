@@ -295,30 +295,36 @@ serve(async (req) => {
       // Update live transcript from artifact.messages if available
       if (prank && !prankError && artifactMessages && Array.isArray(artifactMessages) && artifactMessages.length > 0) {
         // Filter out system messages and convert to our format
-        // Note: VAPI artifact.messages may have timestamps in milliseconds
         const conversationMessages = artifactMessages
           .filter((msg: any) => msg.role !== "system" && msg.role !== "tool-calls" && msg.role !== "tool-call-result")
           .map((msg: any) => ({
             role: msg.role === "bot" ? "assistant" : (msg.role === "assistant" ? "assistant" : "user"),
             content: msg.message || msg.content || "",
-            timestamp: new Date().toISOString() // Use current time to avoid timestamp conversion issues
+            timestamp: new Date().toISOString()
           }));
         
         if (conversationMessages.length > 0) {
+          // CRITICAL: Don't overwrite terminal statuses (recording_available, completed, failed, etc.)
+          // A status-update with "ended" can arrive AFTER end-of-call-report which already set recording_available
+          const terminalStatuses = ["recording_available", "completed", "failed", "no_answer", "busy"];
+          const isAlreadyTerminal = terminalStatuses.includes(prank.call_status);
+          
+          const updatePayload: any = { conversation_history: conversationMessages };
+          
+          if (!isAlreadyTerminal) {
+            updatePayload.call_status = status === "in-progress" ? "in_progress" : 
+                         status === "ended" ? "completed" : prank.call_status;
+          }
+          
           const { error: updateError } = await supabase
             .from("pranks")
-            .update({ 
-              conversation_history: conversationMessages,
-              // Also update call_status based on VAPI status
-              call_status: status === "in-progress" ? "in_progress" : 
-                           status === "ended" ? "completed" : prank.call_status
-            })
+            .update(updatePayload)
             .eq("id", prank.id);
           
           if (updateError) {
             console.error("Error updating from status-update:", updateError);
           } else {
-            console.log("Updated from status-update, messages:", conversationMessages.length);
+            console.log("Updated from status-update, messages:", conversationMessages.length, "status preserved:", isAlreadyTerminal);
           }
         }
       } else if (!prank) {
@@ -692,26 +698,39 @@ serve(async (req) => {
     if (newStatus) {
       console.log(`Updating prank with VAPI call ID ${callId} to status: ${newStatus}`);
       
-      const updateData: { call_status: string; recording_url?: string } = {
-        call_status: newStatus,
-      };
-      
-      if (recordingUrl) {
-        updateData.recording_url = recordingUrl;
-      }
-
-      const { data, error } = await supabase
+      // CRITICAL: Don't overwrite terminal statuses set by end-of-call-report
+      // (e.g., recording_available should not be overwritten by a late call-ended event)
+      const { data: currentPrank } = await supabase
         .from("pranks")
-        .update(updateData)
-        .eq("twilio_call_sid", callId);
-
-      if (error) {
-        console.error("Error updating prank:", error);
+        .select("call_status")
+        .eq("twilio_call_sid", callId)
+        .maybeSingle();
+      
+      const terminalStatuses = ["recording_available", "completed", "failed", "no_answer", "busy"];
+      if (currentPrank && terminalStatuses.includes(currentPrank.call_status)) {
+        console.log(`Skipping status update: prank already in terminal status "${currentPrank.call_status}"`);
       } else {
-        console.log("Prank updated successfully");
+        const updateData: { call_status: string; recording_url?: string } = {
+          call_status: newStatus,
+        };
+        
+        if (recordingUrl) {
+          updateData.recording_url = recordingUrl;
+        }
 
-        if (newStatus === "failed" && endedReasonForDiagnostic && typeof callId === "string") {
-          await appendFailureDiagnostic(supabase, callId, endedReasonForDiagnostic);
+        const { data, error } = await supabase
+          .from("pranks")
+          .update(updateData)
+          .eq("twilio_call_sid", callId);
+
+        if (error) {
+          console.error("Error updating prank:", error);
+        } else {
+          console.log("Prank updated successfully");
+
+          if (newStatus === "failed" && endedReasonForDiagnostic && typeof callId === "string") {
+            await appendFailureDiagnostic(supabase, callId, endedReasonForDiagnostic);
+          }
         }
       }
     }
