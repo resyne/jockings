@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Users, Shield, ShieldCheck, ShieldOff, Phone, Search, Trash2, X } from "lucide-react";
+import { ArrowLeft, Users, Shield, ShieldCheck, ShieldOff, Phone, Search, Trash2, X, PhoneCall, PhoneOff, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import {
