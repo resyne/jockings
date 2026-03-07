@@ -136,20 +136,17 @@ const Dashboard = () => {
 
   const fetchVictims = async () => {
     if (!user) return;
-    const { data, error } = await supabase
-      .from("pranks")
-      .select("victim_first_name, victim_last_name, victim_phone")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
+    const { data, error } = await supabase.rpc('get_user_pranks_decrypted');
     
     if (error) {
       console.error("Error fetching victims:", error);
     } else if (data) {
-      // Extract unique victims by phone
+      // Sort by created_at descending and extract unique victims by phone
+      const sorted = (data as any[]).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       const uniqueVictims: Victim[] = [];
       const seenPhones = new Set<string>();
-      for (const prank of data) {
-        if (!seenPhones.has(prank.victim_phone)) {
+      for (const prank of sorted) {
+        if (prank.victim_phone && !seenPhones.has(prank.victim_phone)) {
           seenPhones.add(prank.victim_phone);
           uniqueVictims.push({
             phone: prank.victim_phone,
