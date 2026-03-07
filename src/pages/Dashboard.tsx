@@ -120,17 +120,16 @@ const Dashboard = () => {
 
   const fetchPranks = async () => {
     if (!user) return;
-    const { data, error } = await supabase
-      .from("pranks")
-      .select("id, victim_first_name, victim_last_name, victim_phone, prank_theme, call_status, recording_url, created_at, scheduled_at")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(10);
+    const { data, error } = await supabase.rpc('get_user_pranks_decrypted');
     
     if (error) {
       console.error("Error fetching pranks:", error);
     } else {
-      setPranks(data || []);
+      // Sort by created_at descending and limit to 10
+      const sorted = (data || [])
+        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 10);
+      setPranks(sorted);
     }
     setLoading(false);
   };
