@@ -248,7 +248,7 @@ serve(async (req) => {
     // Prevent users from initiating calls without available credits
     const { data: userProfile, error: profileError } = await supabase
       .from('profiles')
-      .select('available_pranks, trial_prank_used')
+      .select('available_pranks, trial_prank_used, phone_number, phone_verified')
       .eq('user_id', prank.user_id)
       .single();
 
@@ -258,10 +258,20 @@ serve(async (req) => {
     }
 
     const availablePranks = userProfile.available_pranks || 0;
-    console.log(`Credit check: user ${prank.user_id} has ${availablePranks} available pranks`);
+    
+    // Check if this is a trial call (to own verified number)
+    const userPhoneDigits = (userProfile.phone_number || '').replace(/\D/g, '');
+    const victimPhoneDigits = (prank.victim_phone || '').replace(/\D/g, '');
+    const isTrialCall = !userProfile.trial_prank_used 
+      && userProfile.phone_verified 
+      && userPhoneDigits.length >= 8 
+      && victimPhoneDigits.length >= 8
+      && (victimPhoneDigits.endsWith(userPhoneDigits.slice(-8)) || userPhoneDigits.endsWith(victimPhoneDigits.slice(-8)));
+    
+    console.log(`Credit check: user ${prank.user_id} has ${availablePranks} available pranks, trial_used=${userProfile.trial_prank_used}, isTrialCall=${isTrialCall}`);
 
-    if (availablePranks <= 0) {
-      console.log('=== CALL BLOCKED - No credits available ===');
+    if (availablePranks <= 0 && !isTrialCall) {
+      console.log('=== CALL BLOCKED - No credits available and not a trial call ===');
       
       await supabase
         .from('pranks')
@@ -279,6 +289,16 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
+    }
+    
+    // If it's a trial call, mark it as used immediately (server-side)
+    // This prevents infinite retries even if the call fails later
+    if (isTrialCall) {
+      console.log('=== TRIAL CALL - Marking trial_prank_used = true ===');
+      await supabase
+        .from('profiles')
+        .update({ trial_prank_used: true })
+        .eq('user_id', prank.user_id);
     }
 
     // Check if victim's phone number is blocked
