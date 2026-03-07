@@ -59,6 +59,7 @@ const packages: PricingPackage[] = [
 ];
 
 const Pricing = () => {
+  console.log("[Pricing] Component rendering");
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
