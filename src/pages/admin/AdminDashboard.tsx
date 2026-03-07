@@ -295,6 +295,23 @@ const AdminDashboard = () => {
               </div>
             </CardHeader>
           </Card>
+
+          <Card 
+            className="cursor-pointer hover:border-primary transition-colors"
+            onClick={() => navigate("/admin/billing")}
+          >
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-lg bg-emerald-500/10">
+                  <DollarSign className="w-6 h-6 text-emerald-500" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Dashboard Economica</CardTitle>
+                  <CardDescription>Saldi Twilio, VAPI e Stripe in tempo reale</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
         </div>
       </main>
     </div>
