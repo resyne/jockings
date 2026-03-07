@@ -166,8 +166,11 @@ const Pricing = () => {
   };
 
   const getDiscountedPrice = (price: number) => {
-    if (!appliedPromo) return price;
-    return price * (1 - appliedPromo.discount_percentage / 100);
+    let discounted = price * (1 - LAUNCH_DISCOUNT);
+    if (appliedPromo) {
+      discounted = discounted * (1 - appliedPromo.discount_percentage / 100);
+    }
+    return discounted;
   };
 
   const handleCheckout = async (packageType: string) => {
