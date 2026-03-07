@@ -430,12 +430,8 @@ const Pricing = () => {
                 "Caricamento..."
               ) : (
                 <>
-                  Continua con il pacchetto 
-                  {selectedPackage && appliedPromo ? (
-                    <span className="ml-1">
-                      (€{getDiscountedPrice(selectedPackage.price).toFixed(2).replace(".", ",")})
-                    </span>
-                  ) : (
+                  Continua con il pacchetto
+                  {selectedPackage && (
                     <span className="ml-1">
                       (€{getDiscountedPrice(selectedPackage.price).toFixed(2).replace(".", ",")})
                     </span>
