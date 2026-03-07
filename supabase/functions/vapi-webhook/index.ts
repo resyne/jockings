@@ -698,26 +698,39 @@ serve(async (req) => {
     if (newStatus) {
       console.log(`Updating prank with VAPI call ID ${callId} to status: ${newStatus}`);
       
-      const updateData: { call_status: string; recording_url?: string } = {
-        call_status: newStatus,
-      };
-      
-      if (recordingUrl) {
-        updateData.recording_url = recordingUrl;
-      }
-
-      const { data, error } = await supabase
+      // CRITICAL: Don't overwrite terminal statuses set by end-of-call-report
+      // (e.g., recording_available should not be overwritten by a late call-ended event)
+      const { data: currentPrank } = await supabase
         .from("pranks")
-        .update(updateData)
-        .eq("twilio_call_sid", callId);
-
-      if (error) {
-        console.error("Error updating prank:", error);
+        .select("call_status")
+        .eq("twilio_call_sid", callId)
+        .maybeSingle();
+      
+      const terminalStatuses = ["recording_available", "completed", "failed", "no_answer", "busy"];
+      if (currentPrank && terminalStatuses.includes(currentPrank.call_status)) {
+        console.log(`Skipping status update: prank already in terminal status "${currentPrank.call_status}"`);
       } else {
-        console.log("Prank updated successfully");
+        const updateData: { call_status: string; recording_url?: string } = {
+          call_status: newStatus,
+        };
+        
+        if (recordingUrl) {
+          updateData.recording_url = recordingUrl;
+        }
 
-        if (newStatus === "failed" && endedReasonForDiagnostic && typeof callId === "string") {
-          await appendFailureDiagnostic(supabase, callId, endedReasonForDiagnostic);
+        const { data, error } = await supabase
+          .from("pranks")
+          .update(updateData)
+          .eq("twilio_call_sid", callId);
+
+        if (error) {
+          console.error("Error updating prank:", error);
+        } else {
+          console.log("Prank updated successfully");
+
+          if (newStatus === "failed" && endedReasonForDiagnostic && typeof callId === "string") {
+            await appendFailureDiagnostic(supabase, callId, endedReasonForDiagnostic);
+          }
         }
       }
     }
