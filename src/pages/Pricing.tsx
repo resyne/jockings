@@ -437,7 +437,7 @@ const Pricing = () => {
                     </span>
                   ) : (
                     <span className="ml-1">
-                      (€{selectedPackage?.price.toFixed(2).replace(".", ",")})
+                      (€{getDiscountedPrice(selectedPackage.price).toFixed(2).replace(".", ",")})
                     </span>
                   )}
                 </>
