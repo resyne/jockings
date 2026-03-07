@@ -207,12 +207,10 @@ serve(async (req) => {
     sessionParams.set("metadata[user_id]", user.id);
     sessionParams.set("metadata[package_type]", typedPackage);
     sessionParams.set("metadata[pranks_to_add]", pranksToAdd.toString());
-    sessionParams.set("metadata[promo_code_id]", promoCodeId || "");
+    sessionParams.set("metadata[promo_code_id]", validatedPromoCodeId || "");
     sessionParams.set("metadata[promo_code]", promoCode || "");
 
-    if (stripeCouponId) {
-      sessionParams.set("discounts[0][coupon]", stripeCouponId);
-    }
+    sessionParams.set("discounts[0][coupon]", stripeCouponId);
 
     if (isSubscription) {
       sessionParams.set("subscription_data[metadata][user_id]", user.id);
