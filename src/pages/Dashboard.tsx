@@ -271,6 +271,31 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
+        {/* Promo Banner */}
+        <Card 
+          className="relative overflow-hidden cursor-pointer border-secondary/30 bg-gradient-to-r from-secondary/10 via-primary/5 to-secondary/10 animate-slide-up"
+          style={{ animationDelay: "0.08s" }}
+          onClick={() => navigate("/pricing")}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-secondary/5 via-transparent to-secondary/5 animate-pulse" />
+          <CardContent className="p-3 sm:p-4 relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-secondary/20 flex items-center justify-center animate-bounce" style={{ animationDuration: "2s" }}>
+                <span className="text-lg sm:text-xl">🔥</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-sm sm:text-base text-foreground">
+                  Offerta Lancio: <span className="text-secondary">-50%</span> su tutti i pacchetti!
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  La prova gratuita è solo verso il tuo numero. Per scherzare gli amici, scegli un pacchetto!
+                </p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-secondary flex-shrink-0" />
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Quick Actions */}
         <div className="grid grid-cols-2 gap-2 sm:gap-3">
           <Button
