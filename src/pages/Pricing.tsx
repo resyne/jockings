@@ -31,6 +31,8 @@ interface PromoCodeInfo {
   id: string;
 }
 
+const LAUNCH_DISCOUNT = 0.5; // 50% off
+
 const packages: PricingPackage[] = [
   {
     id: "pack_10",
@@ -164,8 +166,11 @@ const Pricing = () => {
   };
 
   const getDiscountedPrice = (price: number) => {
-    if (!appliedPromo) return price;
-    return price * (1 - appliedPromo.discount_percentage / 100);
+    let discounted = price * (1 - LAUNCH_DISCOUNT);
+    if (appliedPromo) {
+      discounted = discounted * (1 - appliedPromo.discount_percentage / 100);
+    }
+    return discounted;
   };
 
   const handleCheckout = async (packageType: string) => {
@@ -220,9 +225,13 @@ const Pricing = () => {
       <main className="px-4 py-6 max-w-lg mx-auto space-y-6">
         {/* Hero */}
         <div className="text-center space-y-2">
+          <div className="inline-flex items-center gap-2 bg-secondary/10 text-secondary px-4 py-1.5 rounded-full text-sm font-semibold animate-pulse">
+            🔥 Offerta Lancio: -50% su tutto!
+          </div>
           <h2 className="text-2xl font-bold text-foreground">Scegli il tuo pacchetto</h2>
           <p className="text-muted-foreground">
-            Più prank compri, più risparmi!
+            La prova gratuita è solo verso il tuo numero.<br/>
+            Per scherzare gli amici, acquista un pacchetto!
           </p>
         </div>
 
@@ -281,7 +290,7 @@ const Pricing = () => {
         <div className="space-y-4">
           {packages.map((pkg) => {
             const discountedPrice = getDiscountedPrice(pkg.price);
-            const hasDiscount = appliedPromo && discountedPrice < pkg.price;
+            const hasDiscount = discountedPrice < pkg.price;
             
             return (
               <Card 
@@ -381,7 +390,8 @@ const Pricing = () => {
             <DialogDescription className="text-center space-y-2" asChild>
               <div>
                 <span className="block text-base">
-                  Con <span className="font-bold text-primary">€9,99 al mese</span> ottieni{" "}
+                  Con <span className="line-through text-muted-foreground">€9,99</span>{" "}
+                  <span className="font-bold text-primary">€4,99 al mese</span> ottieni{" "}
                   <span className="font-bold">5 prank</span>,
                 </span>
                 <span className="block text-muted-foreground">

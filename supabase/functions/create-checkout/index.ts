@@ -102,9 +102,12 @@ serve(async (req) => {
 
     console.log("User:", user.email, "User ID:", user.id);
 
-    // Validate promo code if provided
-    let stripeCouponId: string | undefined;
-    let discountPercentage = 0;
+    // ── Launch discount: 50% off all packages ──
+    const LAUNCH_DISCOUNT_PERCENT = 50;
+
+    // Validate promo code if provided (stacks on top of launch discount)
+    let promoDiscountPercentage = 0;
+    let validatedPromoCodeId: string | undefined;
 
     if (promoCodeId && promoCode) {
       console.log("Validating promo code...");
@@ -148,18 +151,28 @@ serve(async (req) => {
         throw new Error("Hai già utilizzato questo codice promo");
       }
 
-      discountPercentage = promoCodeData.discount_percentage;
-      console.log("Promo code valid, discount:", discountPercentage + "%");
-
-      const couponParams = new URLSearchParams();
-      couponParams.set("percent_off", String(discountPercentage));
-      couponParams.set("duration", "once");
-      couponParams.set("name", `Promo ${promoCode}`);
-
-      const coupon = await stripeRequest("POST", "/coupons", couponParams);
-      stripeCouponId = coupon.id;
-      console.log("Created Stripe coupon:", stripeCouponId);
+      promoDiscountPercentage = promoCodeData.discount_percentage;
+      validatedPromoCodeId = promoCodeData.id;
+      console.log("Promo code valid, extra discount:", promoDiscountPercentage + "%");
     }
+
+    // Calculate combined discount: launch 50% first, then promo on remaining
+    // e.g. 50% launch + 20% promo = 1 - (0.5 * 0.8) = 60% total
+    const combinedDiscount = Math.min(
+      100,
+      Math.round((1 - (1 - LAUNCH_DISCOUNT_PERCENT / 100) * (1 - promoDiscountPercentage / 100)) * 100)
+    );
+    console.log("Combined discount:", combinedDiscount + "%");
+
+    // Create a single Stripe coupon with the combined discount
+    const couponParams = new URLSearchParams();
+    couponParams.set("percent_off", String(combinedDiscount));
+    couponParams.set("duration", "once");
+    couponParams.set("name", promoCode ? `Lancio 50% + Promo ${promoCode}` : "Offerta Lancio 50%");
+
+    const coupon = await stripeRequest("POST", "/coupons", couponParams);
+    const stripeCouponId = coupon.id;
+    console.log("Created Stripe coupon:", stripeCouponId, "discount:", combinedDiscount + "%");
 
     // Find Stripe customer by email
     const customers = await stripeRequest("GET", "/customers", undefined, {
@@ -194,12 +207,10 @@ serve(async (req) => {
     sessionParams.set("metadata[user_id]", user.id);
     sessionParams.set("metadata[package_type]", typedPackage);
     sessionParams.set("metadata[pranks_to_add]", pranksToAdd.toString());
-    sessionParams.set("metadata[promo_code_id]", promoCodeId || "");
+    sessionParams.set("metadata[promo_code_id]", validatedPromoCodeId || "");
     sessionParams.set("metadata[promo_code]", promoCode || "");
 
-    if (stripeCouponId) {
-      sessionParams.set("discounts[0][coupon]", stripeCouponId);
-    }
+    sessionParams.set("discounts[0][coupon]", stripeCouponId);
 
     if (isSubscription) {
       sessionParams.set("subscription_data[metadata][user_id]", user.id);
