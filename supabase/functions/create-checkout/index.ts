@@ -164,15 +164,30 @@ serve(async (req) => {
     );
     console.log("Combined discount:", combinedDiscount + "%");
 
-    // Create a single Stripe coupon with the combined discount
-    const couponParams = new URLSearchParams();
-    couponParams.set("percent_off", String(combinedDiscount));
-    couponParams.set("duration", "once");
-    couponParams.set("name", promoCode ? `Lancio 50% + Promo ${promoCode}` : "Offerta Lancio 50%");
+    // Reuse existing Stripe coupon if one with same discount already exists
+    // This prevents creating thousands of orphan coupons
+    const couponIdempotencyKey = promoCode 
+      ? `launch_${LAUNCH_DISCOUNT_PERCENT}_promo_${promoCode}_${combinedDiscount}`
+      : `launch_${LAUNCH_DISCOUNT_PERCENT}`;
+    
+    let stripeCouponId: string;
+    try {
+      // Try to retrieve existing coupon by ID
+      const existingCoupon = await stripeRequest("GET", `/coupons/${couponIdempotencyKey}`);
+      stripeCouponId = existingCoupon.id;
+      console.log("Reusing existing Stripe coupon:", stripeCouponId);
+    } catch {
+      // Coupon doesn't exist, create it
+      const couponParams = new URLSearchParams();
+      couponParams.set("id", couponIdempotencyKey);
+      couponParams.set("percent_off", String(combinedDiscount));
+      couponParams.set("duration", "once");
+      couponParams.set("name", promoCode ? `Lancio 50% + Promo ${promoCode}` : "Offerta Lancio 50%");
 
-    const coupon = await stripeRequest("POST", "/coupons", couponParams);
-    const stripeCouponId = coupon.id;
-    console.log("Created Stripe coupon:", stripeCouponId, "discount:", combinedDiscount + "%");
+      const coupon = await stripeRequest("POST", "/coupons", couponParams);
+      stripeCouponId = coupon.id;
+      console.log("Created new Stripe coupon:", stripeCouponId, "discount:", combinedDiscount + "%");
+    }
 
     // Find Stripe customer by email
     const customers = await stripeRequest("GET", "/customers", undefined, {
