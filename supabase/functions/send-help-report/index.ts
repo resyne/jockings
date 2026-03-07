@@ -54,7 +54,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Sarano Help <onboarding@resend.dev>",
+        from: "Sarano Help <noreply@sarano.ai>",
         to: [ADMIN_EMAIL],
         subject: `[Sarano] ${categoryLabels[category] || category} - Segnalazione utente`,
         html: htmlBody,
