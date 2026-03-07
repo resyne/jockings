@@ -31,6 +31,8 @@ interface PromoCodeInfo {
   id: string;
 }
 
+const LAUNCH_DISCOUNT = 0.5; // 50% off
+
 const packages: PricingPackage[] = [
   {
     id: "pack_10",

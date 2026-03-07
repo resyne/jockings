@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Phone, Plus, History, Settings, LogOut, User } from "lucide-react";
+import { Phone, Plus, History, Settings, LogOut, User, ArrowRight } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import PrankCard from "@/components/PrankCard";
 import saranoWordmarkIcon from "@/assets/sarano-wordmark-icon.png";
