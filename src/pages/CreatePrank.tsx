@@ -795,8 +795,16 @@ const CreatePrank = () => {
                   </div>
                 </div>
               </div>
-              {/* Trial call warning */}
-              {profile && profile.available_pranks === 0 && !profile.trial_prank_used && profile.phone_verified && (
+              {/* Card verified: free prank on any number */}
+              {profile && profile.available_pranks === 0 && !profile.trial_prank_used && profile.card_verified && (
+                <div className="p-2 sm:p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+                  <p className="text-xs sm:text-sm text-green-500 font-medium">
+                    🎁 Hai 1 prank gratuito! Puoi chiamare qualsiasi numero.
+                  </p>
+                </div>
+              )}
+              {/* Trial call warning - only for non-card-verified users */}
+              {profile && profile.available_pranks === 0 && !profile.trial_prank_used && !profile.card_verified && profile.phone_verified && (
                 <div className={`p-2 sm:p-3 rounded-lg border ${
                   isTrialUserWithWrongNumber() 
                     ? "bg-destructive/10 border-destructive/30" 
