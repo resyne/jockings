@@ -86,7 +86,7 @@ const VerifyPhone = () => {
         // Different country code typed — strip the + and any leading digits that match a code
         cleaned = cleaned.slice(1);
         // Try to remove common prefixes
-        for (const c of COUNTRY_CODES) {
+        for (const c of COUNTRIES) {
           const prefix = c.code.replace("+", "");
           if (cleaned.startsWith(prefix)) {
             cleaned = cleaned.slice(prefix.length);
