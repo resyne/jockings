@@ -288,36 +288,8 @@ const AdminKPI = () => {
               onClick={() => navigate("/admin/users")}
             />
 
-            {/* Trial Call Stats */}
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 rounded-lg bg-purple-500/10 text-purple-500">
-                    <PhoneCall className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">Chiamate di Prova</CardTitle>
-                    <CardDescription>% utenti che hanno provato la test call</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-3 gap-2 mt-2">
-                  <div className="text-center p-3 rounded-lg bg-muted/50">
-                    <p className="text-3xl font-bold text-primary">{kpiData.trialRate}%</p>
-                    <p className="text-xs text-muted-foreground">Tasso di prova</p>
-                  </div>
-                  <div className="text-center p-3 rounded-lg bg-muted/50">
-                    <p className="text-2xl font-bold">{kpiData.trialUsed}</p>
-                    <p className="text-xs text-muted-foreground">Hanno provato</p>
-                  </div>
-                  <div className="text-center p-3 rounded-lg bg-muted/50">
-                    <p className="text-2xl font-bold">{kpiData.totalUsers - kpiData.trialUsed}</p>
-                    <p className="text-xs text-muted-foreground">Non provato</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Trial Call Analytics */}
+            <TrialCallAnalytics />
 
             <KPICard
               title="Codici Promo Utilizzati"
