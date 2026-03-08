@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Phone, Plus, History, Settings, LogOut, User, ArrowRight } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import PrankCard from "@/components/PrankCard";
+import OnboardingModal from "@/components/OnboardingModal";
 import saranoWordmarkIcon from "@/assets/sarano-wordmark-icon.png";
 import saranoIcon from "@/assets/sarano-icon.png";
 
@@ -16,6 +17,8 @@ interface Profile {
   username: string | null;
   available_pranks: number;
   avatar_url: string | null;
+  card_verified: boolean;
+  trial_prank_used: boolean;
 }
 
 interface Prank {
@@ -42,6 +45,7 @@ const Dashboard = () => {
   const [pranks, setPranks] = useState<Prank[]>([]);
   const [victims, setVictims] = useState<Victim[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -107,14 +111,25 @@ const Dashboard = () => {
     if (!user) return;
     const { data, error } = await supabase
       .from("profiles")
-      .select("username, available_pranks, avatar_url")
+      .select("username, available_pranks, avatar_url, card_verified, trial_prank_used")
       .eq("user_id", user.id)
       .single();
     
     if (error) {
       console.error("Error fetching profile:", error);
     } else {
-      setProfile(data);
+      const profileData = {
+        username: data.username,
+        available_pranks: data.available_pranks ?? 0,
+        avatar_url: data.avatar_url,
+        card_verified: data.card_verified ?? false,
+        trial_prank_used: data.trial_prank_used ?? false,
+      };
+      setProfile(profileData);
+      // Show onboarding if card not verified and trial not used
+      if (!profileData.card_verified && !profileData.trial_prank_used) {
+        setShowOnboarding(true);
+      }
     }
   };
 
@@ -230,6 +245,14 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20 sm:pb-24">
+      <OnboardingModal
+        open={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        onComplete={() => {
+          setShowOnboarding(false);
+          navigate("/create-prank");
+        }}
+      />
       {/* Header */}
       <header className="sticky top-0 z-50 glass border-b border-border px-3 py-2 sm:px-4 sm:py-3">
         <div className="flex items-center justify-between max-w-lg mx-auto">

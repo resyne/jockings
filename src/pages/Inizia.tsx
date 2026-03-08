@@ -83,7 +83,7 @@ const Inizia = () => {
           {/* Micro-copy */}
           <p className="text-xs text-secondary flex items-center gap-1.5">
             <Headphones className="w-3.5 h-3.5" />
-            Prima lo provi su di te. Gratis.
+            La prima chiamata la offriamo noi.
           </p>
 
           {/* Login link */}

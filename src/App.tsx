@@ -26,6 +26,7 @@ const TermsAndConditions = lazy(() => import("./pages/TermsAndConditions"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const CookiePolicy = lazy(() => import("./pages/CookiePolicy"));
 const BlockAndReport = lazy(() => import("./pages/BlockAndReport"));
+const CardSetupSuccess = lazy(() => import("./pages/CardSetupSuccess"));
 const Challenge = lazy(() => import("./pages/Challenge"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
@@ -80,6 +81,7 @@ const App = () => (
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/cookie-policy" element={<CookiePolicy />} />
             <Route path="/blocca-segnala" element={<BlockAndReport />} />
+            <Route path="/card-setup-success" element={<CardSetupSuccess />} />
             <Route path="/challenge" element={<Challenge />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/voices" element={<AdminVoices />} />

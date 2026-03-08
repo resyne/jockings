@@ -460,6 +460,7 @@ export type Database = {
         Row: {
           available_pranks: number | null
           avatar_url: string | null
+          card_verified: boolean | null
           created_at: string
           first_name: string | null
           id: string
@@ -470,6 +471,7 @@ export type Database = {
           phone_verified: boolean | null
           privacy_accepted_at: string | null
           privacy_version: string | null
+          stripe_customer_id: string | null
           terms_accepted_at: string | null
           terms_version: string | null
           trial_prank_used: boolean | null
@@ -480,6 +482,7 @@ export type Database = {
         Insert: {
           available_pranks?: number | null
           avatar_url?: string | null
+          card_verified?: boolean | null
           created_at?: string
           first_name?: string | null
           id?: string
@@ -490,6 +493,7 @@ export type Database = {
           phone_verified?: boolean | null
           privacy_accepted_at?: string | null
           privacy_version?: string | null
+          stripe_customer_id?: string | null
           terms_accepted_at?: string | null
           terms_version?: string | null
           trial_prank_used?: boolean | null
@@ -500,6 +504,7 @@ export type Database = {
         Update: {
           available_pranks?: number | null
           avatar_url?: string | null
+          card_verified?: boolean | null
           created_at?: string
           first_name?: string | null
           id?: string
@@ -510,6 +515,7 @@ export type Database = {
           phone_verified?: boolean | null
           privacy_accepted_at?: string | null
           privacy_version?: string | null
+          stripe_customer_id?: string | null
           terms_accepted_at?: string | null
           terms_version?: string | null
           trial_prank_used?: boolean | null
