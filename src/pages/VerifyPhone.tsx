@@ -10,19 +10,20 @@ import { useToast } from "@/hooks/use-toast";
 import { Phone, ArrowRight, RefreshCw, Check } from "lucide-react";
 import saranoIcon from "@/assets/sarano-icon.png";
 
-const COUNTRY_CODES = [
-  { code: "+39", flag: "🇮🇹", name: "Italia" },
-  { code: "+49", flag: "🇩🇪", name: "Germania" },
-  { code: "+33", flag: "🇫🇷", name: "Francia" },
-  { code: "+34", flag: "🇪🇸", name: "Spagna" },
-  { code: "+44", flag: "🇬🇧", name: "UK" },
-  { code: "+41", flag: "🇨🇭", name: "Svizzera" },
-  { code: "+43", flag: "🇦🇹", name: "Austria" },
-  { code: "+31", flag: "🇳🇱", name: "Olanda" },
-  { code: "+32", flag: "🇧🇪", name: "Belgio" },
-  { code: "+351", flag: "🇵🇹", name: "Portogallo" },
-  { code: "+48", flag: "🇵🇱", name: "Polonia" },
-  { code: "+30", flag: "🇬🇷", name: "Grecia" },
+const COUNTRIES = [
+  { code: "+39", flag: "🇮🇹", name: "Italia", placeholder: "321 123 4567" },
+  { code: "+44", flag: "🇬🇧", name: "UK", placeholder: "7911 123456" },
+  { code: "+1", flag: "🇺🇸", name: "USA", placeholder: "201 555 0123" },
+  { code: "+49", flag: "🇩🇪", name: "Germania", placeholder: "151 1234 5678" },
+  { code: "+33", flag: "🇫🇷", name: "Francia", placeholder: "6 12 34 56 78" },
+  { code: "+34", flag: "🇪🇸", name: "Spagna", placeholder: "612 34 56 78" },
+  { code: "+41", flag: "🇨🇭", name: "Svizzera", placeholder: "76 123 45 67" },
+  { code: "+43", flag: "🇦🇹", name: "Austria", placeholder: "664 123 4567" },
+  { code: "+31", flag: "🇳🇱", name: "Olanda", placeholder: "6 12345678" },
+  { code: "+32", flag: "🇧🇪", name: "Belgio", placeholder: "470 12 34 56" },
+  { code: "+351", flag: "🇵🇹", name: "Portogallo", placeholder: "912 345 678" },
+  { code: "+48", flag: "🇵🇱", name: "Polonia", placeholder: "512 345 678" },
+  { code: "+30", flag: "🇬🇷", name: "Grecia", placeholder: "691 234 5678" },
 ];
 
 type Step = "phone" | "otp" | "success";
