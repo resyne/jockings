@@ -997,58 +997,15 @@ const CreatePrank = () => {
                   <Label className="text-muted-foreground text-xs sm:text-sm">👨 Voci Maschili</Label>
                   <div className="grid gap-2 sm:gap-3">
                     {maleVoices.map((voice) => (
-                      <div
+                      <VoiceCard
                         key={voice.id}
-                        onClick={() => setSelectedVoiceId(voice.id)}
-                        className={`p-2.5 sm:p-4 rounded-lg sm:rounded-xl border-2 cursor-pointer transition-all duration-200 ${
-                          selectedVoiceId === voice.id
-                            ? "border-primary bg-primary/10 shadow-md"
-                            : "border-border bg-card hover:border-primary/50 hover:bg-accent/5"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-2 sm:gap-3">
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-foreground text-sm sm:text-base">
-                              {voice.voice_name || "Voce senza nome"}
-                            </h4>
-                            {voice.description && (
-                              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 truncate">
-                                {voice.description}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1.5 sm:gap-2">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 sm:h-9 sm:w-9 shrink-0"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                playVoicePreview(voice);
-                              }}
-                              disabled={loadingPreviewId === voice.id}
-                            >
-                              {loadingPreviewId === voice.id ? (
-                                <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
-                              ) : playingVoiceId === voice.id ? (
-                                <Square className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
-                              ) : (
-                                <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                              )}
-                            </Button>
-                            <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
-                              selectedVoiceId === voice.id
-                                ? "border-primary bg-primary"
-                                : "border-muted-foreground"
-                            }`}>
-                              {selectedVoiceId === voice.id && (
-                                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary-foreground" />
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                        voice={voice}
+                        isSelected={selectedVoiceId === voice.id}
+                        isPlaying={playingVoiceId === voice.id}
+                        isLoading={loadingPreviewId === voice.id}
+                        onSelect={() => setSelectedVoiceId(voice.id)}
+                        onPlayPreview={() => playVoicePreview(voice)}
+                      />
                     ))}
                   </div>
                 </div>
@@ -1059,58 +1016,15 @@ const CreatePrank = () => {
                   <Label className="text-muted-foreground text-xs sm:text-sm">👩 Voci Femminili</Label>
                   <div className="grid gap-2 sm:gap-3">
                     {femaleVoices.map((voice) => (
-                      <div
+                      <VoiceCard
                         key={voice.id}
-                        onClick={() => setSelectedVoiceId(voice.id)}
-                        className={`p-2.5 sm:p-4 rounded-lg sm:rounded-xl border-2 cursor-pointer transition-all duration-200 ${
-                          selectedVoiceId === voice.id
-                            ? "border-primary bg-primary/10 shadow-md"
-                            : "border-border bg-card hover:border-primary/50 hover:bg-accent/5"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-2 sm:gap-3">
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-foreground text-sm sm:text-base">
-                              {voice.voice_name || "Voce senza nome"}
-                            </h4>
-                            {voice.description && (
-                              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 truncate">
-                                {voice.description}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1.5 sm:gap-2">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 sm:h-9 sm:w-9 shrink-0"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                playVoicePreview(voice);
-                              }}
-                              disabled={loadingPreviewId === voice.id}
-                            >
-                              {loadingPreviewId === voice.id ? (
-                                <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
-                              ) : playingVoiceId === voice.id ? (
-                                <Square className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
-                              ) : (
-                                <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                              )}
-                            </Button>
-                            <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
-                              selectedVoiceId === voice.id
-                                ? "border-primary bg-primary"
-                                : "border-muted-foreground"
-                            }`}>
-                              {selectedVoiceId === voice.id && (
-                                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary-foreground" />
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                        voice={voice}
+                        isSelected={selectedVoiceId === voice.id}
+                        isPlaying={playingVoiceId === voice.id}
+                        isLoading={loadingPreviewId === voice.id}
+                        onSelect={() => setSelectedVoiceId(voice.id)}
+                        onPlayPreview={() => playVoicePreview(voice)}
+                      />
                     ))}
                   </div>
                 </div>
