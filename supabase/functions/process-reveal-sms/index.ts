@@ -21,13 +21,18 @@ serve(async (req) => {
     );
 
     // Find pranks where reveal SMS is scheduled, time has passed, and not yet sent
+    // Only process SMS scheduled within the last 10 minutes to avoid sending old backlog
+    const now = new Date();
+    const tenMinutesAgo = new Date(now.getTime() - 10 * 60 * 1000);
+    
     const { data: pendingSms, error: fetchError } = await supabase
       .from("pranks")
       .select("id")
       .eq("send_reveal_sms", true)
       .eq("reveal_sms_sent", false)
       .not("reveal_sms_scheduled_at", "is", null)
-      .lte("reveal_sms_scheduled_at", new Date().toISOString());
+      .lte("reveal_sms_scheduled_at", now.toISOString())
+      .gte("reveal_sms_scheduled_at", tenMinutesAgo.toISOString());
 
     if (fetchError) {
       console.error("Error fetching pending SMS:", fetchError);
