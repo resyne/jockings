@@ -90,19 +90,33 @@ const VerifyPhone = () => {
       // but the body with error details is still in data
       if (error) {
         // Check if it's a "phone already used" error from the response body
-        if (data?.code === 'PHONE_ALREADY_USED') {
+        // data might be null with some Supabase client versions on non-2xx, so also check error message
+        const errorMessage = data?.error || error.message || '';
+        const errorCode = data?.code || '';
+        
+        if (errorCode === 'PHONE_ALREADY_USED' || errorMessage.includes('già associato') || errorMessage.includes('already')) {
           toast({
-            title: "Numero già registrato",
-            description: "Questo numero è già associato a un altro account. Effettua il login con l'account esistente.",
+            title: "Numero già registrato ⚠️",
+            description: "Questo numero è già associato a un altro account. Effettua il login con l'account esistente oppure usa un numero diverso.",
             variant: "destructive",
           });
+          setLoading(false);
           return;
         }
-        throw new Error(data?.error || error.message);
+        throw new Error(errorMessage || 'Errore durante l\'invio dell\'SMS');
       }
       
       // Also check data.error for edge cases
       if (data?.error) {
+        if (data.code === 'PHONE_ALREADY_USED') {
+          toast({
+            title: "Numero già registrato ⚠️",
+            description: "Questo numero è già associato a un altro account. Effettua il login con l'account esistente oppure usa un numero diverso.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
         throw new Error(data.error);
       }
 
