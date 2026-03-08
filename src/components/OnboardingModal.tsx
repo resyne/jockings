@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Play, Pause, CreditCard, Phone, ArrowRight, Users, UserRound, Smile } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import saranoIcon from "@/assets/sarano-icon.png";
+import AudioWaveAnimation from "@/components/AudioWaveAnimation";
 
 interface OnboardingModalProps {
   open: boolean;
