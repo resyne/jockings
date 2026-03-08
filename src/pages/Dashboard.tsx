@@ -16,6 +16,8 @@ interface Profile {
   username: string | null;
   available_pranks: number;
   avatar_url: string | null;
+  card_verified: boolean;
+  trial_prank_used: boolean;
 }
 
 interface Prank {
