@@ -557,27 +557,45 @@ serve(async (req) => {
     // using AI based on the system prompt and prank theme. This avoids incomplete/broken openers.
     const isItalian = prank.language === 'Italiano';
     
+    const isMaleVoice = actualVoiceGender === 'male';
+    const exampleNamesIT = isMaleVoice 
+      ? 'Marco Bianchi, Luca Ferri, Alessandro Conti, Giovanni Ricci'
+      : 'Giulia Rossi, Francesca Conti, Sara Moretti, Alessandra Ferri';
+    const exampleNamesEN = isMaleVoice
+      ? 'John Miller, David Smith, James Wilson, Robert Davis'
+      : 'Sarah Miller, Emily Davis, Jessica Brown, Lisa Johnson';
+
     const firstMessagePrompt = isItalian
-      ? `Genera SOLO la prima frase che diresti al telefono per aprire questa chiamata di scherzo. 
-Devi:
-- Iniziare con "${greeting}" e il nome "${prank.victim_first_name}"
-- Presentarti con un nome realistico coerente con il tuo sesso
-- Lanciare IMMEDIATAMENTE lo scenario: "${prank.prank_theme}"
-- La frase deve essere COMPLETA (non tronca, non finire con "...")
-- Massimo 2-3 frasi, naturali e colloquiali
-- NON usare asterischi o descrizioni, SOLO testo parlato
+      ? `Sei al telefono. Genera la PRIMA BATTUTA che dici per aprire questa chiamata di scherzo.
 
-Rispondi SOLO con la frase da dire, nient'altro.`
-      : `Generate ONLY the first sentence you would say on the phone to open this prank call.
-You must:
-- Start with "${greeting}" and the name "${prank.victim_first_name}"
-- Introduce yourself with a realistic name matching your gender
-- Launch IMMEDIATELY into the scenario: "${prank.prank_theme}"
-- The sentence must be COMPLETE (not truncated, don't end with "...")
-- Maximum 2-3 sentences, natural and conversational
-- NO asterisks or descriptions, ONLY spoken text
+REQUISITI OBBLIGATORI:
+1. Inizia con "${greeting}, ${prank.victim_first_name}!"
+2. Presentati con un nome italiano realistico (scegli tra: ${exampleNamesIT} o simili)
+3. Spiega SUBITO il motivo della chiamata legato allo scenario: "${prank.prank_theme}"
+4. La frase deve essere COMPLETA e FINITA — terminare con un punto, punto esclamativo o punto interrogativo
+5. NON finire MAI con "...", "perché", "che", o frasi sospese/incomplete
+6. Massimo 2-3 frasi brevi e naturali
+7. NON usare asterischi, parentesi o descrizioni — SOLO parole da pronunciare
 
-Reply ONLY with the sentence to say, nothing else.`;
+ESEMPIO DI FORMATO CORRETTO:
+"${greeting}, ${prank.victim_first_name}! Sono Marco Bianchi dell'ufficio reclami. La contatto perché abbiamo ricevuto una segnalazione molto grave a suo nome."
+
+Rispondi SOLO con la battuta da dire, nient'altro.`
+      : `You are on the phone. Generate the FIRST LINE you say to open this prank call.
+
+MANDATORY REQUIREMENTS:
+1. Start with "${greeting}, ${prank.victim_first_name}!"
+2. Introduce yourself with a realistic name (choose from: ${exampleNamesEN} or similar)
+3. IMMEDIATELY explain the reason for the call related to the scenario: "${prank.prank_theme}"
+4. The sentence must be COMPLETE and FINISHED — end with a period, exclamation mark, or question mark
+5. NEVER end with "...", "because", "that", or incomplete/suspended phrases
+6. Maximum 2-3 short and natural sentences
+7. NO asterisks, parentheses, or descriptions — ONLY words to speak
+
+EXAMPLE OF CORRECT FORMAT:
+"${greeting}, ${prank.victim_first_name}! This is David Smith from the complaints department. I'm calling because we received a very serious report under your name."
+
+Reply ONLY with the line to say, nothing else.`;
 
     let firstMessage: string;
     try {
@@ -595,8 +613,8 @@ Reply ONLY with the sentence to say, nothing else.`;
             { role: 'system', content: systemPrompt },
             { role: 'user', content: firstMessagePrompt }
           ],
-          max_tokens: 120,
-          temperature: 1.0,
+          max_tokens: 200,
+          temperature: 0.9,
         }),
       });
       
