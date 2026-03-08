@@ -587,6 +587,60 @@ export type Database = {
         }
         Relationships: []
       }
+      support_tickets: {
+        Row: {
+          admin_notes: string | null
+          ai_response: string | null
+          category: string
+          contact_email: string | null
+          created_at: string
+          id: string
+          message: string
+          page_url: string | null
+          responded_at: string | null
+          responded_by: string | null
+          status: string
+          updated_at: string
+          user_agent: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          ai_response?: string | null
+          category: string
+          contact_email?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          page_url?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          ai_response?: string | null
+          category?: string
+          contact_email?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          page_url?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       twilio_phone_numbers: {
         Row: {
           caller_id_anonymous: boolean | null

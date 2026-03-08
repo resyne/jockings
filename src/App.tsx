@@ -42,6 +42,7 @@ const AdminAbuseReports = lazy(() => import("./pages/admin/AdminAbuseReports"));
 const AdminKPI = lazy(() => import("./pages/admin/AdminKPI"));
 const AdminPurchases = lazy(() => import("./pages/admin/AdminPurchases"));
 const AdminBilling = lazy(() => import("./pages/admin/AdminBilling"));
+const AdminTickets = lazy(() => import("./pages/admin/AdminTickets"));
 
 const queryClient = new QueryClient();
 
@@ -94,6 +95,7 @@ const App = () => (
             <Route path="/admin/kpi" element={<AdminKPI />} />
             <Route path="/admin/purchases" element={<AdminPurchases />} />
             <Route path="/admin/billing" element={<AdminBilling />} />
+            <Route path="/admin/tickets" element={<AdminTickets />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

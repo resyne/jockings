@@ -101,3 +101,9 @@ verify_jwt = false
 
 [functions.notify-admin]
 verify_jwt = false
+
+[functions.ticket-ai-reply]
+verify_jwt = true
+
+[functions.send-help-report]
+verify_jwt = false

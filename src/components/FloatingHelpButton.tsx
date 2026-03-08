@@ -43,6 +43,18 @@ const FloatingHelpButton = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
+      // Save ticket to database
+      await supabase.from("support_tickets").insert({
+        category,
+        message: message.trim(),
+        contact_email: email.trim() || null,
+        user_email: user?.email || null,
+        user_id: user?.id || null,
+        page_url: window.location.href,
+        user_agent: navigator.userAgent,
+      });
+
+      // Also send email notification
       const { error } = await supabase.functions.invoke("send-help-report", {
         body: {
           category,
