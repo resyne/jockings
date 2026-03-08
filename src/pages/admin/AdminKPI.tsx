@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, ArrowLeft, Users, Phone, Ticket, CreditCard, TrendingUp, Calendar, PhoneCall } from "lucide-react";
+import { Shield, ArrowLeft, Users, Phone, Ticket, CreditCard, TrendingUp, Calendar } from "lucide-react";
+import { TrialCallAnalytics } from "@/components/admin/TrialCallAnalytics";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { it } from "date-fns/locale";
 
