@@ -555,7 +555,6 @@ serve(async (req) => {
     // === GENERATE FIRST MESSAGE WITH AI ===
     // Instead of using a static template, we generate a complete, natural first message
     // using AI based on the system prompt and prank theme. This avoids incomplete/broken openers.
-    const greeting = getTimeBasedGreeting(prank.language);
     const isItalian = prank.language === 'Italiano';
     
     const firstMessagePrompt = isItalian
