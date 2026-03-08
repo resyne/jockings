@@ -26,8 +26,23 @@ interface PromoCodeInfo {
 
 const LAUNCH_DISCOUNT = 0.5; // 50% off
 
-// Launch offer end date — change this to set when the offer expires
-const LAUNCH_END_DATE = new Date("2026-04-15T23:59:59");
+// Returns the next 7:00 AM (Europe/Rome) as the countdown target
+function getNextResetDate(): Date {
+  const now = new Date();
+  // Work in UTC but target 7:00 AM Rome time (UTC+1 or UTC+2 DST)
+  const rome = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Rome" }));
+  const todayReset = new Date(rome);
+  todayReset.setHours(7, 0, 0, 0);
+
+  // If we're past 7 AM Rome time today, target tomorrow 7 AM
+  const target = rome >= todayReset
+    ? new Date(todayReset.getTime() + 24 * 60 * 60 * 1000)
+    : todayReset;
+
+  // Convert back: offset = rome - now (in ms)
+  const offset = rome.getTime() - now.getTime();
+  return new Date(target.getTime() - offset);
+}
 
 const packages: PricingPackage[] = [
   {
