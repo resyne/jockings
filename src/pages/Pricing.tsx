@@ -93,7 +93,7 @@ const Pricing = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState<string | null>(null);
-  const countdown = useCountdown(LAUNCH_END_DATE);
+  const countdown = useCountdown(getNextResetDate());
   
   // Promo code state
   const [promoInput, setPromoInput] = useState("");
