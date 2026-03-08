@@ -153,7 +153,7 @@ const Auth = () => {
 
         // Notify admin of new registration
         supabase.functions.invoke("notify-admin", {
-          body: { type: "new_user", data: { email, name: `${firstName} ${lastName}`.trim() || username } }
+          body: { type: "new_user", data: { email, name: username } }
         }).catch(err => console.error("Admin notify error:", err));
         
         toast({
