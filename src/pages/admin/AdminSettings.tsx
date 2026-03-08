@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Shield, ArrowLeft, Save, Clock, Phone } from "lucide-react";
+import { Shield, ArrowLeft, Save, Clock, Phone, Upload, Play, Pause, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 
 const AdminSettings = () => {
@@ -20,6 +20,14 @@ const AdminSettings = () => {
   const [requireAnswered, setRequireAnswered] = useState(true);
   const [countFailedCalls, setCountFailedCalls] = useState(false);
 
+  // Demo audio
+  const [uploadingAudio, setUploadingAudio] = useState(false);
+  const [demoAudioExists, setDemoAudioExists] = useState(false);
+  const [playingDemo, setPlayingDemo] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const DEMO_AUDIO_URL = "https://vtsankkghplkfhrlxefs.supabase.co/storage/v1/object/public/temp-audio/demo-call.mp3";
+
   useEffect(() => {
     if (!loading && !isAdmin) {
       navigate("/auth");
@@ -29,6 +37,7 @@ const AdminSettings = () => {
   useEffect(() => {
     if (isAdmin) {
       fetchSettings();
+      checkDemoAudio();
     }
   }, [isAdmin]);
 
@@ -49,6 +58,54 @@ const AdminSettings = () => {
         }
       });
     }
+  };
+
+  const checkDemoAudio = async () => {
+    try {
+      const res = await fetch(DEMO_AUDIO_URL, { method: "HEAD" });
+      setDemoAudioExists(res.ok);
+    } catch {
+      setDemoAudioExists(false);
+    }
+  };
+
+  const handleUploadDemoAudio = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("audio/")) {
+      toast.error("Seleziona un file audio (MP3, WAV, etc.)");
+      return;
+    }
+    setUploadingAudio(true);
+    try {
+      await supabase.storage.from("temp-audio").remove(["demo-call.mp3"]);
+      const { error } = await supabase.storage
+        .from("temp-audio")
+        .upload("demo-call.mp3", file, { contentType: file.type, upsert: true });
+      if (error) throw error;
+      setDemoAudioExists(true);
+      toast.success("Audio demo caricato!");
+    } catch (err: any) {
+      toast.error("Errore: " + (err.message || "errore sconosciuto"));
+    } finally {
+      setUploadingAudio(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handlePlayDemoPreview = () => {
+    if (playingDemo && audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+      setPlayingDemo(false);
+      return;
+    }
+    const audio = new Audio(DEMO_AUDIO_URL + "?t=" + Date.now());
+    audioRef.current = audio;
+    audio.onended = () => setPlayingDemo(false);
+    audio.onerror = () => { setPlayingDemo(false); toast.error("Impossibile riprodurre"); };
+    audio.play();
+    setPlayingDemo(true);
   };
 
   const saveSetting = async (key: string, value: string) => {
@@ -201,6 +258,56 @@ const AdminSettings = () => {
                 </div>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Demo Audio Upload */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-lg bg-primary/10">
+                <Volume2 className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Audio Demo Onboarding</CardTitle>
+                <CardDescription>
+                  Audio di esempio che gli utenti ascoltano prima della prima chiamata (10-15 secondi consigliati)
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="audio/*"
+                className="hidden"
+                onChange={handleUploadDemoAudio}
+              />
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingAudio}
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                {uploadingAudio ? "Caricamento..." : "Carica audio demo"}
+              </Button>
+
+              {demoAudioExists && (
+                <Button variant="ghost" size="sm" onClick={handlePlayDemoPreview}>
+                  {playingDemo ? <Pause className="w-4 h-4 mr-1" /> : <Play className="w-4 h-4 mr-1" />}
+                  {playingDemo ? "Stop" : "Anteprima"}
+                </Button>
+              )}
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              {demoAudioExists 
+                ? "✅ Audio demo presente. Gli utenti lo sentiranno nel modal di onboarding."
+                : "⚠️ Nessun audio demo caricato. Il modal funzionerà ma senza audio di esempio."
+              }
+            </p>
           </CardContent>
         </Card>
       </main>
