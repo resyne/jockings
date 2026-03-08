@@ -70,8 +70,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (user) {
       fetchProfile();
-      fetchPranks();
-      fetchVictims();
+      fetchPranksAndVictims();
 
       // Realtime subscription for pranks updates
       const channel = supabase
@@ -93,7 +92,7 @@ const Dashboard = () => {
                   : p
               ));
             } else if (payload.eventType === 'INSERT') {
-              fetchPranks(); // Refresh list for new pranks
+              fetchPranksAndVictims();
             } else if (payload.eventType === 'DELETE') {
               setPranks(prev => prev.filter(p => p.id !== payload.old.id));
             }
