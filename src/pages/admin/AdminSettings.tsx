@@ -60,6 +60,54 @@ const AdminSettings = () => {
     }
   };
 
+  const checkDemoAudio = async () => {
+    try {
+      const res = await fetch(DEMO_AUDIO_URL, { method: "HEAD" });
+      setDemoAudioExists(res.ok);
+    } catch {
+      setDemoAudioExists(false);
+    }
+  };
+
+  const handleUploadDemoAudio = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("audio/")) {
+      toast.error("Seleziona un file audio (MP3, WAV, etc.)");
+      return;
+    }
+    setUploadingAudio(true);
+    try {
+      await supabase.storage.from("temp-audio").remove(["demo-call.mp3"]);
+      const { error } = await supabase.storage
+        .from("temp-audio")
+        .upload("demo-call.mp3", file, { contentType: file.type, upsert: true });
+      if (error) throw error;
+      setDemoAudioExists(true);
+      toast.success("Audio demo caricato!");
+    } catch (err: any) {
+      toast.error("Errore: " + (err.message || "errore sconosciuto"));
+    } finally {
+      setUploadingAudio(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handlePlayDemoPreview = () => {
+    if (playingDemo && audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+      setPlayingDemo(false);
+      return;
+    }
+    const audio = new Audio(DEMO_AUDIO_URL + "?t=" + Date.now());
+    audioRef.current = audio;
+    audio.onended = () => setPlayingDemo(false);
+    audio.onerror = () => { setPlayingDemo(false); toast.error("Impossibile riprodurre"); };
+    audio.play();
+    setPlayingDemo(true);
+  };
+
   const saveSetting = async (key: string, value: string) => {
     const { error } = await supabase
       .from("app_settings")
