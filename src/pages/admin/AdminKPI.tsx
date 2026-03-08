@@ -27,6 +27,8 @@ interface KPIData {
   purchasesMonth: number;
   totalPurchases: number;
   totalPranksFromPurchases: number;
+  trialUsed: number;
+  trialRate: number;
 }
 
 const AdminKPI = () => {
