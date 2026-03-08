@@ -226,32 +226,8 @@ const Auth = () => {
           <form onSubmit={handleEmailAuth} className="space-y-3 sm:space-y-4">
             {mode === "signup" && (
               <>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">Nome</Label>
-                    <Input
-                      id="firstName"
-                      type="text"
-                      placeholder="Mario"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      className="h-10 sm:h-12"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Cognome</Label>
-                    <Input
-                      id="lastName"
-                      type="text"
-                      placeholder="Rossi"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      className="h-10 sm:h-12"
-                    />
-                  </div>
-                </div>
                 <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
+                  <Label htmlFor="username">Nickname</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <Input
