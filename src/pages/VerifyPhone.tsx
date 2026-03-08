@@ -280,29 +280,40 @@ const VerifyPhone = () => {
               <div className="space-y-2">
                 <Label>Numero di telefono</Label>
                 <div className="flex gap-2">
-                  <Select value={countryCode} onValueChange={setCountryCode}>
-                    <SelectTrigger className="w-[100px] h-12">
-                      <SelectValue />
+                  <Select 
+                    value={selectedCountry.code} 
+                    onValueChange={(val) => {
+                      const country = COUNTRIES.find(c => c.code === val);
+                      if (country) setSelectedCountry(country);
+                    }}
+                  >
+                    <SelectTrigger className="w-[130px] h-12">
+                      <SelectValue>
+                        <span className="flex items-center gap-2">
+                          <span className="text-lg">{selectedCountry.flag}</span>
+                          <span>{selectedCountry.code}</span>
+                        </span>
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      {COUNTRY_CODES.map((country) => (
+                      {COUNTRIES.map((country) => (
                         <SelectItem key={country.code} value={country.code}>
                           <span className="flex items-center gap-2">
                             <span>{country.flag}</span>
-                            <span>{country.code}</span>
+                            <span className="font-medium">{country.name}</span>
+                            <span className="text-muted-foreground">{country.code}</span>
                           </span>
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                   <div className="relative flex-1">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <Input
                       type="tel"
-                      placeholder="123 456 7890"
+                      placeholder={selectedCountry.placeholder}
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
-                      className="pl-10 h-12"
+                      className="h-12"
                     />
                   </div>
                 </div>
