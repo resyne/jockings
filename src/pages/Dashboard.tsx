@@ -173,7 +173,7 @@ const Dashboard = () => {
       toast({ title: "Errore", description: "Impossibile annullare lo scherzo", variant: "destructive" });
     } else {
       toast({ title: "Scherzo annullato", description: "Lo scherzo programmato è stato annullato" });
-      fetchPranks();
+      fetchPranksAndVictims();
     }
   };
 
