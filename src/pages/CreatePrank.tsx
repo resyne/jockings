@@ -418,6 +418,7 @@ const CreatePrank = () => {
     if (!profile) return false;
     if (profile.available_pranks > 0) return false; // Has paid pranks
     if (profile.trial_prank_used) return false; // Trial already used, different message
+    if (profile.card_verified) return false; // Card verified = can call any number
     if (!profile.phone_verified || !profile.phone_number) return false;
     
     const fullVictimPhone = normalizePhoneDigits(`${phoneCountryCode}${victimPhone}`);
