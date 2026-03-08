@@ -216,6 +216,9 @@ const Dashboard = () => {
     }
   };
 
+  const effectivePranks = (profile?.available_pranks || 0) + 
+    (profile?.card_verified && !profile?.trial_prank_used && (profile?.available_pranks || 0) === 0 ? 1 : 0);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
