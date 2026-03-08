@@ -37,6 +37,8 @@ const AdminSettings = () => {
   useEffect(() => {
     if (isAdmin) {
       fetchSettings();
+      checkDemoAudio();
+    }
     }
   }, [isAdmin]);
 
