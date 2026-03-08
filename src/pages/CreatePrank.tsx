@@ -129,7 +129,7 @@ const CreatePrank = () => {
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
       .from("profiles")
-      .select("available_pranks, trial_prank_used, phone_verified, phone_number")
+      .select("available_pranks, trial_prank_used, phone_verified, phone_number, card_verified")
       .eq("user_id", userId)
       .single();
     
@@ -139,6 +139,7 @@ const CreatePrank = () => {
         trial_prank_used: data.trial_prank_used || false,
         phone_verified: data.phone_verified || false,
         phone_number: data.phone_number,
+        card_verified: data.card_verified || false,
       });
     }
   };
