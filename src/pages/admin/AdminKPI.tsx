@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, ArrowLeft, Users, Phone, Ticket, CreditCard, TrendingUp, Calendar } from "lucide-react";
+import { Shield, ArrowLeft, Users, Phone, Ticket, CreditCard, TrendingUp, Calendar, PhoneCall } from "lucide-react";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { it } from "date-fns/locale";
 
@@ -27,6 +27,8 @@ interface KPIData {
   purchasesMonth: number;
   totalPurchases: number;
   totalPranksFromPurchases: number;
+  trialUsed: number;
+  trialRate: number;
 }
 
 const AdminKPI = () => {
@@ -51,6 +53,8 @@ const AdminKPI = () => {
     purchasesMonth: 0,
     totalPurchases: 0,
     totalPranksFromPurchases: 0,
+    trialUsed: 0,
+    trialRate: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -96,6 +100,7 @@ const AdminKPI = () => {
         purchasesWeek,
         purchasesMonth,
         totalPranksFromPurchases,
+        trialUsed,
       ] = await Promise.all([
         // Users
         supabase.from("profiles").select("id", { count: "exact", head: true }),
@@ -120,10 +125,16 @@ const AdminKPI = () => {
         supabase.from("processed_payments").select("id", { count: "exact", head: true }).gte("created_at", monthStart),
         // Total pranks from purchases
         supabase.from("processed_payments").select("pranks_added"),
+        // Trial prank usage
+        supabase.from("profiles").select("id", { count: "exact", head: true }).eq("trial_prank_used", true),
       ]);
 
       // Calculate total pranks from purchases
       const totalPranks = totalPranksFromPurchases.data?.reduce((sum, p) => sum + (p.pranks_added || 0), 0) || 0;
+      
+      const totalUsersCount = usersTotal.count || 0;
+      const trialUsedCount = trialUsed.count || 0;
+      const trialRatePercent = totalUsersCount > 0 ? Math.round((trialUsedCount / totalUsersCount) * 100) : 0;
 
       setKpiData({
         newUsersToday: usersToday.count || 0,
@@ -144,6 +155,8 @@ const AdminKPI = () => {
         purchasesMonth: purchasesMonth.count || 0,
         totalPurchases: purchasesTotal.count || 0,
         totalPranksFromPurchases: totalPranks,
+        trialUsed: trialUsedCount,
+        trialRate: trialRatePercent,
       });
     } catch (error) {
       console.error("Error fetching KPI data:", error);
@@ -273,6 +286,37 @@ const AdminKPI = () => {
               total={kpiData.totalUsers}
               onClick={() => navigate("/admin/users")}
             />
+
+            {/* Trial Call Stats */}
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-lg bg-purple-500/10 text-purple-500">
+                    <PhoneCall className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Chiamate di Prova</CardTitle>
+                    <CardDescription>% utenti che hanno provato la test call</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-2 mt-2">
+                  <div className="text-center p-3 rounded-lg bg-muted/50">
+                    <p className="text-3xl font-bold text-primary">{kpiData.trialRate}%</p>
+                    <p className="text-xs text-muted-foreground">Tasso di prova</p>
+                  </div>
+                  <div className="text-center p-3 rounded-lg bg-muted/50">
+                    <p className="text-2xl font-bold">{kpiData.trialUsed}</p>
+                    <p className="text-xs text-muted-foreground">Hanno provato</p>
+                  </div>
+                  <div className="text-center p-3 rounded-lg bg-muted/50">
+                    <p className="text-2xl font-bold">{kpiData.totalUsers - kpiData.trialUsed}</p>
+                    <p className="text-xs text-muted-foreground">Non provato</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             <KPICard
               title="Codici Promo Utilizzati"
