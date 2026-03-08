@@ -94,19 +94,30 @@ const OnboardingModal = ({ open, onClose, onComplete }: OnboardingModalProps) =>
           {step === 1 && (
             <div className="space-y-5">
               {/* Demo Audio Player */}
-              <div className="bg-muted/50 rounded-xl p-5 text-center">
+              <div className="bg-muted/50 rounded-xl p-5 text-center space-y-3">
+                {/* Talking animation */}
+                <div className="flex flex-col items-center gap-2">
+                  <div className="relative w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                    <img src={saranoIcon} alt="Sarano" className="w-12 h-12 object-contain rounded-full" />
+                    {isPlaying && (
+                      <span className="absolute inset-0 rounded-full border-2 border-primary animate-ping opacity-30" />
+                    )}
+                  </div>
+                  <AudioWaveAnimation isActive={isPlaying} barCount={7} className="h-8" />
+                </div>
+
                 <button
                   onClick={handlePlayDemo}
-                  className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-all active:scale-95"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-all active:scale-95 text-sm font-medium"
                 >
                   {isPlaying ? (
-                    <Pause className="w-7 h-7" />
+                    <><Pause className="w-4 h-4" /> Pausa</>
                   ) : (
-                    <Play className="w-7 h-7 ml-1" />
+                    <><Play className="w-4 h-4 ml-0.5" /> Ascolta la demo</>
                   )}
                 </button>
-                <p className="text-xs text-muted-foreground mt-3">
-                  {isPlaying ? "In riproduzione..." : "Premi play per ascoltare"}
+                <p className="text-xs text-muted-foreground">
+                  {isPlaying ? "Ascolta come suona una chiamata Sarano..." : "~1 minuto di esempio reale"}
                 </p>
               </div>
 
