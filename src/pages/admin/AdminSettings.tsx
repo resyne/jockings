@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Shield, ArrowLeft, Save, Clock, Phone } from "lucide-react";
+import { Shield, ArrowLeft, Save, Clock, Phone, Upload, Play, Pause, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 
 const AdminSettings = () => {
