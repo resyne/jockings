@@ -619,14 +619,24 @@ Reply ONLY with the line to say, nothing else.`;
       });
       
       const aiData = await aiResponse.json();
-      const generatedMessage = aiData.choices?.[0]?.message?.content?.trim();
+      let generatedMessage = aiData.choices?.[0]?.message?.content?.trim();
       
-      if (generatedMessage && generatedMessage.length > 10) {
+      // Clean up: remove surrounding quotes if present
+      if (generatedMessage && generatedMessage.startsWith('"') && generatedMessage.endsWith('"')) {
+        generatedMessage = generatedMessage.slice(1, -1).trim();
+      }
+      
+      // Validate: message must be long enough AND end with proper punctuation (not truncated)
+      const endsWithPunctuation = generatedMessage && /[.!?]$/.test(generatedMessage);
+      const endsWithSuspension = generatedMessage && /(?:perché|che|perche|perchè|perch|\.{2,})$/i.test(generatedMessage);
+      
+      if (generatedMessage && generatedMessage.length > 20 && endsWithPunctuation && !endsWithSuspension) {
         firstMessage = generatedMessage;
-        console.log('AI-generated first message:', firstMessage);
+        console.log('AI-generated first message (valid):', firstMessage);
       } else {
-        // Fallback to template if AI fails
-        console.warn('AI first message too short or empty, using fallback');
+        // Fallback to template if AI generates incomplete message
+        console.warn('AI first message invalid or incomplete:', generatedMessage);
+        console.warn('Validation: length=', generatedMessage?.length, 'punctuation=', endsWithPunctuation, 'suspension=', endsWithSuspension);
         firstMessage = buildFirstMessage(prank, greeting, firstMessageTemplateIT, firstMessageTemplateEN);
       }
     } catch (aiError) {
