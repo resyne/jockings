@@ -282,92 +282,95 @@ const AdminUsers = () => {
           <div className="space-y-3">
             {filteredUsers.map((user) => (
               <Card key={user.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <span className="text-lg font-bold text-primary">
-                          {user.username?.[0]?.toUpperCase() || "U"}
-                        </span>
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-medium truncate">{user.username || "Senza nome"}</p>
-                          {user.isAdmin && (
-                            <Badge variant="secondary" className="text-xs">
-                              <Shield className="w-3 h-3 mr-1" />
-                              Admin
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Registrato il {format(new Date(user.created_at), "d MMM yyyy", { locale: it })}
-                        </p>
-                        {user.phone_number && (
-                          <p className="text-xs text-muted-foreground truncate">{user.phone_number}</p>
+                <CardContent className="p-4 space-y-3">
+                  {/* Row 1: Avatar + Name + Admin badge */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-lg font-bold text-primary">
+                        {user.username?.[0]?.toUpperCase() || "U"}
+                      </span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-medium truncate">{user.username || "Senza nome"}</p>
+                        {user.isAdmin && (
+                          <Badge variant="secondary" className="text-xs">
+                            <Shield className="w-3 h-3 mr-1" />
+                            Admin
+                          </Badge>
                         )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Registrato il {format(new Date(user.created_at), "d MMM yyyy", { locale: it })}
+                      </p>
+                      {user.phone_number && (
+                        <p className="text-xs text-muted-foreground truncate">{user.phone_number}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Row 2: Call stats + Credits */}
+                  <div className="flex items-center justify-between gap-2 border-t border-border/50 pt-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1 text-muted-foreground" title="Totale chiamate">
+                        <Phone className="w-3.5 h-3.5" />
+                        <span className="text-xs font-medium">{user.callStats?.total || 0}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-blue-500" title="Prove (verso sé stesso)">
+                        <UserCheck className="w-3.5 h-3.5" />
+                        <span className="text-xs font-medium">{user.callStats?.trial || 0}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-green-500" title="Successo (>30s)">
+                        <PhoneCall className="w-3.5 h-3.5" />
+                        <span className="text-xs font-medium">{user.callStats?.success || 0}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-destructive" title="Fallite">
+                        <PhoneOff className="w-3.5 h-3.5" />
+                        <span className="text-xs font-medium">{user.callStats?.failed || 0}</span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      {/* Call stats */}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <div className="flex items-center gap-1 text-muted-foreground" title="Totale chiamate">
-                          <Phone className="w-3.5 h-3.5" />
-                          <span className="text-xs font-medium">{user.callStats?.total || 0}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-blue-500" title="Prove (verso sé stesso)">
-                          <UserCheck className="w-3.5 h-3.5" />
-                          <span className="text-xs font-medium">{user.callStats?.trial || 0}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-green-500" title="Successo (>30s)">
-                          <PhoneCall className="w-3.5 h-3.5" />
-                          <span className="text-xs font-medium">{user.callStats?.success || 0}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-destructive" title="Fallite">
-                          <PhoneOff className="w-3.5 h-3.5" />
-                          <span className="text-xs font-medium">{user.callStats?.failed || 0}</span>
-                        </div>
-                      </div>
-                      
-                      {/* Available pranks (editable) */}
-                      <div className="flex items-center gap-1" title="Crediti disponibili (modificabile)">
-                        <span className="text-xs text-primary">💰</span>
-                        <input
-                          type="number"
-                          value={user.available_pranks || 0}
-                          onChange={(e) => updatePranks(user.user_id, parseInt(e.target.value) || 0)}
-                          className="w-12 text-center bg-muted rounded px-1 py-1 text-sm"
-                        />
-                      </div>
-                      <Button
-                        variant={user.isAdmin ? "destructive" : "outline"}
-                        size="sm"
-                        onClick={() => toggleAdminRole(user.user_id, user.isAdmin || false)}
-                        disabled={user.user_id === currentUserId}
-                      >
-                        {user.isAdmin ? (
-                          <>
-                            <ShieldOff className="w-4 h-4 mr-1" />
-                            Rimuovi
-                          </>
-                        ) : (
-                          <>
-                            <ShieldCheck className="w-4 h-4 mr-1" />
-                            Admin
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => setUserToDelete(user)}
-                        disabled={user.user_id === currentUserId}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                    <div className="flex items-center gap-1" title="Crediti disponibili">
+                      <span className="text-xs text-primary">💰</span>
+                      <input
+                        type="number"
+                        value={user.available_pranks || 0}
+                        onChange={(e) => updatePranks(user.user_id, parseInt(e.target.value) || 0)}
+                        className="w-12 text-center bg-muted rounded px-1 py-1 text-sm"
+                      />
                     </div>
+                  </div>
+
+                  {/* Row 3: Action buttons */}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant={user.isAdmin ? "destructive" : "outline"}
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => toggleAdminRole(user.user_id, user.isAdmin || false)}
+                      disabled={user.user_id === currentUserId}
+                    >
+                      {user.isAdmin ? (
+                        <>
+                          <ShieldOff className="w-4 h-4 mr-1" />
+                          Rimuovi Admin
+                        </>
+                      ) : (
+                        <>
+                          <ShieldCheck className="w-4 h-4 mr-1" />
+                          Rendi Admin
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
+                      onClick={() => setUserToDelete(user)}
+                      disabled={user.user_id === currentUserId}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
