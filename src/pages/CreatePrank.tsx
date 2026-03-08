@@ -76,6 +76,7 @@ interface UserProfile {
   trial_prank_used: boolean;
   phone_verified: boolean;
   phone_number: string | null;
+  card_verified: boolean;
 }
 
 const CreatePrank = () => {
