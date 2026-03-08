@@ -73,12 +73,15 @@ serve(async (req) => {
 
     if (existingProfile) {
       console.log(`[send-otp] Phone ${phoneNumber} already verified by user ${existingProfile.user_id}`);
+      // Return 200 with error info so supabase.functions.invoke puts it in data (not error)
+      // This avoids issues where non-2xx responses may have null data in some client versions
       return new Response(
         JSON.stringify({ 
-          error: 'Questo numero è già associato a un altro account. Effettua il login con l\'account esistente.',
+          success: false,
+          error: 'Questo numero è già associato a un altro account. Effettua il login con l\'account esistente oppure usa un numero diverso.',
           code: 'PHONE_ALREADY_USED'
         }),
-        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
