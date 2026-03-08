@@ -68,8 +68,42 @@ const VerifyPhone = () => {
     }
   }, [resendCooldown]);
 
+  const sanitizePhoneNumber = (phone: string): string => {
+    // Remove spaces, dashes, parentheses
+    let cleaned = phone.replace(/[\s\-\(\)]/g, "");
+    // Strip any leading + or country code the user may have typed
+    // If the number starts with + or 00, remove the prefix
+    if (cleaned.startsWith("+")) {
+      // Check if it starts with the selected country code
+      const codeWithoutPlus = countryCode.replace("+", "");
+      if (cleaned.startsWith(countryCode)) {
+        cleaned = cleaned.slice(countryCode.length);
+      } else if (cleaned.startsWith("+" + codeWithoutPlus)) {
+        cleaned = cleaned.slice(codeWithoutPlus.length + 1);
+      } else {
+        // Different country code typed — strip the + and any leading digits that match a code
+        cleaned = cleaned.slice(1);
+        // Try to remove common prefixes
+        for (const c of COUNTRY_CODES) {
+          const prefix = c.code.replace("+", "");
+          if (cleaned.startsWith(prefix)) {
+            cleaned = cleaned.slice(prefix.length);
+            break;
+          }
+        }
+      }
+    } else if (cleaned.startsWith("00")) {
+      cleaned = cleaned.slice(2);
+      const codeWithoutPlus = countryCode.replace("+", "");
+      if (cleaned.startsWith(codeWithoutPlus)) {
+        cleaned = cleaned.slice(codeWithoutPlus.length);
+      }
+    }
+    return cleaned;
+  };
+
   const handleSendOtp = async () => {
-    if (!phoneNumber || phoneNumber.length < 6) {
+    if (!phoneNumber || phoneNumber.replace(/\D/g, "").length < 6) {
       toast({
         title: "Errore",
         description: "Inserisci un numero di telefono valido",
@@ -79,7 +113,8 @@ const VerifyPhone = () => {
     }
 
     setLoading(true);
-    const fullPhone = `${countryCode}${phoneNumber.replace(/\s/g, "")}`;
+    const cleanedNumber = sanitizePhoneNumber(phoneNumber);
+    const fullPhone = `${countryCode}${cleanedNumber}`;
 
     try {
       const { data, error } = await supabase.functions.invoke("send-otp", {
@@ -90,7 +125,6 @@ const VerifyPhone = () => {
       // but the body with error details is still in data
       if (error) {
         // Check if it's a "phone already used" error from the response body
-        // data might be null with some Supabase client versions on non-2xx, so also check error message
         const errorMessage = data?.error || error.message || '';
         const errorCode = data?.code || '';
         
@@ -232,7 +266,7 @@ const VerifyPhone = () => {
             {step === "success" && "Verificato! ✅"}
           </CardTitle>
           <CardDescription>
-            {step === "phone" && "Per la tua sicurezza, verifica il tuo numero di telefono"}
+            {step === "phone" && "Serve per ricevere la chiamata di prova gratuita"}
             {step === "otp" && "Abbiamo inviato un SMS con il codice di 6 cifre"}
             {step === "success" && "Il tuo numero è stato verificato con successo"}
           </CardDescription>
@@ -287,9 +321,21 @@ const VerifyPhone = () => {
                 )}
               </Button>
 
-              <p className="text-xs text-muted-foreground text-center">
-                Questo numero sarà usato per la tua prova gratuita
-              </p>
+              {/* Trust & info messages */}
+              <div className="space-y-2 pt-1">
+                <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                  <span className="mt-0.5">🎯</span>
+                  <span>La prova gratuita viene effettuata <strong className="text-foreground">sul tuo numero</strong> — è così che funziona!</span>
+                </div>
+                <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                  <span className="mt-0.5">🔒</span>
+                  <span>Non condivideremo mai il tuo numero con nessuno.</span>
+                </div>
+                <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                  <span className="mt-0.5">⚡</span>
+                  <span>Ci vogliono 30 secondi. Riceverai un SMS con il codice.</span>
+                </div>
+              </div>
             </>
           )}
 
