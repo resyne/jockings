@@ -32,12 +32,12 @@ const buildFirstMessage = (prank: any, greeting: string, templateIT: string | nu
   // Use template from settings if available, otherwise use default
   let template = isItalian ? templateIT : templateEN;
   
-  // Default templates - ASSERTIVE, NO QUESTIONS
-  // The AI should launch directly into the scenario without waiting for confirmation
+  // Default templates - Simple greeting asking for the victim by name
+  // The AI will then launch into the scenario after the victim confirms
   if (!template) {
     template = isItalian 
-      ? `{{GREETING}}, {{VICTIM_FIRST_NAME}}! Senta, ho bisogno di parlarle di una questione urgente.`
-      : `{{GREETING}}, {{VICTIM_FIRST_NAME}}! Listen, I need to talk to you about an urgent matter.`;
+      ? `{{GREETING}}, parlo con {{VICTIM_FIRST_NAME}}?`
+      : `{{GREETING}}, am I speaking with {{VICTIM_FIRST_NAME}}?`;
   }
   
   // Replace placeholders
@@ -122,11 +122,11 @@ SCENARIO DELLO SCHERZO:
 PERSONALITÀ E TONO:
 {{PERSONALITY_TONE}}
 
-COMPORTAMENTO CRUCIALE ALL'INIZIO:
-- Dopo il saluto iniziale, CONTINUA SUBITO a parlare senza aspettare risposta
-- NON fare domande come "mi sente?" o "parlo con...?" - dai per scontato che ti sentano
-- Lancia IMMEDIATAMENTE lo scenario senza pause
-- La vittima risponderà quando vuole, tu intanto continua a spiegare il motivo della chiamata
+COMPORTAMENTO ALL'INIZIO DELLA CHIAMATA:
+- Il primo messaggio chiede alla vittima se è lei. Quando la vittima conferma (es. "sì", "sono io", "chi parla?"), PRESENTATI con un nome realistico e LANCIA IMMEDIATAMENTE lo scenario dello scherzo.
+- Se la vittima dice "chi è?" o "chi parla?", presentati e lancia lo scenario.
+- Se la vittima dice "no, ha sbagliato numero", insisti gentilmente che sei sicuro di avere il numero giusto.
+- NON ripetere la domanda "parlo con...?" dopo il primo messaggio — quella è già stata fatta.
 
 REGOLE FONDAMENTALI:
 1. Parla SOLO in italiano
@@ -141,7 +141,7 @@ REGOLE FONDAMENTALI:
 10. IMPORTANTE: Usa la grammatica corretta per il sesso della vittima
 11. La priorità è mantenere la conversazione credibile e divertente
 
-IMPORTANTE: I primi 3 secondi sono cruciali. Lancia subito lo scenario!`;
+IMPORTANTE: Appena la vittima conferma la sua identità, lancia subito lo scenario!`;
     } else {
       template = `You are {{GENDER}} making a prank phone call to {{VICTIM_NAME}} ({{VICTIM_GENDER}}).
 
@@ -153,11 +153,11 @@ PRANK SCENARIO:
 PERSONALITY AND TONE:
 {{PERSONALITY_TONE}}
 
-CRUCIAL BEHAVIOR AT START:
-- After the initial greeting, IMMEDIATELY continue speaking without waiting for a response
-- DO NOT ask questions like "can you hear me?" or "am I speaking with...?" - assume they can hear you
-- Launch into the scenario IMMEDIATELY without pauses
-- The victim will respond when they want, you keep explaining why you're calling
+BEHAVIOR AT THE START OF THE CALL:
+- The first message asks the victim if it's them. When the victim confirms (e.g., "yes", "that's me", "who is this?"), INTRODUCE yourself with a realistic name and IMMEDIATELY launch into the prank scenario.
+- If the victim asks "who is this?" or "who's calling?", introduce yourself and launch the scenario.
+- If the victim says "no, wrong number", gently insist you're sure you have the right number.
+- DO NOT repeat the "am I speaking with...?" question after the first message — it has already been asked.
 
 FUNDAMENTAL RULES:
 1. Speak ONLY in English
@@ -171,7 +171,7 @@ FUNDAMENTAL RULES:
 9. Use authentic expressions and idioms
 10. Priority is keeping the conversation believable and entertaining
 
-IMPORTANT: The first 3 seconds are crucial. Launch the scenario immediately!`;
+IMPORTANT: As soon as the victim confirms their identity, launch the scenario immediately!`;
     }
   }
 
@@ -557,93 +557,11 @@ serve(async (req) => {
     // using AI based on the system prompt and prank theme. This avoids incomplete/broken openers.
     const isItalian = prank.language === 'Italiano';
     
-    const isMaleVoice = actualVoiceGender === 'male';
-    const exampleNamesIT = isMaleVoice 
-      ? 'Marco Bianchi, Luca Ferri, Alessandro Conti, Giovanni Ricci'
-      : 'Giulia Rossi, Francesca Conti, Sara Moretti, Alessandra Ferri';
-    const exampleNamesEN = isMaleVoice
-      ? 'John Miller, David Smith, James Wilson, Robert Davis'
-      : 'Sarah Miller, Emily Davis, Jessica Brown, Lisa Johnson';
-
-    const firstMessagePrompt = isItalian
-      ? `Sei al telefono. Genera la PRIMA BATTUTA che dici per aprire questa chiamata di scherzo.
-
-REQUISITI OBBLIGATORI:
-1. Inizia con "${greeting}, ${prank.victim_first_name}!"
-2. Presentati con un nome italiano realistico (scegli tra: ${exampleNamesIT} o simili)
-3. Spiega SUBITO il motivo della chiamata legato allo scenario: "${prank.prank_theme}"
-4. La frase deve essere COMPLETA e FINITA — terminare con un punto, punto esclamativo o punto interrogativo
-5. NON finire MAI con "...", "perché", "che", o frasi sospese/incomplete
-6. Massimo 2-3 frasi brevi e naturali
-7. NON usare asterischi, parentesi o descrizioni — SOLO parole da pronunciare
-
-ESEMPIO DI FORMATO CORRETTO:
-"${greeting}, ${prank.victim_first_name}! Sono Marco Bianchi dell'ufficio reclami. La contatto perché abbiamo ricevuto una segnalazione molto grave a suo nome."
-
-Rispondi SOLO con la battuta da dire, nient'altro.`
-      : `You are on the phone. Generate the FIRST LINE you say to open this prank call.
-
-MANDATORY REQUIREMENTS:
-1. Start with "${greeting}, ${prank.victim_first_name}!"
-2. Introduce yourself with a realistic name (choose from: ${exampleNamesEN} or similar)
-3. IMMEDIATELY explain the reason for the call related to the scenario: "${prank.prank_theme}"
-4. The sentence must be COMPLETE and FINISHED — end with a period, exclamation mark, or question mark
-5. NEVER end with "...", "because", "that", or incomplete/suspended phrases
-6. Maximum 2-3 short and natural sentences
-7. NO asterisks, parentheses, or descriptions — ONLY words to speak
-
-EXAMPLE OF CORRECT FORMAT:
-"${greeting}, ${prank.victim_first_name}! This is David Smith from the complaints department. I'm calling because we received a very serious report under your name."
-
-Reply ONLY with the line to say, nothing else.`;
-
-    let firstMessage: string;
-    try {
-      console.log('Generating AI first message...');
-      const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-      const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: firstMessagePrompt }
-          ],
-          max_tokens: 200,
-          temperature: 0.9,
-        }),
-      });
-      
-      const aiData = await aiResponse.json();
-      let generatedMessage = aiData.choices?.[0]?.message?.content?.trim();
-      
-      // Clean up: remove surrounding quotes if present
-      if (generatedMessage && generatedMessage.startsWith('"') && generatedMessage.endsWith('"')) {
-        generatedMessage = generatedMessage.slice(1, -1).trim();
-      }
-      
-      // Validate: message must be long enough AND end with proper punctuation (not truncated)
-      const endsWithPunctuation = generatedMessage && /[.!?]$/.test(generatedMessage);
-      const endsWithSuspension = generatedMessage && /(?:perché|che|perche|perchè|perch|\.{2,})$/i.test(generatedMessage);
-      
-      if (generatedMessage && generatedMessage.length > 20 && endsWithPunctuation && !endsWithSuspension) {
-        firstMessage = generatedMessage;
-        console.log('AI-generated first message (valid):', firstMessage);
-      } else {
-        // Fallback to template if AI generates incomplete message
-        console.warn('AI first message invalid or incomplete:', generatedMessage);
-        console.warn('Validation: length=', generatedMessage?.length, 'punctuation=', endsWithPunctuation, 'suspension=', endsWithSuspension);
-        firstMessage = buildFirstMessage(prank, greeting, firstMessageTemplateIT, firstMessageTemplateEN);
-      }
-    } catch (aiError) {
-      console.error('Error generating AI first message:', aiError);
-      // Fallback to template
-      firstMessage = buildFirstMessage(prank, greeting, firstMessageTemplateIT, firstMessageTemplateEN);
-    }
+    // === BUILD FIRST MESSAGE ===
+    // Simple greeting asking for the victim by name. The LLM will handle the rest
+    // after the victim responds, based on the system prompt instructions.
+    const firstMessage = buildFirstMessage(prank, greeting, firstMessageTemplateIT, firstMessageTemplateEN);
+    console.log('First message:', firstMessage);
 
     // VAPI transcriber configuration is provider/model-specific.
     // Deepgram expects locale codes (it, en, en-US, ...), not language names.
