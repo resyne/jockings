@@ -551,7 +551,72 @@ serve(async (req) => {
     const prankForPrompt = { ...prank, voice_gender: actualVoiceGender };
     
     const systemPrompt = buildSystemPrompt(prankForPrompt, systemPromptTemplateIT, systemPromptTemplateEN, voicePersonaDescription);
-    const firstMessage = buildFirstMessage(prank, greeting, firstMessageTemplateIT, firstMessageTemplateEN);
+    
+    // === GENERATE FIRST MESSAGE WITH AI ===
+    // Instead of using a static template, we generate a complete, natural first message
+    // using AI based on the system prompt and prank theme. This avoids incomplete/broken openers.
+    const greeting = getTimeBasedGreeting(prank.language);
+    const isItalian = prank.language === 'Italiano';
+    
+    const firstMessagePrompt = isItalian
+      ? `Genera SOLO la prima frase che diresti al telefono per aprire questa chiamata di scherzo. 
+Devi:
+- Iniziare con "${greeting}" e il nome "${prank.victim_first_name}"
+- Presentarti con un nome realistico coerente con il tuo sesso
+- Lanciare IMMEDIATAMENTE lo scenario: "${prank.prank_theme}"
+- La frase deve essere COMPLETA (non tronca, non finire con "...")
+- Massimo 2-3 frasi, naturali e colloquiali
+- NON usare asterischi o descrizioni, SOLO testo parlato
+
+Rispondi SOLO con la frase da dire, nient'altro.`
+      : `Generate ONLY the first sentence you would say on the phone to open this prank call.
+You must:
+- Start with "${greeting}" and the name "${prank.victim_first_name}"
+- Introduce yourself with a realistic name matching your gender
+- Launch IMMEDIATELY into the scenario: "${prank.prank_theme}"
+- The sentence must be COMPLETE (not truncated, don't end with "...")
+- Maximum 2-3 sentences, natural and conversational
+- NO asterisks or descriptions, ONLY spoken text
+
+Reply ONLY with the sentence to say, nothing else.`;
+
+    let firstMessage: string;
+    try {
+      console.log('Generating AI first message...');
+      const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+      const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: firstMessagePrompt }
+          ],
+          max_tokens: 120,
+          temperature: 1.0,
+        }),
+      });
+      
+      const aiData = await aiResponse.json();
+      const generatedMessage = aiData.choices?.[0]?.message?.content?.trim();
+      
+      if (generatedMessage && generatedMessage.length > 10) {
+        firstMessage = generatedMessage;
+        console.log('AI-generated first message:', firstMessage);
+      } else {
+        // Fallback to template if AI fails
+        console.warn('AI first message too short or empty, using fallback');
+        firstMessage = buildFirstMessage(prank, greeting, firstMessageTemplateIT, firstMessageTemplateEN);
+      }
+    } catch (aiError) {
+      console.error('Error generating AI first message:', aiError);
+      // Fallback to template
+      firstMessage = buildFirstMessage(prank, greeting, firstMessageTemplateIT, firstMessageTemplateEN);
+    }
 
     // VAPI transcriber configuration is provider/model-specific.
     // Deepgram expects locale codes (it, en, en-US, ...), not language names.
