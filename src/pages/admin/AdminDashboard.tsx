@@ -312,6 +312,23 @@ const AdminDashboard = () => {
               </div>
             </CardHeader>
           </Card>
+
+          <Card 
+            className="cursor-pointer hover:border-primary transition-colors"
+            onClick={() => navigate("/admin/tickets")}
+          >
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-lg bg-cyan-500/10">
+                  <HeadphonesIcon className="w-6 h-6 text-cyan-500" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Ticket Supporto</CardTitle>
+                  <CardDescription>Gestisci segnalazioni e rispondi con AI</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
         </div>
       </main>
     </div>
