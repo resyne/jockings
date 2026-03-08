@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Phone, Plus, History, Settings, LogOut, User, ArrowRight } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import PrankCard from "@/components/PrankCard";
+import OnboardingModal from "@/components/OnboardingModal";
 import saranoWordmarkIcon from "@/assets/sarano-wordmark-icon.png";
 import saranoIcon from "@/assets/sarano-icon.png";
 
