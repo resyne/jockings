@@ -44,6 +44,7 @@ const Dashboard = () => {
   const [pranks, setPranks] = useState<Prank[]>([]);
   const [victims, setVictims] = useState<Victim[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
