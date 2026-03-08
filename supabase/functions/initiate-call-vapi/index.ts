@@ -557,93 +557,11 @@ serve(async (req) => {
     // using AI based on the system prompt and prank theme. This avoids incomplete/broken openers.
     const isItalian = prank.language === 'Italiano';
     
-    const isMaleVoice = actualVoiceGender === 'male';
-    const exampleNamesIT = isMaleVoice 
-      ? 'Marco Bianchi, Luca Ferri, Alessandro Conti, Giovanni Ricci'
-      : 'Giulia Rossi, Francesca Conti, Sara Moretti, Alessandra Ferri';
-    const exampleNamesEN = isMaleVoice
-      ? 'John Miller, David Smith, James Wilson, Robert Davis'
-      : 'Sarah Miller, Emily Davis, Jessica Brown, Lisa Johnson';
-
-    const firstMessagePrompt = isItalian
-      ? `Sei al telefono. Genera la PRIMA BATTUTA che dici per aprire questa chiamata di scherzo.
-
-REQUISITI OBBLIGATORI:
-1. Inizia con "${greeting}, ${prank.victim_first_name}!"
-2. Presentati con un nome italiano realistico (scegli tra: ${exampleNamesIT} o simili)
-3. Spiega SUBITO il motivo della chiamata legato allo scenario: "${prank.prank_theme}"
-4. La frase deve essere COMPLETA e FINITA — terminare con un punto, punto esclamativo o punto interrogativo
-5. NON finire MAI con "...", "perché", "che", o frasi sospese/incomplete
-6. Massimo 2-3 frasi brevi e naturali
-7. NON usare asterischi, parentesi o descrizioni — SOLO parole da pronunciare
-
-ESEMPIO DI FORMATO CORRETTO:
-"${greeting}, ${prank.victim_first_name}! Sono Marco Bianchi dell'ufficio reclami. La contatto perché abbiamo ricevuto una segnalazione molto grave a suo nome."
-
-Rispondi SOLO con la battuta da dire, nient'altro.`
-      : `You are on the phone. Generate the FIRST LINE you say to open this prank call.
-
-MANDATORY REQUIREMENTS:
-1. Start with "${greeting}, ${prank.victim_first_name}!"
-2. Introduce yourself with a realistic name (choose from: ${exampleNamesEN} or similar)
-3. IMMEDIATELY explain the reason for the call related to the scenario: "${prank.prank_theme}"
-4. The sentence must be COMPLETE and FINISHED — end with a period, exclamation mark, or question mark
-5. NEVER end with "...", "because", "that", or incomplete/suspended phrases
-6. Maximum 2-3 short and natural sentences
-7. NO asterisks, parentheses, or descriptions — ONLY words to speak
-
-EXAMPLE OF CORRECT FORMAT:
-"${greeting}, ${prank.victim_first_name}! This is David Smith from the complaints department. I'm calling because we received a very serious report under your name."
-
-Reply ONLY with the line to say, nothing else.`;
-
-    let firstMessage: string;
-    try {
-      console.log('Generating AI first message...');
-      const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-      const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: firstMessagePrompt }
-          ],
-          max_tokens: 200,
-          temperature: 0.9,
-        }),
-      });
-      
-      const aiData = await aiResponse.json();
-      let generatedMessage = aiData.choices?.[0]?.message?.content?.trim();
-      
-      // Clean up: remove surrounding quotes if present
-      if (generatedMessage && generatedMessage.startsWith('"') && generatedMessage.endsWith('"')) {
-        generatedMessage = generatedMessage.slice(1, -1).trim();
-      }
-      
-      // Validate: message must be long enough AND end with proper punctuation (not truncated)
-      const endsWithPunctuation = generatedMessage && /[.!?]$/.test(generatedMessage);
-      const endsWithSuspension = generatedMessage && /(?:perché|che|perche|perchè|perch|\.{2,})$/i.test(generatedMessage);
-      
-      if (generatedMessage && generatedMessage.length > 20 && endsWithPunctuation && !endsWithSuspension) {
-        firstMessage = generatedMessage;
-        console.log('AI-generated first message (valid):', firstMessage);
-      } else {
-        // Fallback to template if AI generates incomplete message
-        console.warn('AI first message invalid or incomplete:', generatedMessage);
-        console.warn('Validation: length=', generatedMessage?.length, 'punctuation=', endsWithPunctuation, 'suspension=', endsWithSuspension);
-        firstMessage = buildFirstMessage(prank, greeting, firstMessageTemplateIT, firstMessageTemplateEN);
-      }
-    } catch (aiError) {
-      console.error('Error generating AI first message:', aiError);
-      // Fallback to template
-      firstMessage = buildFirstMessage(prank, greeting, firstMessageTemplateIT, firstMessageTemplateEN);
-    }
+    // === BUILD FIRST MESSAGE ===
+    // Simple greeting asking for the victim by name. The LLM will handle the rest
+    // after the victim responds, based on the system prompt instructions.
+    const firstMessage = buildFirstMessage(prank, greeting, firstMessageTemplateIT, firstMessageTemplateEN);
+    console.log('First message:', firstMessage);
 
     // VAPI transcriber configuration is provider/model-specific.
     // Deepgram expects locale codes (it, en, en-US, ...), not language names.
