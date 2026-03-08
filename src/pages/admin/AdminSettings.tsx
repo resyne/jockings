@@ -20,6 +20,14 @@ const AdminSettings = () => {
   const [requireAnswered, setRequireAnswered] = useState(true);
   const [countFailedCalls, setCountFailedCalls] = useState(false);
 
+  // Demo audio
+  const [uploadingAudio, setUploadingAudio] = useState(false);
+  const [demoAudioExists, setDemoAudioExists] = useState(false);
+  const [playingDemo, setPlayingDemo] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const DEMO_AUDIO_URL = "https://vtsankkghplkfhrlxefs.supabase.co/storage/v1/object/public/temp-audio/demo-call.mp3";
+
   useEffect(() => {
     if (!loading && !isAdmin) {
       navigate("/auth");
