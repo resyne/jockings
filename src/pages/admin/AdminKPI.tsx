@@ -100,6 +100,7 @@ const AdminKPI = () => {
         purchasesWeek,
         purchasesMonth,
         totalPranksFromPurchases,
+        trialUsed,
       ] = await Promise.all([
         // Users
         supabase.from("profiles").select("id", { count: "exact", head: true }),
