@@ -245,6 +245,14 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20 sm:pb-24">
+      <OnboardingModal
+        open={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        onComplete={() => {
+          setShowOnboarding(false);
+          navigate("/create-prank");
+        }}
+      />
       {/* Header */}
       <header className="sticky top-0 z-50 glass border-b border-border px-3 py-2 sm:px-4 sm:py-3">
         <div className="flex items-center justify-between max-w-lg mx-auto">
