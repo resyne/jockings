@@ -70,8 +70,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (user) {
       fetchProfile();
-      fetchPranks();
-      fetchVictims();
+      fetchPranksAndVictims();
 
       // Realtime subscription for pranks updates
       const channel = supabase
@@ -93,7 +92,7 @@ const Dashboard = () => {
                   : p
               ));
             } else if (payload.eventType === 'INSERT') {
-              fetchPranks(); // Refresh list for new pranks
+              fetchPranksAndVictims();
             } else if (payload.eventType === 'DELETE') {
               setPranks(prev => prev.filter(p => p.id !== payload.old.id));
             }
@@ -133,31 +132,19 @@ const Dashboard = () => {
     }
   };
 
-  const fetchPranks = async () => {
+  const fetchPranksAndVictims = async () => {
     if (!user) return;
     const { data, error } = await supabase.rpc('get_user_pranks_decrypted');
     
     if (error) {
       console.error("Error fetching pranks:", error);
     } else {
-      // Sort by created_at descending and limit to 10
       const sorted = (data || [])
-        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        .slice(0, 10);
-      setPranks(sorted);
-    }
-    setLoading(false);
-  };
+        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      
+      setPranks(sorted.slice(0, 10));
 
-  const fetchVictims = async () => {
-    if (!user) return;
-    const { data, error } = await supabase.rpc('get_user_pranks_decrypted');
-    
-    if (error) {
-      console.error("Error fetching victims:", error);
-    } else if (data) {
-      // Sort by created_at descending and extract unique victims by phone
-      const sorted = (data as any[]).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      // Extract unique victims from the same data
       const uniqueVictims: Victim[] = [];
       const seenPhones = new Set<string>();
       for (const prank of sorted) {
@@ -166,12 +153,13 @@ const Dashboard = () => {
           uniqueVictims.push({
             phone: prank.victim_phone,
             firstName: prank.victim_first_name,
-            lastName: prank.victim_last_name
+            lastName: prank.victim_last_name,
           });
         }
       }
       setVictims(uniqueVictims);
     }
+    setLoading(false);
   };
 
 
@@ -185,7 +173,7 @@ const Dashboard = () => {
       toast({ title: "Errore", description: "Impossibile annullare lo scherzo", variant: "destructive" });
     } else {
       toast({ title: "Scherzo annullato", description: "Lo scherzo programmato è stato annullato" });
-      fetchPranks();
+      fetchPranksAndVictims();
     }
   };
 
@@ -227,6 +215,9 @@ const Dashboard = () => {
       default: return status;
     }
   };
+
+  const effectivePranks = (profile?.available_pranks || 0) + 
+    (profile?.card_verified && !profile?.trial_prank_used && (profile?.available_pranks || 0) === 0 ? 1 : 0);
 
   if (loading) {
     return (
@@ -285,7 +276,7 @@ const Dashboard = () => {
             <div className="flex items-center gap-1.5 sm:gap-2 cursor-pointer" onClick={() => navigate("/pricing")}>
               <Phone className="w-4 h-4 sm:w-5 sm:h-5" />
               <span className="font-bold text-base sm:text-lg">
-                {(profile?.available_pranks || 0) + (profile?.card_verified && !profile?.trial_prank_used && (profile?.available_pranks || 0) === 0 ? 1 : 0)}
+                {effectivePranks}
               </span>
               <span className="text-xs sm:text-sm opacity-80">prank disponibili</span>
             </div>
