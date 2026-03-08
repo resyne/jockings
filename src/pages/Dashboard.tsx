@@ -117,7 +117,18 @@ const Dashboard = () => {
     if (error) {
       console.error("Error fetching profile:", error);
     } else {
-      setProfile(data);
+      const profileData = {
+        username: data.username,
+        available_pranks: data.available_pranks ?? 0,
+        avatar_url: data.avatar_url,
+        card_verified: data.card_verified ?? false,
+        trial_prank_used: data.trial_prank_used ?? false,
+      };
+      setProfile(profileData);
+      // Show onboarding if card not verified and trial not used
+      if (!profileData.card_verified && !profileData.trial_prank_used) {
+        setShowOnboarding(true);
+      }
     }
   };
 
