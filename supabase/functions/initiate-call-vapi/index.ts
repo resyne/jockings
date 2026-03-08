@@ -32,12 +32,12 @@ const buildFirstMessage = (prank: any, greeting: string, templateIT: string | nu
   // Use template from settings if available, otherwise use default
   let template = isItalian ? templateIT : templateEN;
   
-  // Default templates - ASSERTIVE, NO QUESTIONS
-  // The AI should launch directly into the scenario without waiting for confirmation
+  // Default templates - Simple greeting asking for the victim by name
+  // The AI will then launch into the scenario after the victim confirms
   if (!template) {
     template = isItalian 
-      ? `{{GREETING}}, {{VICTIM_FIRST_NAME}}! Senta, ho bisogno di parlarle di una questione urgente.`
-      : `{{GREETING}}, {{VICTIM_FIRST_NAME}}! Listen, I need to talk to you about an urgent matter.`;
+      ? `{{GREETING}}, parlo con {{VICTIM_FIRST_NAME}}?`
+      : `{{GREETING}}, am I speaking with {{VICTIM_FIRST_NAME}}?`;
   }
   
   // Replace placeholders
