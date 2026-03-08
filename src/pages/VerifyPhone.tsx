@@ -30,7 +30,8 @@ type Step = "phone" | "otp" | "success";
 
 const VerifyPhone = () => {
   const [step, setStep] = useState<Step>("phone");
-  const [countryCode, setCountryCode] = useState("+39");
+  const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[0]);
+  const countryCode = selectedCountry.code;
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
