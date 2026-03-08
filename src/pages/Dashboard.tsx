@@ -110,7 +110,7 @@ const Dashboard = () => {
     if (!user) return;
     const { data, error } = await supabase
       .from("profiles")
-      .select("username, available_pranks, avatar_url")
+      .select("username, available_pranks, avatar_url, card_verified, trial_prank_used")
       .eq("user_id", user.id)
       .single();
     
