@@ -153,8 +153,13 @@ const CreatePrank = () => {
       return { allowed: true, isTrialCall: false };
     }
     
-    // Can use free trial (only to own verified number)
-    if (!profile.trial_prank_used && profile.phone_verified && profile.phone_number) {
+    // Card verified + trial not used = can call ANY number
+    if (!profile.trial_prank_used && profile.card_verified) {
+      return { allowed: true, isTrialCall: true };
+    }
+
+    // Fallback: Can use free trial to own verified number (legacy)
+    if (!profile.trial_prank_used && profile.phone_verified && profile.phone_number && !profile.card_verified) {
       const fullVictimPhone = normalizePhoneDigits(`${phoneCountryCode}${victimPhone}`);
       const normalizedUserPhone = normalizePhoneDigits(profile.phone_number);
 
@@ -174,9 +179,9 @@ const CreatePrank = () => {
       return { allowed: false, isTrialCall: false, reason: "Hai esaurito i prank disponibili. Acquista un pacchetto per continuare!" };
     }
     
-    // Phone not verified
-    if (!profile.phone_verified) {
-      return { allowed: false, isTrialCall: false, reason: "Verifica il tuo numero di telefono per ottenere un prank gratuito!" };
+    // Phone not verified and card not verified
+    if (!profile.phone_verified && !profile.card_verified) {
+      return { allowed: false, isTrialCall: false, reason: "Verifica il tuo numero di telefono o aggiungi una carta per ottenere un prank gratuito!" };
     }
     
     return { allowed: false, isTrialCall: false, reason: "Nessun prank disponibile" };
