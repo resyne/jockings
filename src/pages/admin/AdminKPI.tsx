@@ -155,6 +155,8 @@ const AdminKPI = () => {
         purchasesMonth: purchasesMonth.count || 0,
         totalPurchases: purchasesTotal.count || 0,
         totalPranksFromPurchases: totalPranks,
+        trialUsed: trialUsedCount,
+        trialRate: trialRatePercent,
       });
     } catch (error) {
       console.error("Error fetching KPI data:", error);
