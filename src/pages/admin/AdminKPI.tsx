@@ -124,10 +124,16 @@ const AdminKPI = () => {
         supabase.from("processed_payments").select("id", { count: "exact", head: true }).gte("created_at", monthStart),
         // Total pranks from purchases
         supabase.from("processed_payments").select("pranks_added"),
+        // Trial prank usage
+        supabase.from("profiles").select("id", { count: "exact", head: true }).eq("trial_prank_used", true),
       ]);
 
       // Calculate total pranks from purchases
       const totalPranks = totalPranksFromPurchases.data?.reduce((sum, p) => sum + (p.pranks_added || 0), 0) || 0;
+      
+      const totalUsersCount = usersTotal.count || 0;
+      const trialUsedCount = trialUsed.count || 0;
+      const trialRatePercent = totalUsersCount > 0 ? Math.round((trialUsedCount / totalUsersCount) * 100) : 0;
 
       setKpiData({
         newUsersToday: usersToday.count || 0,
