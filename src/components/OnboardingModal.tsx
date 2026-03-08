@@ -11,7 +11,8 @@ interface OnboardingModalProps {
   onComplete: () => void;
 }
 
-const DEMO_AUDIO_URL = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/temp-audio/demo-call.mp3`;
+// Demo audio - upload to Supabase Storage temp-audio bucket as "demo-call.mp3"
+const DEMO_AUDIO_URL = `https://vtsankkghplkfhrlxefs.supabase.co/storage/v1/object/public/temp-audio/demo-call.mp3`;
 
 const CALL_SUGGESTIONS = [
   { icon: UserRound, label: "Il tuo migliore amico", emoji: "👋" },
