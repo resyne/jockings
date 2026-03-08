@@ -276,7 +276,7 @@ const Dashboard = () => {
             <div className="flex items-center gap-1.5 sm:gap-2 cursor-pointer" onClick={() => navigate("/pricing")}>
               <Phone className="w-4 h-4 sm:w-5 sm:h-5" />
               <span className="font-bold text-base sm:text-lg">
-                {(profile?.available_pranks || 0) + (profile?.card_verified && !profile?.trial_prank_used && (profile?.available_pranks || 0) === 0 ? 1 : 0)}
+                {effectivePranks}
               </span>
               <span className="text-xs sm:text-sm opacity-80">prank disponibili</span>
             </div>
