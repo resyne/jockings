@@ -107,3 +107,9 @@ verify_jwt = true
 
 [functions.send-help-report]
 verify_jwt = false
+
+[functions.setup-card]
+verify_jwt = true
+
+[functions.verify-card-setup]
+verify_jwt = true
