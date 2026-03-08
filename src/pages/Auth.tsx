@@ -138,8 +138,6 @@ const Auth = () => {
           await supabase
             .from("profiles")
             .update({
-              first_name: firstName,
-              last_name: lastName,
               terms_accepted_at: now,
               privacy_accepted_at: now,
               terms_version: "1.0",
