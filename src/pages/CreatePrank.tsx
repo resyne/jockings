@@ -438,8 +438,8 @@ const CreatePrank = () => {
           toast({ title: "Errore", description: "Numero di telefono non valido", variant: "destructive" });
           return false;
         }
-        // Block trial users early if they entered a different number
-        if (profile && profile.available_pranks === 0 && !profile.trial_prank_used && profile.phone_verified && profile.phone_number) {
+        // Block trial users early if they entered a different number (only for non-card-verified users)
+        if (profile && profile.available_pranks === 0 && !profile.trial_prank_used && !profile.card_verified && profile.phone_verified && profile.phone_number) {
           const fullVictimPhone = normalizePhoneDigits(`${phoneCountryCode}${victimPhone}`);
           const normalizedUserPhone = normalizePhoneDigits(profile.phone_number);
           if (fullVictimPhone !== normalizedUserPhone) {
