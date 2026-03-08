@@ -789,10 +789,42 @@ const CreatePrank = () => {
               </div>
               {/* Trial call warning */}
               {profile && profile.available_pranks === 0 && !profile.trial_prank_used && profile.phone_verified && (
-                <div className="p-2 sm:p-3 rounded-lg bg-orange-500/10 border border-orange-500/30">
-                  <p className="text-xs sm:text-sm text-orange-500 font-medium">
-                    🎁 Prank gratuito! Solo sul tuo numero: {profile.phone_number}
+                <div className={`p-2 sm:p-3 rounded-lg border ${
+                  isTrialUserWithWrongNumber() 
+                    ? "bg-destructive/10 border-destructive/30" 
+                    : "bg-orange-500/10 border-orange-500/30"
+                }`}>
+                  <p className={`text-xs sm:text-sm font-medium ${
+                    isTrialUserWithWrongNumber() ? "text-destructive" : "text-orange-500"
+                  }`}>
+                    {isTrialUserWithWrongNumber() 
+                      ? `⚠️ Il prank gratuito funziona solo sul tuo numero: ${profile.phone_number}`
+                      : `🎁 Prank gratuito! Solo sul tuo numero: ${profile.phone_number}`
+                    }
                   </p>
+                  {isTrialUserWithWrongNumber() && (
+                    <Button 
+                      variant="link" 
+                      className="text-primary p-0 h-auto text-xs sm:text-sm mt-1"
+                      onClick={() => navigate("/pricing")}
+                    >
+                      Acquista un pacchetto per chiamare altri numeri →
+                    </Button>
+                  )}
+                </div>
+              )}
+              {profile && profile.available_pranks === 0 && profile.trial_prank_used && (
+                <div className="p-2 sm:p-3 rounded-lg bg-destructive/10 border border-destructive/30">
+                  <p className="text-xs sm:text-sm text-destructive font-medium">
+                    ❌ Hai esaurito i prank disponibili
+                  </p>
+                  <Button 
+                    variant="link" 
+                    className="text-primary p-0 h-auto text-xs sm:text-sm mt-1"
+                    onClick={() => navigate("/pricing")}
+                  >
+                    Acquista un pacchetto →
+                  </Button>
                 </div>
               )}
               {profile && profile.available_pranks === 0 && !profile.trial_prank_used && !profile.phone_verified && (
