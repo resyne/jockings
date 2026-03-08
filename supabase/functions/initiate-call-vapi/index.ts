@@ -36,8 +36,8 @@ const buildFirstMessage = (prank: any, greeting: string, templateIT: string | nu
   // The AI should launch directly into the scenario without waiting for confirmation
   if (!template) {
     template = isItalian 
-      ? `{{GREETING}}, {{VICTIM_FIRST_NAME}}! Senta, la chiamo perché...`
-      : `{{GREETING}}, {{VICTIM_FIRST_NAME}}! Listen, I'm calling because...`;
+      ? `{{GREETING}}, {{VICTIM_FIRST_NAME}}! Senta, ho bisogno di parlarle di una questione urgente.`
+      : `{{GREETING}}, {{VICTIM_FIRST_NAME}}! Listen, I need to talk to you about an urgent matter.`;
   }
   
   // Replace placeholders
