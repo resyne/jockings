@@ -39,7 +39,6 @@ const AdminSettings = () => {
       fetchSettings();
       checkDemoAudio();
     }
-    }
   }, [isAdmin]);
 
   const fetchSettings = async () => {
