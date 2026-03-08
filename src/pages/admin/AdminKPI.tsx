@@ -53,6 +53,8 @@ const AdminKPI = () => {
     purchasesMonth: 0,
     totalPurchases: 0,
     totalPranksFromPurchases: 0,
+    trialUsed: 0,
+    trialRate: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
 
