@@ -368,12 +368,16 @@ const CreatePrank = () => {
     try {
       if (!user?.id) return;
       
-      const { data, error } = await supabase
-        .from("pranks")
-        .select("*")
-        .eq("id", prankId)
-        .eq("user_id", user.id)
-        .single();
+      // Use RPC to get decrypted prank data (victim_phone, names are encrypted in pranks table)
+      const { data: allPranks, error } = await supabase.rpc("get_user_pranks_decrypted");
+      
+      if (error) {
+        console.error("Error loading prank:", error);
+        toast({ title: "Errore", description: "Impossibile caricare lo scherzo", variant: "destructive" });
+        return;
+      }
+      
+      const data = allPranks?.find((p: any) => p.id === prankId);
 
       if (error) {
         console.error("Error loading prank:", error);
