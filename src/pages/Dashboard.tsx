@@ -284,7 +284,9 @@ const Dashboard = () => {
           <CardContent className="p-3 sm:p-6 pt-1 sm:pt-0 relative z-10">
             <div className="flex items-center gap-1.5 sm:gap-2 cursor-pointer" onClick={() => navigate("/pricing")}>
               <Phone className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span className="font-bold text-base sm:text-lg">{profile?.available_pranks || 0}</span>
+              <span className="font-bold text-base sm:text-lg">
+                {(profile?.available_pranks || 0) + (profile?.card_verified && !profile?.trial_prank_used && (profile?.available_pranks || 0) === 0 ? 1 : 0)}
+              </span>
               <span className="text-xs sm:text-sm opacity-80">prank disponibili</span>
             </div>
           </CardContent>
@@ -307,7 +309,10 @@ const Dashboard = () => {
                   Offerta Lancio: <span className="text-secondary">-50%</span> su tutti i pacchetti!
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  La prova gratuita è solo verso il tuo numero. Per scherzare gli amici, scegli un pacchetto!
+                  {profile?.card_verified && !profile?.trial_prank_used
+                    ? "Hai 1 prank gratuito incluso! Per altri scherzi, scegli un pacchetto!"
+                    : "La prova gratuita è solo verso il tuo numero. Per scherzare gli amici, scegli un pacchetto!"
+                  }
                 </p>
               </div>
               <ArrowRight className="w-5 h-5 text-secondary flex-shrink-0" />
