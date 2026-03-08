@@ -132,31 +132,19 @@ const Dashboard = () => {
     }
   };
 
-  const fetchPranks = async () => {
+  const fetchPranksAndVictims = async () => {
     if (!user) return;
     const { data, error } = await supabase.rpc('get_user_pranks_decrypted');
     
     if (error) {
       console.error("Error fetching pranks:", error);
     } else {
-      // Sort by created_at descending and limit to 10
       const sorted = (data || [])
-        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        .slice(0, 10);
-      setPranks(sorted);
-    }
-    setLoading(false);
-  };
+        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      
+      setPranks(sorted.slice(0, 10));
 
-  const fetchVictims = async () => {
-    if (!user) return;
-    const { data, error } = await supabase.rpc('get_user_pranks_decrypted');
-    
-    if (error) {
-      console.error("Error fetching victims:", error);
-    } else if (data) {
-      // Sort by created_at descending and extract unique victims by phone
-      const sorted = (data as any[]).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      // Extract unique victims from the same data
       const uniqueVictims: Victim[] = [];
       const seenPhones = new Set<string>();
       for (const prank of sorted) {
@@ -165,12 +153,13 @@ const Dashboard = () => {
           uniqueVictims.push({
             phone: prank.victim_phone,
             firstName: prank.victim_first_name,
-            lastName: prank.victim_last_name
+            lastName: prank.victim_last_name,
           });
         }
       }
       setVictims(uniqueVictims);
     }
+    setLoading(false);
   };
 
 
