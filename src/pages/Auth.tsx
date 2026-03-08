@@ -127,7 +127,7 @@ const Auth = () => {
           password,
           options: {
             emailRedirectTo: redirectUrl,
-            data: { username, first_name: firstName, last_name: lastName },
+            data: { username },
           },
         });
         if (error) throw error;
