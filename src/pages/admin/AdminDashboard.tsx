@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Settings, Users, Phone, Mic, FileText, Shield, ArrowLeft, Ticket, ShieldAlert, TrendingUp, CreditCard, DollarSign } from "lucide-react";
+import { Settings, Users, Phone, Mic, FileText, Shield, ArrowLeft, Ticket, ShieldAlert, TrendingUp, CreditCard, DollarSign, HeadphonesIcon } from "lucide-react";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
