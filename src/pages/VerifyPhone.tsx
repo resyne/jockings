@@ -10,26 +10,28 @@ import { useToast } from "@/hooks/use-toast";
 import { Phone, ArrowRight, RefreshCw, Check } from "lucide-react";
 import saranoIcon from "@/assets/sarano-icon.png";
 
-const COUNTRY_CODES = [
-  { code: "+39", flag: "🇮🇹", name: "Italia" },
-  { code: "+49", flag: "🇩🇪", name: "Germania" },
-  { code: "+33", flag: "🇫🇷", name: "Francia" },
-  { code: "+34", flag: "🇪🇸", name: "Spagna" },
-  { code: "+44", flag: "🇬🇧", name: "UK" },
-  { code: "+41", flag: "🇨🇭", name: "Svizzera" },
-  { code: "+43", flag: "🇦🇹", name: "Austria" },
-  { code: "+31", flag: "🇳🇱", name: "Olanda" },
-  { code: "+32", flag: "🇧🇪", name: "Belgio" },
-  { code: "+351", flag: "🇵🇹", name: "Portogallo" },
-  { code: "+48", flag: "🇵🇱", name: "Polonia" },
-  { code: "+30", flag: "🇬🇷", name: "Grecia" },
+const COUNTRIES = [
+  { code: "+39", flag: "🇮🇹", name: "Italia", placeholder: "321 123 4567" },
+  { code: "+44", flag: "🇬🇧", name: "UK", placeholder: "7911 123456" },
+  { code: "+1", flag: "🇺🇸", name: "USA", placeholder: "201 555 0123" },
+  { code: "+49", flag: "🇩🇪", name: "Germania", placeholder: "151 1234 5678" },
+  { code: "+33", flag: "🇫🇷", name: "Francia", placeholder: "6 12 34 56 78" },
+  { code: "+34", flag: "🇪🇸", name: "Spagna", placeholder: "612 34 56 78" },
+  { code: "+41", flag: "🇨🇭", name: "Svizzera", placeholder: "76 123 45 67" },
+  { code: "+43", flag: "🇦🇹", name: "Austria", placeholder: "664 123 4567" },
+  { code: "+31", flag: "🇳🇱", name: "Olanda", placeholder: "6 12345678" },
+  { code: "+32", flag: "🇧🇪", name: "Belgio", placeholder: "470 12 34 56" },
+  { code: "+351", flag: "🇵🇹", name: "Portogallo", placeholder: "912 345 678" },
+  { code: "+48", flag: "🇵🇱", name: "Polonia", placeholder: "512 345 678" },
+  { code: "+30", flag: "🇬🇷", name: "Grecia", placeholder: "691 234 5678" },
 ];
 
 type Step = "phone" | "otp" | "success";
 
 const VerifyPhone = () => {
   const [step, setStep] = useState<Step>("phone");
-  const [countryCode, setCountryCode] = useState("+39");
+  const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[0]);
+  const countryCode = selectedCountry.code;
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
@@ -84,7 +86,7 @@ const VerifyPhone = () => {
         // Different country code typed — strip the + and any leading digits that match a code
         cleaned = cleaned.slice(1);
         // Try to remove common prefixes
-        for (const c of COUNTRY_CODES) {
+        for (const c of COUNTRIES) {
           const prefix = c.code.replace("+", "");
           if (cleaned.startsWith(prefix)) {
             cleaned = cleaned.slice(prefix.length);
@@ -278,29 +280,40 @@ const VerifyPhone = () => {
               <div className="space-y-2">
                 <Label>Numero di telefono</Label>
                 <div className="flex gap-2">
-                  <Select value={countryCode} onValueChange={setCountryCode}>
-                    <SelectTrigger className="w-[100px] h-12">
-                      <SelectValue />
+                  <Select 
+                    value={selectedCountry.code} 
+                    onValueChange={(val) => {
+                      const country = COUNTRIES.find(c => c.code === val);
+                      if (country) setSelectedCountry(country);
+                    }}
+                  >
+                    <SelectTrigger className="w-[130px] h-12">
+                      <SelectValue>
+                        <span className="flex items-center gap-2">
+                          <span className="text-lg">{selectedCountry.flag}</span>
+                          <span>{selectedCountry.code}</span>
+                        </span>
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      {COUNTRY_CODES.map((country) => (
+                      {COUNTRIES.map((country) => (
                         <SelectItem key={country.code} value={country.code}>
                           <span className="flex items-center gap-2">
                             <span>{country.flag}</span>
-                            <span>{country.code}</span>
+                            <span className="font-medium">{country.name}</span>
+                            <span className="text-muted-foreground">{country.code}</span>
                           </span>
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                   <div className="relative flex-1">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <Input
                       type="tel"
-                      placeholder="123 456 7890"
+                      placeholder={selectedCountry.placeholder}
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
-                      className="pl-10 h-12"
+                      className="h-12"
                     />
                   </div>
                 </div>
