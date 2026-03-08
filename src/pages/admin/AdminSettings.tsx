@@ -260,6 +260,56 @@ const AdminSettings = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Demo Audio Upload */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-lg bg-primary/10">
+                <Volume2 className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Audio Demo Onboarding</CardTitle>
+                <CardDescription>
+                  Audio di esempio che gli utenti ascoltano prima della prima chiamata (10-15 secondi consigliati)
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="audio/*"
+                className="hidden"
+                onChange={handleUploadDemoAudio}
+              />
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingAudio}
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                {uploadingAudio ? "Caricamento..." : "Carica audio demo"}
+              </Button>
+
+              {demoAudioExists && (
+                <Button variant="ghost" size="sm" onClick={handlePlayDemoPreview}>
+                  {playingDemo ? <Pause className="w-4 h-4 mr-1" /> : <Play className="w-4 h-4 mr-1" />}
+                  {playingDemo ? "Stop" : "Anteprima"}
+                </Button>
+              )}
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              {demoAudioExists 
+                ? "✅ Audio demo presente. Gli utenti lo sentiranno nel modal di onboarding."
+                : "⚠️ Nessun audio demo caricato. Il modal funzionerà ma senza audio di esempio."
+              }
+            </p>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
