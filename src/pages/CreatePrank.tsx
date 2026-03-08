@@ -406,6 +406,18 @@ const CreatePrank = () => {
     }
   };
 
+  // Check if the current phone number is valid for trial users
+  const isTrialUserWithWrongNumber = (): boolean => {
+    if (!profile) return false;
+    if (profile.available_pranks > 0) return false; // Has paid pranks
+    if (profile.trial_prank_used) return false; // Trial already used, different message
+    if (!profile.phone_verified || !profile.phone_number) return false;
+    
+    const fullVictimPhone = normalizePhoneDigits(`${phoneCountryCode}${victimPhone}`);
+    const normalizedUserPhone = normalizePhoneDigits(profile.phone_number);
+    return fullVictimPhone !== normalizedUserPhone;
+  };
+
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
@@ -417,6 +429,28 @@ const CreatePrank = () => {
           phoneSchema.parse(normalizePhoneDigits(victimPhone));
         } catch {
           toast({ title: "Errore", description: "Numero di telefono non valido", variant: "destructive" });
+          return false;
+        }
+        // Block trial users early if they entered a different number
+        if (profile && profile.available_pranks === 0 && !profile.trial_prank_used && profile.phone_verified && profile.phone_number) {
+          const fullVictimPhone = normalizePhoneDigits(`${phoneCountryCode}${victimPhone}`);
+          const normalizedUserPhone = normalizePhoneDigits(profile.phone_number);
+          if (fullVictimPhone !== normalizedUserPhone) {
+            toast({ 
+              title: "Numero non valido per il prank gratuito", 
+              description: `Il prank gratuito può essere fatto solo al tuo numero verificato (${profile.phone_number}). Per chiamare altri numeri, acquista un pacchetto!`, 
+              variant: "destructive" 
+            });
+            return false;
+          }
+        }
+        // Block if trial already used and no pranks
+        if (profile && profile.available_pranks === 0 && profile.trial_prank_used) {
+          toast({ 
+            title: "Nessun prank disponibile", 
+            description: "Hai esaurito i prank disponibili. Acquista un pacchetto per continuare!", 
+            variant: "destructive" 
+          });
           return false;
         }
         return true;
@@ -755,10 +789,42 @@ const CreatePrank = () => {
               </div>
               {/* Trial call warning */}
               {profile && profile.available_pranks === 0 && !profile.trial_prank_used && profile.phone_verified && (
-                <div className="p-2 sm:p-3 rounded-lg bg-orange-500/10 border border-orange-500/30">
-                  <p className="text-xs sm:text-sm text-orange-500 font-medium">
-                    🎁 Prank gratuito! Solo sul tuo numero: {profile.phone_number}
+                <div className={`p-2 sm:p-3 rounded-lg border ${
+                  isTrialUserWithWrongNumber() 
+                    ? "bg-destructive/10 border-destructive/30" 
+                    : "bg-orange-500/10 border-orange-500/30"
+                }`}>
+                  <p className={`text-xs sm:text-sm font-medium ${
+                    isTrialUserWithWrongNumber() ? "text-destructive" : "text-orange-500"
+                  }`}>
+                    {isTrialUserWithWrongNumber() 
+                      ? `⚠️ Il prank gratuito funziona solo sul tuo numero: ${profile.phone_number}`
+                      : `🎁 Prank gratuito! Solo sul tuo numero: ${profile.phone_number}`
+                    }
                   </p>
+                  {isTrialUserWithWrongNumber() && (
+                    <Button 
+                      variant="link" 
+                      className="text-primary p-0 h-auto text-xs sm:text-sm mt-1"
+                      onClick={() => navigate("/pricing")}
+                    >
+                      Acquista un pacchetto per chiamare altri numeri →
+                    </Button>
+                  )}
+                </div>
+              )}
+              {profile && profile.available_pranks === 0 && profile.trial_prank_used && (
+                <div className="p-2 sm:p-3 rounded-lg bg-destructive/10 border border-destructive/30">
+                  <p className="text-xs sm:text-sm text-destructive font-medium">
+                    ❌ Hai esaurito i prank disponibili
+                  </p>
+                  <Button 
+                    variant="link" 
+                    className="text-primary p-0 h-auto text-xs sm:text-sm mt-1"
+                    onClick={() => navigate("/pricing")}
+                  >
+                    Acquista un pacchetto →
+                  </Button>
                 </div>
               )}
               {profile && profile.available_pranks === 0 && !profile.trial_prank_used && !profile.phone_verified && (
