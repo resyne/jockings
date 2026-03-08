@@ -81,6 +81,7 @@ const App = () => (
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/cookie-policy" element={<CookiePolicy />} />
             <Route path="/blocca-segnala" element={<BlockAndReport />} />
+            <Route path="/card-setup-success" element={<CardSetupSuccess />} />
             <Route path="/challenge" element={<Challenge />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/voices" element={<AdminVoices />} />
