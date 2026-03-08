@@ -338,7 +338,7 @@ const VerifyPhone = () => {
               <div className="space-y-2 pt-1">
                 <div className="flex items-start gap-2 text-xs text-muted-foreground">
                   <span className="mt-0.5">🎯</span>
-                  <span>La prova gratuita viene effettuata <strong className="text-foreground">sul tuo numero</strong> — è così che funziona!</span>
+                  <span>La prova gratuita può essere effettuata <strong className="text-foreground">anche sul tuo numero</strong> — provalo su te stesso o su chi vuoi!</span>
                 </div>
                 <div className="flex items-start gap-2 text-xs text-muted-foreground">
                   <span className="mt-0.5">🔒</span>
