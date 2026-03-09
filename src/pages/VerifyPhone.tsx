@@ -345,8 +345,8 @@ const VerifyPhone = () => {
                   <span>Non condivideremo mai il tuo numero con nessuno.</span>
                 </div>
                 <div className="flex items-start gap-2 text-xs text-muted-foreground">
-                  <span className="mt-0.5">⚡</span>
-                  <span>Ci vogliono 30 secondi. Riceverai un SMS con il codice.</span>
+                  <span className="mt-0.5">📲</span>
+                  <span>Riceverai un <strong className="text-foreground">SMS da Sarano</strong> con un codice a 6 cifre. Controllalo nei messaggi del telefono.</span>
                 </div>
               </div>
             </>
