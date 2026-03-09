@@ -152,10 +152,10 @@ const OnboardingModal = ({ open, onClose, onComplete }: OnboardingModalProps) =>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-foreground">
-                      1 chiamata inclusa
+                      1 chiamata gratis verso qualsiasi numero
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Inserisci un metodo di pagamento per iniziare
+                      Aggiungi una carta per verificare la tua identità
                     </p>
                   </div>
                 </div>
@@ -170,14 +170,20 @@ const OnboardingModal = ({ open, onClose, onComplete }: OnboardingModalProps) =>
                   ) : (
                     <>
                       <CreditCard className="w-4 h-4 mr-2" />
-                      Aggiungi carta e inizia
+                      Verifica identità e inizia gratis
                     </>
                   )}
                 </Button>
 
-                <p className="text-[11px] text-center text-muted-foreground">
-                  Nessun addebito. La carta serve solo per verificare il tuo account.
-                </p>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
+                    <span>🔒</span>
+                    <span><strong className="text-foreground">€0,00</strong> — Nessun addebito, oggi né mai (senza acquisti).</span>
+                  </div>
+                  <p className="text-[11px] text-center text-muted-foreground">
+                    La carta serve solo per impedire abusi e verificare che sei una persona reale. Pagamento sicuro via Stripe.
+                  </p>
+                </div>
               </div>
 
               {/* Who to call suggestions */}
