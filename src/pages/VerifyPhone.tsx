@@ -268,8 +268,13 @@ const VerifyPhone = () => {
             {step === "success" && "Verificato! ✅"}
           </CardTitle>
           <CardDescription>
-            {step === "phone" && "Serve per ricevere la chiamata di prova gratuita"}
-            {step === "otp" && "Abbiamo inviato un SMS con il codice di 6 cifre"}
+            {step === "phone" && "Inserisci il tuo numero per ricevere un SMS di verifica"}
+            {step === "otp" && (
+              <>
+                Abbiamo inviato un SMS al tuo telefono.{" "}
+                <strong className="text-foreground">Controlla i messaggi</strong> e inserisci il codice a 6 cifre qui sotto.
+              </>
+            )}
             {step === "success" && "Il tuo numero è stato verificato con successo"}
           </CardDescription>
         </CardHeader>
@@ -345,8 +350,8 @@ const VerifyPhone = () => {
                   <span>Non condivideremo mai il tuo numero con nessuno.</span>
                 </div>
                 <div className="flex items-start gap-2 text-xs text-muted-foreground">
-                  <span className="mt-0.5">⚡</span>
-                  <span>Ci vogliono 30 secondi. Riceverai un SMS con il codice.</span>
+                  <span className="mt-0.5">📲</span>
+                  <span>Riceverai un <strong className="text-foreground">SMS da Sarano</strong> con un codice a 6 cifre. Controllalo nei messaggi del telefono.</span>
                 </div>
               </div>
             </>
@@ -389,15 +394,21 @@ const VerifyPhone = () => {
                 <p className="text-xs text-muted-foreground">
                   Non hai ricevuto il codice?
                 </p>
-                <Button
-                  variant="outline"
-                  onClick={handleResendOtp}
-                  disabled={resendCooldown > 0 || loading}
-                  className="inline-flex items-center gap-2"
-                >
-                  <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                  {resendCooldown > 0 ? `Riprova tra ${resendCooldown}s` : "Rinvia SMS"}
-                </Button>
+                <div className="space-y-1.5">
+                  <Button
+                    variant="outline"
+                    onClick={handleResendOtp}
+                    disabled={resendCooldown > 0 || loading}
+                    className="inline-flex items-center gap-2"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                    {resendCooldown > 0 ? `Riprova tra ${resendCooldown}s` : "Rinvia SMS"}
+                  </Button>
+                  <p className="text-[11px] text-muted-foreground leading-tight">
+                    💡 Controlla anche la cartella <strong>spam</strong> o i messaggi filtrati.
+                    <br />Se usi un numero virtuale (VoIP), potrebbe non ricevere SMS.
+                  </p>
+                </div>
               </div>
 
               <button
