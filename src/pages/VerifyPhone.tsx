@@ -394,15 +394,21 @@ const VerifyPhone = () => {
                 <p className="text-xs text-muted-foreground">
                   Non hai ricevuto il codice?
                 </p>
-                <Button
-                  variant="outline"
-                  onClick={handleResendOtp}
-                  disabled={resendCooldown > 0 || loading}
-                  className="inline-flex items-center gap-2"
-                >
-                  <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                  {resendCooldown > 0 ? `Riprova tra ${resendCooldown}s` : "Rinvia SMS"}
-                </Button>
+                <div className="space-y-1.5">
+                  <Button
+                    variant="outline"
+                    onClick={handleResendOtp}
+                    disabled={resendCooldown > 0 || loading}
+                    className="inline-flex items-center gap-2"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                    {resendCooldown > 0 ? `Riprova tra ${resendCooldown}s` : "Rinvia SMS"}
+                  </Button>
+                  <p className="text-[11px] text-muted-foreground leading-tight">
+                    💡 Controlla anche la cartella <strong>spam</strong> o i messaggi filtrati.
+                    <br />Se usi un numero virtuale (VoIP), potrebbe non ricevere SMS.
+                  </p>
+                </div>
               </div>
 
               <button
