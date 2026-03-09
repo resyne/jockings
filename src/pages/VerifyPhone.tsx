@@ -268,8 +268,13 @@ const VerifyPhone = () => {
             {step === "success" && "Verificato! ✅"}
           </CardTitle>
           <CardDescription>
-            {step === "phone" && "Serve per ricevere la chiamata di prova gratuita"}
-            {step === "otp" && "Abbiamo inviato un SMS con il codice di 6 cifre"}
+            {step === "phone" && "Inserisci il tuo numero per ricevere un SMS di verifica"}
+            {step === "otp" && (
+              <>
+                Abbiamo inviato un SMS al tuo telefono.{" "}
+                <strong className="text-foreground">Controlla i messaggi</strong> e inserisci il codice a 6 cifre qui sotto.
+              </>
+            )}
             {step === "success" && "Il tuo numero è stato verificato con successo"}
           </CardDescription>
         </CardHeader>
