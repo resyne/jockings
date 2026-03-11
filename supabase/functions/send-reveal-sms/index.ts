@@ -34,7 +34,7 @@ serve(async (req) => {
     // Get prank data including encrypted fields
     const { data: prank, error: prankError } = await supabase
       .from("pranks")
-      .select("send_reveal_sms, reveal_sender_name, user_id, victim_phone")
+      .select("send_reveal_sms, reveal_sender_name, user_id, victim_phone, twilio_call_sid")
       .eq("id", prankId)
       .single();
 
@@ -75,6 +75,25 @@ serve(async (req) => {
       });
     }
 
+    // Get the caller phone number used for this call
+    let callerPhoneNumber = "";
+    const { data: queueEntry } = await supabase
+      .from("call_queue")
+      .select("phone_number_id")
+      .eq("prank_id", prankId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (queueEntry?.phone_number_id) {
+      const { data: phoneNum } = await supabase
+        .from("twilio_phone_numbers")
+        .select("phone_number")
+        .eq("id", queueEntry.phone_number_id)
+        .single();
+      callerPhoneNumber = phoneNum?.phone_number || "";
+    }
+
     // Get sender's phone number from profile
     const { data: senderProfile } = await supabase
       .from("profiles")
@@ -83,13 +102,12 @@ serve(async (req) => {
       .single();
 
     const senderPhone = senderProfile?.phone_number || "N/D";
-    const senderDisplayName = prank.reveal_sender_name || senderProfile?.first_name || "";
 
-    // Build the SMS message - clean and friendly
-    const senderLine = senderDisplayName 
-      ? `Inviato da: ${senderDisplayName} (${senderPhone})`
-      : `Inviato dal numero: ${senderPhone}`;
-    const smsBody = `😄 Tranquillo! La chiamata che hai ricevuto era solo uno scherzo.\n\n${senderLine}\n\nTramite Sarano AI`;
+    // Build the SMS message - friendly and clear
+    const callerLine = callerPhoneNumber 
+      ? `La chiamata ricevuta dal numero ${callerPhoneNumber} era` 
+      : "La chiamata che hai ricevuto era";
+    const smsBody = `😄 Ridici su! ${callerLine} parte di uno scherzo organizzato dal numero ${senderPhone} tramite il servizio Sarano AI.`;
 
     console.log("Sending reveal SMS to:", victimPhone);
     console.log("Sender:", senderDisplayName || senderPhone);
