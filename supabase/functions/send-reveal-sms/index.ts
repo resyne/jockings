@@ -107,7 +107,7 @@ serve(async (req) => {
     const callerLine = callerPhoneNumber 
       ? `La chiamata ricevuta dal numero ${callerPhoneNumber} era` 
       : "La chiamata che hai ricevuto era";
-    const smsBody = `😄 Ridici su! ${callerLine} parte di uno scherzo organizzato dal numero ${senderPhone} tramite il servizio Sarano AI.`;
+    const smsBody = `Ridici su! ${callerLine} parte di uno scherzo organizzato dal numero ${senderPhone} tramite il servizio Sarano AI.`;
 
     console.log("Sending reveal SMS to:", victimPhone);
     console.log("Sender:", senderDisplayName || senderPhone);
