@@ -527,11 +527,8 @@ const CreatePrank = () => {
             .single()
         : { data: null };
       
-      // For trial calls, force reveal SMS with sender phone number
-      const effectiveRevealSms = isTrialCall ? true : sendRevealSms;
-      const effectiveRevealName = isTrialCall 
-        ? `${revealSenderName.trim() || profile?.phone_number || "Anonimo"} (tel: ${profile?.phone_number || "N/D"})`
-        : (sendRevealSms ? (revealSenderName.trim() || null) : null);
+      // Reveal SMS is always mandatory with sender's phone number
+      const effectiveRevealName = `${revealSenderName.trim() || profile?.phone_number || "Anonimo"} (tel: ${profile?.phone_number || "N/D"})`;
 
       const { data: prank, error } = await supabase
         .from("pranks")
