@@ -420,19 +420,7 @@ const CreatePrank = () => {
           toast({ title: "Errore", description: "Numero di telefono non valido", variant: "destructive" });
           return false;
         }
-        // Block trial users early if they entered a different number (only for non-card-verified users)
-        if (profile && profile.available_pranks === 0 && !profile.trial_prank_used && !profile.card_verified && profile.phone_verified && profile.phone_number) {
-          const fullVictimPhone = normalizePhoneDigits(`${phoneCountryCode}${victimPhone}`);
-          const normalizedUserPhone = normalizePhoneDigits(profile.phone_number);
-          if (fullVictimPhone !== normalizedUserPhone) {
-            toast({ 
-              title: "Numero non valido per il prank gratuito", 
-              description: `Il prank gratuito può essere fatto solo al tuo numero verificato (${profile.phone_number}). Per chiamare altri numeri, acquista un pacchetto!`, 
-              variant: "destructive" 
-            });
-            return false;
-          }
-        }
+        // No longer restrict trial to own phone number — trial allows any number
         // Block if trial already used and no pranks
         if (profile && profile.available_pranks === 0 && profile.trial_prank_used) {
           toast({ 
