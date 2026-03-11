@@ -1,8 +1,7 @@
 import { useState, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, CreditCard, Phone, ArrowRight, Users, UserRound, Smile } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Play, Pause, Phone, ArrowRight, Users, UserRound, Smile, MessageSquare, ShieldCheck } from "lucide-react";
 import saranoIcon from "@/assets/sarano-icon.png";
 import AudioWaveAnimation from "@/components/AudioWaveAnimation";
 
@@ -24,7 +23,6 @@ const OnboardingModal = ({ open, onClose, onComplete }: OnboardingModalProps) =>
   const [step, setStep] = useState(1);
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasListened, setHasListened] = useState(false);
-  const [loadingCard, setLoadingCard] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const handlePlayDemo = () => {
@@ -36,7 +34,7 @@ const OnboardingModal = ({ open, onClose, onComplete }: OnboardingModalProps) =>
       };
       audioRef.current.onerror = () => {
         setIsPlaying(false);
-        setHasListened(true); // Let them proceed anyway
+        setHasListened(true);
       };
     }
 
@@ -49,22 +47,7 @@ const OnboardingModal = ({ open, onClose, onComplete }: OnboardingModalProps) =>
         setHasListened(true);
       });
       setIsPlaying(true);
-      // Mark as listened after 3 seconds even if not finished
       setTimeout(() => setHasListened(true), 3000);
-    }
-  };
-
-  const handleAddCard = async () => {
-    setLoadingCard(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("setup-card");
-      if (error) throw error;
-      if (data?.url) {
-        window.location.href = data.url;
-      }
-    } catch (err) {
-      console.error("Setup card error:", err);
-      setLoadingCard(false);
     }
   };
 
@@ -82,11 +65,11 @@ const OnboardingModal = ({ open, onClose, onComplete }: OnboardingModalProps) =>
           </div>
           <h2 className="text-xl font-bold text-foreground">
             {step === 1 && "Ascolta una chiamata Sarano"}
-            {step === 2 && "Ora prova tu"}
+            {step === 2 && "Hai 1 scherzo gratis! 🎁"}
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
             {step === 1 && "Scopri come funziona in 10 secondi"}
-            {step === 2 && "La prima chiamata la offriamo noi 🎁"}
+            {step === 2 && "Chiama chi vuoi, subito e senza costi"}
           </p>
         </div>
 
@@ -95,7 +78,6 @@ const OnboardingModal = ({ open, onClose, onComplete }: OnboardingModalProps) =>
             <div className="space-y-5">
               {/* Demo Audio Player */}
               <div className="bg-muted/50 rounded-xl p-5 text-center space-y-3">
-                {/* Talking animation */}
                 <div className="flex flex-col items-center gap-2">
                   <div className="relative w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
                     <img src={saranoIcon} alt="Sarano" className="w-12 h-12 object-contain rounded-full" />
@@ -121,7 +103,6 @@ const OnboardingModal = ({ open, onClose, onComplete }: OnboardingModalProps) =>
                 </p>
               </div>
 
-              {/* Reassurance */}
               <p className="text-xs text-center text-muted-foreground/80 italic">
                 Se non fa ridere, chiudi. Zero rischi.
               </p>
@@ -144,45 +125,43 @@ const OnboardingModal = ({ open, onClose, onComplete }: OnboardingModalProps) =>
 
           {step === 2 && (
             <div className="space-y-5">
-              {/* Card setup CTA */}
+              {/* Free prank info */}
               <div className="bg-muted/50 rounded-xl p-4 space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <CreditCard className="w-5 h-5 text-primary" />
+                  <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                    <Phone className="w-5 h-5 text-green-500" />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-foreground">
                       1 chiamata gratis verso qualsiasi numero
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Aggiungi una carta per verificare la tua identità
+                      Nessuna carta richiesta, parti subito!
                     </p>
                   </div>
                 </div>
 
                 <Button
-                  onClick={handleAddCard}
+                  onClick={handleStartPrank}
                   className="w-full h-11"
-                  disabled={loadingCard}
                 >
-                  {loadingCard ? (
-                    <span className="animate-pulse">Caricamento...</span>
-                  ) : (
-                    <>
-                      <CreditCard className="w-4 h-4 mr-2" />
-                      Verifica identità e inizia gratis
-                    </>
-                  )}
+                  <Phone className="w-4 h-4 mr-2" />
+                  Crea il tuo primo scherzo
                 </Button>
+              </div>
 
-                <div className="space-y-1">
-                  <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
-                    <span>🔒</span>
-                    <span><strong className="text-foreground">€0,00</strong> — Nessun addebito, oggi né mai (senza acquisti).</span>
-                  </div>
-                  <p className="text-[11px] text-center text-muted-foreground">
-                    La carta serve solo per impedire abusi e verificare che sei una persona reale. Pagamento sicuro via Stripe.
-                  </p>
+              {/* Mandatory reveal SMS info */}
+              <div className="bg-orange-500/5 border border-orange-500/20 rounded-xl p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-orange-500 shrink-0" />
+                  <span className="font-medium text-sm text-foreground">SMS rivelatore obbligatorio</span>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Per lo scherzo gratuito, la vittima riceverà un SMS dopo la chiamata che rivela lo scherzo e <strong className="text-foreground">include il tuo numero di telefono</strong>. Questo garantisce un uso responsabile del servizio.
+                </p>
+                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <ShieldCheck className="w-3.5 h-3.5 text-green-500" />
+                  <span>Per la sicurezza di tutti</span>
                 </div>
               </div>
 

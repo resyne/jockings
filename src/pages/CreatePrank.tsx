@@ -154,25 +154,9 @@ const CreatePrank = () => {
       return { allowed: true, isTrialCall: false };
     }
     
-    // Card verified + trial not used = can call ANY number
-    if (!profile.trial_prank_used && profile.card_verified) {
+    // Trial not used + phone verified = can call ANY number (no card needed)
+    if (!profile.trial_prank_used && profile.phone_verified) {
       return { allowed: true, isTrialCall: true };
-    }
-
-    // Fallback: Can use free trial to own verified number (legacy)
-    if (!profile.trial_prank_used && profile.phone_verified && profile.phone_number && !profile.card_verified) {
-      const fullVictimPhone = normalizePhoneDigits(`${phoneCountryCode}${victimPhone}`);
-      const normalizedUserPhone = normalizePhoneDigits(profile.phone_number);
-
-      if (fullVictimPhone === normalizedUserPhone) {
-        return { allowed: true, isTrialCall: true };
-      } else {
-        return { 
-          allowed: false, 
-          isTrialCall: false, 
-          reason: `Il prank gratuito può essere fatto solo al tuo numero verificato (${profile.phone_number})` 
-        };
-      }
     }
     
     // No pranks and trial used
@@ -180,9 +164,9 @@ const CreatePrank = () => {
       return { allowed: false, isTrialCall: false, reason: "Hai esaurito i prank disponibili. Acquista un pacchetto per continuare!" };
     }
     
-    // Phone not verified and card not verified
-    if (!profile.phone_verified && !profile.card_verified) {
-      return { allowed: false, isTrialCall: false, reason: "Verifica il tuo numero di telefono o aggiungi una carta per ottenere un prank gratuito!" };
+    // Phone not verified
+    if (!profile.phone_verified) {
+      return { allowed: false, isTrialCall: false, reason: "Verifica il tuo numero di telefono per ottenere un prank gratuito!" };
     }
     
     return { allowed: false, isTrialCall: false, reason: "Nessun prank disponibile" };
@@ -418,17 +402,9 @@ const CreatePrank = () => {
     }
   };
 
-  // Check if the current phone number is valid for trial users
+  // Trial user check is no longer needed for phone restriction since trial allows any number
   const isTrialUserWithWrongNumber = (): boolean => {
-    if (!profile) return false;
-    if (profile.available_pranks > 0) return false; // Has paid pranks
-    if (profile.trial_prank_used) return false; // Trial already used, different message
-    if (profile.card_verified) return false; // Card verified = can call any number
-    if (!profile.phone_verified || !profile.phone_number) return false;
-    
-    const fullVictimPhone = normalizePhoneDigits(`${phoneCountryCode}${victimPhone}`);
-    const normalizedUserPhone = normalizePhoneDigits(profile.phone_number);
-    return fullVictimPhone !== normalizedUserPhone;
+    return false; // No longer restrict trial to own number
   };
 
   const validateStep = (step: number): boolean => {
@@ -444,19 +420,7 @@ const CreatePrank = () => {
           toast({ title: "Errore", description: "Numero di telefono non valido", variant: "destructive" });
           return false;
         }
-        // Block trial users early if they entered a different number (only for non-card-verified users)
-        if (profile && profile.available_pranks === 0 && !profile.trial_prank_used && !profile.card_verified && profile.phone_verified && profile.phone_number) {
-          const fullVictimPhone = normalizePhoneDigits(`${phoneCountryCode}${victimPhone}`);
-          const normalizedUserPhone = normalizePhoneDigits(profile.phone_number);
-          if (fullVictimPhone !== normalizedUserPhone) {
-            toast({ 
-              title: "Numero non valido per il prank gratuito", 
-              description: `Il prank gratuito può essere fatto solo al tuo numero verificato (${profile.phone_number}). Per chiamare altri numeri, acquista un pacchetto!`, 
-              variant: "destructive" 
-            });
-            return false;
-          }
-        }
+        // No longer restrict trial to own phone number — trial allows any number
         // Block if trial already used and no pranks
         if (profile && profile.available_pranks === 0 && profile.trial_prank_used) {
           toast({ 
@@ -535,6 +499,7 @@ const CreatePrank = () => {
 
     // Check if user can make this prank
     const prankCheck = canMakePrank();
+    const isTrialCall = prankCheck.isTrialCall;
     if (!prankCheck.allowed) {
       toast({ 
         title: "Non puoi fare questo scherzo", 
@@ -562,6 +527,12 @@ const CreatePrank = () => {
             .single()
         : { data: null };
       
+      // For trial calls, force reveal SMS with sender phone number
+      const effectiveRevealSms = isTrialCall ? true : sendRevealSms;
+      const effectiveRevealName = isTrialCall 
+        ? `${revealSenderName.trim() || profile?.phone_number || "Anonimo"} (tel: ${profile?.phone_number || "N/D"})`
+        : (sendRevealSms ? (revealSenderName.trim() || null) : null);
+
       const { data: prank, error } = await supabase
         .from("pranks")
         .insert({
@@ -584,8 +555,8 @@ const CreatePrank = () => {
           max_duration: maxDuration,
           creativity_level: creativityLevel[0],
           send_recording: sendRecording,
-          send_reveal_sms: sendRevealSms,
-          reveal_sender_name: sendRevealSms ? (revealSenderName.trim() || null) : null,
+          send_reveal_sms: effectiveRevealSms,
+          reveal_sender_name: effectiveRevealName,
           call_status: "pending",
           scheduled_at: null,
         })
@@ -1063,9 +1034,9 @@ const CreatePrank = () => {
                           <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
                         </div>
                         <div>
-                          <p className="font-semibold text-orange-500 text-sm sm:text-base">Prank Gratuito</p>
+                          <p className="font-semibold text-orange-500 text-sm sm:text-base">Prank Gratuito 🎁</p>
                           <p className="text-[10px] sm:text-xs text-muted-foreground">
-                            Solo al tuo numero verificato
+                            SMS rivelatore obbligatorio con il tuo numero
                           </p>
                         </div>
                       </div>
@@ -1155,48 +1126,69 @@ const CreatePrank = () => {
                 </div>
                 
                 {/* SMS Reveal Option */}
-                <div 
-                  className={`flex items-start gap-2 sm:gap-3 p-2.5 sm:p-4 rounded-lg sm:rounded-xl border-2 cursor-pointer transition-all ${
-                    sendRevealSms 
-                      ? "border-primary bg-primary/10" 
-                      : "border-border bg-card hover:border-primary/50"
-                  }`}
-                  onClick={() => setSendRevealSms(!sendRevealSms)}
-                >
-                  <div className={`mt-0.5 w-4 h-4 sm:w-5 sm:h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${
-                    sendRevealSms 
-                      ? "border-primary bg-primary" 
-                      : "border-muted-foreground"
-                  }`}>
-                    {sendRevealSms && <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-primary-foreground" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                      <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />
-                      <span className="font-medium text-sm sm:text-base">SMS rivelatore 📱</span>
+                {canMakePrank().isTrialCall ? (
+                  /* Trial call: reveal SMS is mandatory */
+                  <div className="flex items-start gap-2 sm:gap-3 p-2.5 sm:p-4 rounded-lg sm:rounded-xl border-2 border-orange-500/50 bg-orange-500/5">
+                    <div className="mt-0.5 w-4 h-4 sm:w-5 sm:h-5 rounded border-2 flex items-center justify-center shrink-0 border-orange-500 bg-orange-500">
+                      <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-primary-foreground" />
                     </div>
-                    <p className="text-[10px] sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
-                      Dopo lo scherzo, la vittima riceverà un SMS che rivela che era uno scherzo (solo se la chiamata dura più di 30 secondi)
-                    </p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-500 shrink-0" />
+                        <span className="font-medium text-sm sm:text-base">SMS rivelatore obbligatorio 📱</span>
+                      </div>
+                      <p className="text-[10px] sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
+                        Per lo scherzo gratuito, la vittima riceverà un SMS che include <strong className="text-foreground">il tuo numero di telefono ({profile?.phone_number})</strong> per garantire un uso responsabile.
+                      </p>
+                    </div>
                   </div>
-                </div>
-                
-                {sendRevealSms && (
-                  <div className="mt-2 sm:mt-3">
-                    <Label htmlFor="revealSenderName" className="text-xs sm:text-sm text-muted-foreground">
-                      Il tuo nome (apparirà nell'SMS)
-                    </Label>
-                    <Input
-                      id="revealSenderName"
-                      placeholder="es. Marco"
-                      value={revealSenderName}
-                      onChange={(e) => setRevealSenderName(e.target.value)}
-                      className="mt-1 h-9 sm:h-10 text-sm"
-                    />
-                    <p className="text-[9px] sm:text-xs text-muted-foreground mt-1">
-                      Messaggio: "Sarano AI: la chiamata ricevuta era parte di uno scherzo. Inviato da: {revealSenderName || "..."} (tramite Sarano AI)."
-                    </p>
-                  </div>
+                ) : (
+                  /* Paid call: reveal SMS is optional */
+                  <>
+                    <div 
+                      className={`flex items-start gap-2 sm:gap-3 p-2.5 sm:p-4 rounded-lg sm:rounded-xl border-2 cursor-pointer transition-all ${
+                        sendRevealSms 
+                          ? "border-primary bg-primary/10" 
+                          : "border-border bg-card hover:border-primary/50"
+                      }`}
+                      onClick={() => setSendRevealSms(!sendRevealSms)}
+                    >
+                      <div className={`mt-0.5 w-4 h-4 sm:w-5 sm:h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${
+                        sendRevealSms 
+                          ? "border-primary bg-primary" 
+                          : "border-muted-foreground"
+                      }`}>
+                        {sendRevealSms && <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-primary-foreground" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 sm:gap-2">
+                          <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />
+                          <span className="font-medium text-sm sm:text-base">SMS rivelatore 📱</span>
+                        </div>
+                        <p className="text-[10px] sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
+                          Dopo lo scherzo, la vittima riceverà un SMS che rivela che era uno scherzo (solo se la chiamata dura più di 30 secondi)
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {sendRevealSms && (
+                      <div className="mt-2 sm:mt-3">
+                        <Label htmlFor="revealSenderName" className="text-xs sm:text-sm text-muted-foreground">
+                          Il tuo nome (apparirà nell'SMS)
+                        </Label>
+                        <Input
+                          id="revealSenderName"
+                          placeholder="es. Marco"
+                          value={revealSenderName}
+                          onChange={(e) => setRevealSenderName(e.target.value)}
+                          className="mt-1 h-9 sm:h-10 text-sm"
+                        />
+                        <p className="text-[9px] sm:text-xs text-muted-foreground mt-1">
+                          Messaggio: "Sarano AI: la chiamata ricevuta era parte di uno scherzo. Inviato da: {revealSenderName || "..."} (tramite Sarano AI)."
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>

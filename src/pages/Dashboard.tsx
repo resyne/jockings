@@ -125,8 +125,8 @@ const Dashboard = () => {
         trial_prank_used: data.trial_prank_used ?? false,
       };
       setProfile(profileData);
-      // Show onboarding if card not verified and trial not used
-      if (!profileData.card_verified && !profileData.trial_prank_used) {
+      // Show onboarding if trial not used yet
+      if (!profileData.trial_prank_used) {
         setShowOnboarding(true);
       }
     }
@@ -217,7 +217,7 @@ const Dashboard = () => {
   };
 
   const effectivePranks = (profile?.available_pranks || 0) + 
-    (profile?.card_verified && !profile?.trial_prank_used && (profile?.available_pranks || 0) === 0 ? 1 : 0);
+    (!profile?.trial_prank_used && (profile?.available_pranks || 0) === 0 ? 1 : 0);
 
   if (loading) {
     return (
@@ -300,9 +300,9 @@ const Dashboard = () => {
                   Offerta Lancio: <span className="text-secondary">-50%</span> su tutti i pacchetti!
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {profile?.card_verified && !profile?.trial_prank_used
-                    ? "Hai 1 prank gratuito incluso! Per altri scherzi, scegli un pacchetto!"
-                    : "La prova gratuita è solo verso il tuo numero. Per scherzare gli amici, scegli un pacchetto!"
+                  {!profile?.trial_prank_used
+                    ? "Hai 1 prank gratuito! Chiama chi vuoi, subito!"
+                    : "Per altri scherzi, scegli un pacchetto!"
                   }
                 </p>
               </div>
