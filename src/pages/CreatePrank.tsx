@@ -1125,71 +1125,21 @@ const CreatePrank = () => {
                   <p className="text-[10px] sm:text-sm">Registrazione disponibile a fine chiamata</p>
                 </div>
                 
-                {/* SMS Reveal Option */}
-                {canMakePrank().isTrialCall ? (
-                  /* Trial call: reveal SMS is mandatory */
-                  <div className="flex items-start gap-2 sm:gap-3 p-2.5 sm:p-4 rounded-lg sm:rounded-xl border-2 border-orange-500/50 bg-orange-500/5">
-                    <div className="mt-0.5 w-4 h-4 sm:w-5 sm:h-5 rounded border-2 flex items-center justify-center shrink-0 border-orange-500 bg-orange-500">
-                      <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-primary-foreground" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 sm:gap-2">
-                        <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-500 shrink-0" />
-                        <span className="font-medium text-sm sm:text-base">SMS rivelatore obbligatorio 📱</span>
-                      </div>
-                      <p className="text-[10px] sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
-                        Se la chiamata dura più di <strong className="text-foreground">30 secondi</strong>, dopo <strong className="text-foreground">2 minuti</strong> la vittima riceverà un SMS con <strong className="text-foreground">il tuo numero ({profile?.phone_number})</strong>. Scherza solo con chi può apprezzare!
-                      </p>
-                    </div>
+                {/* SMS Reveal - Always mandatory */}
+                <div className="flex items-start gap-2 sm:gap-3 p-2.5 sm:p-4 rounded-lg sm:rounded-xl border-2 border-orange-500/50 bg-orange-500/5">
+                  <div className="mt-0.5 w-4 h-4 sm:w-5 sm:h-5 rounded border-2 flex items-center justify-center shrink-0 border-orange-500 bg-orange-500">
+                    <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-primary-foreground" />
                   </div>
-                ) : (
-                  /* Paid call: reveal SMS is optional */
-                  <>
-                    <div 
-                      className={`flex items-start gap-2 sm:gap-3 p-2.5 sm:p-4 rounded-lg sm:rounded-xl border-2 cursor-pointer transition-all ${
-                        sendRevealSms 
-                          ? "border-primary bg-primary/10" 
-                          : "border-border bg-card hover:border-primary/50"
-                      }`}
-                      onClick={() => setSendRevealSms(!sendRevealSms)}
-                    >
-                      <div className={`mt-0.5 w-4 h-4 sm:w-5 sm:h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 ${
-                        sendRevealSms 
-                          ? "border-primary bg-primary" 
-                          : "border-muted-foreground"
-                      }`}>
-                        {sendRevealSms && <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-primary-foreground" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 sm:gap-2">
-                          <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />
-                          <span className="font-medium text-sm sm:text-base">SMS rivelatore 📱</span>
-                        </div>
-                        <p className="text-[10px] sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
-                          Dopo lo scherzo, la vittima riceverà un SMS che rivela che era uno scherzo (solo se la chiamata dura più di 30 secondi)
-                        </p>
-                      </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-500 shrink-0" />
+                      <span className="font-medium text-sm sm:text-base">SMS rivelatore obbligatorio 📱</span>
                     </div>
-                    
-                    {sendRevealSms && (
-                      <div className="mt-2 sm:mt-3">
-                        <Label htmlFor="revealSenderName" className="text-xs sm:text-sm text-muted-foreground">
-                          Il tuo nome (apparirà nell'SMS)
-                        </Label>
-                        <Input
-                          id="revealSenderName"
-                          placeholder="es. Marco"
-                          value={revealSenderName}
-                          onChange={(e) => setRevealSenderName(e.target.value)}
-                          className="mt-1 h-9 sm:h-10 text-sm"
-                        />
-                        <p className="text-[9px] sm:text-xs text-muted-foreground mt-1">
-                          Messaggio: "Sarano AI: la chiamata ricevuta era parte di uno scherzo. Inviato da: {revealSenderName || "..."} (tramite Sarano AI)."
-                        </p>
-                      </div>
-                    )}
-                  </>
-                )}
+                    <p className="text-[10px] sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
+                      Se la chiamata dura più di <strong className="text-foreground">30 secondi</strong>, dopo <strong className="text-foreground">2 minuti</strong> la vittima riceverà un SMS con <strong className="text-foreground">il tuo numero ({profile?.phone_number})</strong>. Scherza solo con chi può apprezzare!
+                    </p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
