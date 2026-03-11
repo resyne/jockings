@@ -768,38 +768,12 @@ const CreatePrank = () => {
                   </div>
                 </div>
               </div>
-              {/* Card verified: free prank on any number */}
-              {profile && profile.available_pranks === 0 && !profile.trial_prank_used && profile.card_verified && (
+              {/* Trial prank available */}
+              {profile && profile.available_pranks === 0 && !profile.trial_prank_used && profile.phone_verified && (
                 <div className="p-2 sm:p-3 rounded-lg bg-green-500/10 border border-green-500/30">
                   <p className="text-xs sm:text-sm text-green-500 font-medium">
                     🎁 Hai 1 prank gratuito! Puoi chiamare qualsiasi numero.
                   </p>
-                </div>
-              )}
-              {/* Trial call warning - only for non-card-verified users */}
-              {profile && profile.available_pranks === 0 && !profile.trial_prank_used && !profile.card_verified && profile.phone_verified && (
-                <div className={`p-2 sm:p-3 rounded-lg border ${
-                  isTrialUserWithWrongNumber() 
-                    ? "bg-destructive/10 border-destructive/30" 
-                    : "bg-orange-500/10 border-orange-500/30"
-                }`}>
-                  <p className={`text-xs sm:text-sm font-medium ${
-                    isTrialUserWithWrongNumber() ? "text-destructive" : "text-orange-500"
-                  }`}>
-                    {isTrialUserWithWrongNumber() 
-                      ? `⚠️ Il prank gratuito funziona solo sul tuo numero: ${profile.phone_number}`
-                      : `🎁 Prank gratuito! Solo sul tuo numero: ${profile.phone_number}`
-                    }
-                  </p>
-                  {isTrialUserWithWrongNumber() && (
-                    <Button 
-                      variant="link" 
-                      className="text-primary p-0 h-auto text-xs sm:text-sm mt-1"
-                      onClick={() => navigate("/pricing")}
-                    >
-                      Acquista un pacchetto per chiamare altri numeri →
-                    </Button>
-                  )}
                 </div>
               )}
               {profile && profile.available_pranks === 0 && profile.trial_prank_used && (
@@ -1033,7 +1007,7 @@ const CreatePrank = () => {
                         <div>
                           <p className="font-semibold text-orange-500 text-sm sm:text-base">Prank Gratuito 🎁</p>
                           <p className="text-[10px] sm:text-xs text-muted-foreground">
-                            SMS rivelatore obbligatorio con il tuo numero
+                            Chiama chi vuoi · SMS rivelatore obbligatorio
                           </p>
                         </div>
                       </div>

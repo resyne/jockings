@@ -133,10 +133,10 @@ const OnboardingModal = ({ open, onClose, onComplete }: OnboardingModalProps) =>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-foreground">
-                      1 chiamata gratis verso qualsiasi numero
+                      1 chiamata gratis — chiama chi vuoi!
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Nessuna carta richiesta, parti subito!
+                      Nessuna carta richiesta · SMS rivelatore incluso
                     </p>
                   </div>
                 </div>
