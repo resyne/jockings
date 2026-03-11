@@ -300,9 +300,9 @@ const Dashboard = () => {
                   Offerta Lancio: <span className="text-secondary">-50%</span> su tutti i pacchetti!
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {profile?.card_verified && !profile?.trial_prank_used
-                    ? "Hai 1 prank gratuito incluso! Per altri scherzi, scegli un pacchetto!"
-                    : "La prova gratuita è solo verso il tuo numero. Per scherzare gli amici, scegli un pacchetto!"
+                  {!profile?.trial_prank_used
+                    ? "Hai 1 prank gratuito! Chiama chi vuoi, subito!"
+                    : "Per altri scherzi, scegli un pacchetto!"
                   }
                 </p>
               </div>
