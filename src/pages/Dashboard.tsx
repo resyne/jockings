@@ -125,8 +125,8 @@ const Dashboard = () => {
         trial_prank_used: data.trial_prank_used ?? false,
       };
       setProfile(profileData);
-      // Show onboarding if card not verified and trial not used
-      if (!profileData.card_verified && !profileData.trial_prank_used) {
+      // Show onboarding if trial not used yet
+      if (!profileData.trial_prank_used) {
         setShowOnboarding(true);
       }
     }
