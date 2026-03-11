@@ -261,14 +261,8 @@ serve(async (req) => {
 
     const availablePranks = userProfile.available_pranks || 0;
     
-    // Check if this is a trial call (to own verified number)
-    const userPhoneDigits = (userProfile.phone_number || '').replace(/\D/g, '');
-    const victimPhoneDigits = (prank.victim_phone || '').replace(/\D/g, '');
-    const isTrialCall = !userProfile.trial_prank_used 
-      && userProfile.phone_verified 
-      && userPhoneDigits.length >= 8 
-      && victimPhoneDigits.length >= 8
-      && (victimPhoneDigits.endsWith(userPhoneDigits.slice(-8)) || userPhoneDigits.endsWith(victimPhoneDigits.slice(-8)));
+    // Trial call: phone verified + trial not used = can call ANY number (no card needed)
+    const isTrialCall = !userProfile.trial_prank_used && userProfile.phone_verified;
     
     console.log(`Credit check: user ${prank.user_id} has ${availablePranks} available pranks, trial_used=${userProfile.trial_prank_used}, isTrialCall=${isTrialCall}`);
 
@@ -294,13 +288,32 @@ serve(async (req) => {
     }
     
     // If it's a trial call, mark it as used immediately (server-side)
-    // This prevents infinite retries even if the call fails later
+    // Also force reveal SMS with sender phone number for accountability
     if (isTrialCall) {
-      console.log('=== TRIAL CALL - Marking trial_prank_used = true ===');
+      console.log('=== TRIAL CALL - Marking trial_prank_used = true, forcing reveal SMS ===');
       await supabase
         .from('profiles')
         .update({ trial_prank_used: true })
         .eq('user_id', prank.user_id);
+      
+      // Force reveal SMS with sender's phone number
+      const senderPhone = userProfile.phone_number || 'N/D';
+      const currentRevealName = prank.reveal_sender_name || '';
+      const revealNameWithPhone = currentRevealName.includes('tel:') 
+        ? currentRevealName 
+        : `${currentRevealName || 'Anonimo'} (tel: ${senderPhone})`;
+      
+      await supabase
+        .from('pranks')
+        .update({ 
+          send_reveal_sms: true,
+          reveal_sender_name: revealNameWithPhone
+        })
+        .eq('id', prankId);
+      
+      // Update local prank object for downstream use
+      prank.send_reveal_sms = true;
+      prank.reveal_sender_name = revealNameWithPhone;
     }
 
     // Check if victim's phone number is blocked
