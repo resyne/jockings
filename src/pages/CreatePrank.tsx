@@ -402,17 +402,9 @@ const CreatePrank = () => {
     }
   };
 
-  // Check if the current phone number is valid for trial users
+  // Trial user check is no longer needed for phone restriction since trial allows any number
   const isTrialUserWithWrongNumber = (): boolean => {
-    if (!profile) return false;
-    if (profile.available_pranks > 0) return false; // Has paid pranks
-    if (profile.trial_prank_used) return false; // Trial already used, different message
-    if (profile.card_verified) return false; // Card verified = can call any number
-    if (!profile.phone_verified || !profile.phone_number) return false;
-    
-    const fullVictimPhone = normalizePhoneDigits(`${phoneCountryCode}${victimPhone}`);
-    const normalizedUserPhone = normalizePhoneDigits(profile.phone_number);
-    return fullVictimPhone !== normalizedUserPhone;
+    return false; // No longer restrict trial to own number
   };
 
   const validateStep = (step: number): boolean => {
