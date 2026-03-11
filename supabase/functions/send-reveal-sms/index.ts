@@ -92,7 +92,7 @@ serve(async (req) => {
     const smsBody = `😄 Tranquillo! La chiamata che hai ricevuto era solo uno scherzo.\n\n${senderLine}\n\nTramite Sarano AI`;
 
     console.log("Sending reveal SMS to:", victimPhone);
-    console.log("Sender name:", senderName);
+    console.log("Sender:", senderDisplayName || senderPhone);
 
     // Get Twilio credentials
     const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
