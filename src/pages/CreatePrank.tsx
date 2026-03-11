@@ -1007,7 +1007,7 @@ const CreatePrank = () => {
                         <div>
                           <p className="font-semibold text-orange-500 text-sm sm:text-base">Prank Gratuito 🎁</p>
                           <p className="text-[10px] sm:text-xs text-muted-foreground">
-                            SMS rivelatore obbligatorio con il tuo numero
+                            Chiama chi vuoi · SMS rivelatore obbligatorio
                           </p>
                         </div>
                       </div>
