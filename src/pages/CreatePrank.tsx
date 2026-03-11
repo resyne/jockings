@@ -1107,7 +1107,7 @@ const CreatePrank = () => {
                       <span className="font-medium text-sm sm:text-base">SMS rivelatore obbligatorio 📱</span>
                     </div>
                     <p className="text-[10px] sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
-                      Se la chiamata dura più di <strong className="text-foreground">30 secondi</strong>, dopo <strong className="text-foreground">2 minuti</strong> la vittima riceverà un SMS con <strong className="text-foreground">il tuo numero ({profile?.phone_number})</strong>. Scherza solo con chi può apprezzare!
+                      Se la chiamata dura più di <strong className="text-foreground">30 secondi</strong>, dopo <strong className="text-foreground">2 minuti</strong> la vittima riceverà un messaggio in cui è scritto che lo scherzo parte dal tuo numero <strong className="text-foreground">({profile?.phone_number})</strong>. Scherza solo con chi può apprezzare!
                     </p>
                   </div>
                 </div>
