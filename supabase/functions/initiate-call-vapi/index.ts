@@ -297,24 +297,14 @@ serve(async (req) => {
         .eq('user_id', prank.user_id);
     }
 
-    // Force reveal SMS with sender's phone number for ALL calls
-    const senderPhone = userProfile.phone_number || 'N/D';
-    const currentRevealName = prank.reveal_sender_name || '';
-    const revealNameWithPhone = currentRevealName.includes('tel:') 
-      ? currentRevealName 
-      : `${currentRevealName || 'Anonimo'} (tel: ${senderPhone})`;
-    
-    if (!prank.send_reveal_sms || !currentRevealName.includes('tel:')) {
+    // Force reveal SMS for ALL calls
+    if (!prank.send_reveal_sms) {
       await supabase
         .from('pranks')
-        .update({ 
-          send_reveal_sms: true,
-          reveal_sender_name: revealNameWithPhone
-        })
+        .update({ send_reveal_sms: true })
         .eq('id', prankId);
       
       prank.send_reveal_sms = true;
-      prank.reveal_sender_name = revealNameWithPhone;
     }
 
     // Check if victim's phone number is blocked
