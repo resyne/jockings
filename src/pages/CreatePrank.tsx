@@ -527,8 +527,8 @@ const CreatePrank = () => {
             .single()
         : { data: null };
       
-      // Reveal SMS is always mandatory with sender's phone number
-      const effectiveRevealName = `${revealSenderName.trim() || profile?.phone_number || "Anonimo"} (tel: ${profile?.phone_number || "N/D"})`;
+      // Reveal SMS is always mandatory - store just the display name
+      const effectiveRevealName = revealSenderName.trim() || "";
 
       const { data: prank, error } = await supabase
         .from("pranks")

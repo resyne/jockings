@@ -75,12 +75,24 @@ serve(async (req) => {
       });
     }
 
-    // Build the SMS message
-    const senderName = prank.reveal_sender_name || "Un amico";
-    const smsBody = `Sarano AI: la chiamata ricevuta era parte di uno scherzo.\n\nInviato da: ${senderName} (tramite Sarano AI).`;
+    // Get sender's phone number from profile
+    const { data: senderProfile } = await supabase
+      .from("profiles")
+      .select("phone_number, first_name")
+      .eq("user_id", prank.user_id)
+      .single();
+
+    const senderPhone = senderProfile?.phone_number || "N/D";
+    const senderDisplayName = prank.reveal_sender_name || senderProfile?.first_name || "";
+
+    // Build the SMS message - clean and friendly
+    const senderLine = senderDisplayName 
+      ? `Inviato da: ${senderDisplayName} (${senderPhone})`
+      : `Inviato dal numero: ${senderPhone}`;
+    const smsBody = `😄 Tranquillo! La chiamata che hai ricevuto era solo uno scherzo.\n\n${senderLine}\n\nTramite Sarano AI`;
 
     console.log("Sending reveal SMS to:", victimPhone);
-    console.log("Sender name:", senderName);
+    console.log("Sender:", senderDisplayName || senderPhone);
 
     // Get Twilio credentials
     const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
