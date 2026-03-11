@@ -157,7 +157,10 @@ const OnboardingModal = ({ open, onClose, onComplete }: OnboardingModalProps) =>
                   <span className="font-medium text-sm text-foreground">SMS rivelatore obbligatorio</span>
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Per lo scherzo gratuito, la vittima riceverà un SMS dopo la chiamata che rivela lo scherzo e <strong className="text-foreground">include il tuo numero di telefono</strong>. Questo garantisce un uso responsabile del servizio.
+                  Se la chiamata dura più di <strong className="text-foreground">30 secondi</strong>, la vittima riceverà un SMS dopo <strong className="text-foreground">2 minuti</strong> che rivela lo scherzo e <strong className="text-foreground">include il tuo numero di telefono</strong>.
+                </p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  ⚠️ Scherza solo con persone che conosci e che possono apprezzare lo scherzo!
                 </p>
                 <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                   <ShieldCheck className="w-3.5 h-3.5 text-green-500" />
