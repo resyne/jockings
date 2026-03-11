@@ -295,14 +295,16 @@ serve(async (req) => {
         .from('profiles')
         .update({ trial_prank_used: true })
         .eq('user_id', prank.user_id);
-      
-      // Force reveal SMS with sender's phone number
-      const senderPhone = userProfile.phone_number || 'N/D';
-      const currentRevealName = prank.reveal_sender_name || '';
-      const revealNameWithPhone = currentRevealName.includes('tel:') 
-        ? currentRevealName 
-        : `${currentRevealName || 'Anonimo'} (tel: ${senderPhone})`;
-      
+    }
+
+    // Force reveal SMS with sender's phone number for ALL calls
+    const senderPhone = userProfile.phone_number || 'N/D';
+    const currentRevealName = prank.reveal_sender_name || '';
+    const revealNameWithPhone = currentRevealName.includes('tel:') 
+      ? currentRevealName 
+      : `${currentRevealName || 'Anonimo'} (tel: ${senderPhone})`;
+    
+    if (!prank.send_reveal_sms || !currentRevealName.includes('tel:')) {
       await supabase
         .from('pranks')
         .update({ 
@@ -311,7 +313,6 @@ serve(async (req) => {
         })
         .eq('id', prankId);
       
-      // Update local prank object for downstream use
       prank.send_reveal_sms = true;
       prank.reveal_sender_name = revealNameWithPhone;
     }
