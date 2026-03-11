@@ -499,6 +499,8 @@ const CreatePrank = () => {
 
     // Check if user can make this prank
     const prankCheck = canMakePrank();
+    const isTrialCall = prankCheck.isTrialCall;
+    const prankCheck = canMakePrank();
     if (!prankCheck.allowed) {
       toast({ 
         title: "Non puoi fare questo scherzo", 
