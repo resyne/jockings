@@ -555,8 +555,8 @@ const CreatePrank = () => {
           max_duration: maxDuration,
           creativity_level: creativityLevel[0],
           send_recording: sendRecording,
-          send_reveal_sms: sendRevealSms,
-          reveal_sender_name: sendRevealSms ? (revealSenderName.trim() || null) : null,
+          send_reveal_sms: effectiveRevealSms,
+          reveal_sender_name: effectiveRevealName,
           call_status: "pending",
           scheduled_at: null,
         })
