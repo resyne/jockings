@@ -1034,9 +1034,9 @@ const CreatePrank = () => {
                           <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
                         </div>
                         <div>
-                          <p className="font-semibold text-orange-500 text-sm sm:text-base">Prank Gratuito</p>
+                          <p className="font-semibold text-orange-500 text-sm sm:text-base">Prank Gratuito 🎁</p>
                           <p className="text-[10px] sm:text-xs text-muted-foreground">
-                            Solo al tuo numero verificato
+                            SMS rivelatore obbligatorio con il tuo numero
                           </p>
                         </div>
                       </div>
