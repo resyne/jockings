@@ -9,8 +9,8 @@ interface PostTrialModalProps {
 }
 
 const PACKAGES = [
-  { name: "Starter Pack", pranks: 3, price: 9.99, discounted: 4.99, perPrank: "1,66" },
-  { name: "Mega Pack", pranks: 10, price: 24.99, discounted: 12.49, perPrank: "1,25", best: true },
+  { name: "Starter Pack", pranks: 3, price: 4.99, discounted: 2.49, perPrank: "0,83" },
+  { name: "Mega Pack", pranks: 10, price: 14.99, discounted: 7.49, perPrank: "0,75", best: true },
 ];
 
 const PostTrialModal = ({ open, onClose }: PostTrialModalProps) => {

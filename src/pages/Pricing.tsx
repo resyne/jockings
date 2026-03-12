@@ -49,20 +49,20 @@ const packages: PricingPackage[] = [
     id: "pack_10",
     name: "Mega Pack",
     pranks: 10,
-    price: 24.99,
+    price: 14.99,
   },
   {
     id: "pack_3",
     name: "Starter Pack",
     pranks: 3,
-    price: 9.99,
+    price: 4.99,
     recommended: true,
   },
   {
     id: "pack_1",
     name: "Singolo",
     pranks: 1,
-    price: 3.99,
+    price: 1.99,
   },
 ];
 
