@@ -118,7 +118,40 @@ const PrankDetail = () => {
     };
   }, [id]);
 
+  // Check if this was a trial call and show conversion modal
+  useEffect(() => {
+    if (postTrialCheckedRef.current || !prank) return;
+    const isTerminal = ["completed", "recording_available", "no_answer", "busy", "failed"].includes(prank.call_status);
+    if (!isTerminal) return;
 
+    postTrialCheckedRef.current = true;
+
+    const checkTrialStatus = async () => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("trial_prank_used, available_pranks")
+        .eq("user_id", session.session.user.id)
+        .single();
+
+      if (profile?.trial_prank_used && (profile?.available_pranks || 0) === 0) {
+        // Check if user has never purchased
+        const { data: purchases } = await supabase
+          .from("processed_payments")
+          .select("id")
+          .eq("user_id", session.session.user.id)
+          .limit(1);
+
+        if (!purchases || purchases.length === 0) {
+          setTimeout(() => setShowPostTrialModal(true), 1500);
+        }
+      }
+    };
+
+    checkTrialStatus();
+  }, [prank?.call_status]);
   const fetchPrank = async (prankId: string) => {
     try {
       const { data: session } = await supabase.auth.getSession();
