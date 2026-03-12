@@ -335,6 +335,7 @@ const PrankDetail = () => {
 
   return (
     <div className="min-h-screen bg-background pb-6">
+      <PostTrialModal open={showPostTrialModal} onClose={() => setShowPostTrialModal(false)} />
       {/* Header */}
       <header className="sticky top-0 z-50 glass border-b px-3 py-2 sm:px-4 sm:py-3">
         <div className="flex items-center gap-2 sm:gap-3 max-w-lg mx-auto">
