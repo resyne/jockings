@@ -114,6 +114,10 @@ serve(async (req) => {
     const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
     const twilioPhone = Deno.env.get('TWILIO_PHONE_NUMBER');
 
+    console.log(`[send-otp] DEBUG: SID present=${!!accountSid}, SID length=${accountSid?.length}, SID prefix=${accountSid?.substring(0, 6)}`);
+    console.log(`[send-otp] DEBUG: Token present=${!!authToken}, Token length=${authToken?.length}`);
+    console.log(`[send-otp] DEBUG: Phone=${twilioPhone}`);
+
     if (!accountSid || !authToken || !twilioPhone) {
       console.error('[send-otp] Missing Twilio credentials');
       return new Response(
