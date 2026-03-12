@@ -42,6 +42,8 @@ const PrankDetail = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
   const [showTranscript, setShowTranscript] = useState(false);
+  const [showPostTrialModal, setShowPostTrialModal] = useState(false);
+  const postTrialCheckedRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
