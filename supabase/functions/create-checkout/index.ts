@@ -42,11 +42,11 @@ async function stripeRequest(
   return data;
 }
 
-// Price IDs from Stripe (LIVE)
+// Price IDs from Stripe (LIVE) - v2 pricing
 const PRICES = {
-  pack_10: "price_1Sg65pB6NXLO6CywoqK0Elxv", // €24.99 - 10 pranks
-  pack_3: "price_1Sg69SB6NXLO6CywE0CR8XQb", // €9.99 - 3 pranks
-  pack_1: "price_1Sg6AjB6NXLO6CywA3CNRbCu", // €3.99 - 1 prank
+  pack_10: "price_1TA9N4B6NXLO6CyweLJx2tg9", // €14.99 - 10 pranks
+  pack_3: "price_1TA9J4B6NXLO6Cyw1O5g3Yho", // €4.99 - 3 pranks
+  pack_1: "price_1TA9IeB6NXLO6CywlLWPikMO", // €1.99 - 1 prank
   subscription: "price_1Sg6BUB6NXLO6CywSCZFn66D", // €9.99/month - 5 pranks
 } as const;
 
