@@ -10,6 +10,7 @@ import { it } from "date-fns/locale";
 import { toast } from "sonner";
 import saranoIcon from "@/assets/sarano-icon.png";
 import LiveCallView from "@/components/LiveCallView";
+import PostTrialModal from "@/components/PostTrialModal";
 
 interface Prank {
   id: string;
