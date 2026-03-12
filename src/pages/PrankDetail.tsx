@@ -10,6 +10,7 @@ import { it } from "date-fns/locale";
 import { toast } from "sonner";
 import saranoIcon from "@/assets/sarano-icon.png";
 import LiveCallView from "@/components/LiveCallView";
+import PostTrialModal from "@/components/PostTrialModal";
 
 interface Prank {
   id: string;
@@ -41,6 +42,8 @@ const PrankDetail = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
   const [showTranscript, setShowTranscript] = useState(false);
+  const [showPostTrialModal, setShowPostTrialModal] = useState(false);
+  const postTrialCheckedRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
@@ -115,7 +118,40 @@ const PrankDetail = () => {
     };
   }, [id]);
 
+  // Check if this was a trial call and show conversion modal
+  useEffect(() => {
+    if (postTrialCheckedRef.current || !prank) return;
+    const isTerminal = ["completed", "recording_available", "no_answer", "busy", "failed"].includes(prank.call_status);
+    if (!isTerminal) return;
 
+    postTrialCheckedRef.current = true;
+
+    const checkTrialStatus = async () => {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("trial_prank_used, available_pranks")
+        .eq("user_id", session.session.user.id)
+        .single();
+
+      if (profile?.trial_prank_used && (profile?.available_pranks || 0) === 0) {
+        // Check if user has never purchased
+        const { data: purchases } = await supabase
+          .from("processed_payments")
+          .select("id")
+          .eq("user_id", session.session.user.id)
+          .limit(1);
+
+        if (!purchases || purchases.length === 0) {
+          setTimeout(() => setShowPostTrialModal(true), 1500);
+        }
+      }
+    };
+
+    checkTrialStatus();
+  }, [prank?.call_status]);
   const fetchPrank = async (prankId: string) => {
     try {
       const { data: session } = await supabase.auth.getSession();
@@ -299,6 +335,7 @@ const PrankDetail = () => {
 
   return (
     <div className="min-h-screen bg-background pb-6">
+      <PostTrialModal open={showPostTrialModal} onClose={() => setShowPostTrialModal(false)} />
       {/* Header */}
       <header className="sticky top-0 z-50 glass border-b px-3 py-2 sm:px-4 sm:py-3">
         <div className="flex items-center gap-2 sm:gap-3 max-w-lg mx-auto">
