@@ -110,13 +110,13 @@ serve(async (req) => {
     }
 
     // Send SMS via Twilio
-    const accountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
-    const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
-    const twilioPhone = Deno.env.get('TWILIO_PHONE_NUMBER');
+    const accountSid = (Deno.env.get('TWILIO_ACCOUNT_SID') || '').trim();
+    const authToken = (Deno.env.get('TWILIO_AUTH_TOKEN') || '').trim();
+    const twilioPhone = (Deno.env.get('TWILIO_PHONE_NUMBER') || '').trim();
 
-    console.log(`[send-otp] DEBUG: SID present=${!!accountSid}, SID length=${accountSid?.length}, SID prefix=${accountSid?.substring(0, 6)}`);
-    console.log(`[send-otp] DEBUG: Token present=${!!authToken}, Token length=${authToken?.length}`);
-    console.log(`[send-otp] DEBUG: Phone=${twilioPhone}`);
+    console.log(`[send-otp] DEBUG: SID="${accountSid?.substring(0, 6)}...${accountSid?.substring(accountSid.length - 4)}", len=${accountSid?.length}`);
+    console.log(`[send-otp] DEBUG: Token first4="${authToken?.substring(0, 4)}", last4="${authToken?.substring(authToken.length - 4)}", len=${authToken?.length}`);
+    console.log(`[send-otp] DEBUG: Phone="${twilioPhone}"`);
 
     if (!accountSid || !authToken || !twilioPhone) {
       console.error('[send-otp] Missing Twilio credentials');
