@@ -40,6 +40,16 @@ const PaymentSuccess = () => {
         if (data?.success) {
           setPranksAdded(data.pranks_added);
           setTotalPranks(data.total_pranks);
+
+          // TikTok Pixel: track completed purchase
+          if (typeof window !== "undefined" && (window as any).ttq) {
+            (window as any).ttq.track("CompletePayment", {
+              content_type: "product",
+              quantity: data.pranks_added,
+              description: "Prank purchase",
+            });
+          }
+
           toast({
             title: "Pagamento completato! 🎉",
             description: `Hai ricevuto ${data.pranks_added} prank`,
