@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Phone, ArrowRight, RefreshCw, Check } from "lucide-react";
+import { Phone, ArrowRight, RefreshCw, Check, X } from "lucide-react";
 import saranoIcon from "@/assets/sarano-icon.png";
 
 const COUNTRIES = [
@@ -251,8 +251,24 @@ const VerifyPhone = () => {
     await handleSendOtp();
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
+      {/* Back to login */}
+      <div className="w-full max-w-md flex justify-end mb-2">
+        <button
+          onClick={handleLogout}
+          className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+        >
+          Esci
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
       {/* Logo */}
       <div className="mb-6 text-center">
         <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl shadow-card mb-2 overflow-hidden bg-card">
